@@ -43,3 +43,8 @@ Thumbs.db
 .idea/
 .vscode/
 *.log
+
+# Khóa ký manifest DEV (không commit)
+tools/runtime/*.pem
+# Đầu ra render/PoC cục bộ
+.poc-data/
