@@ -45,11 +45,17 @@ describe('buildFfmpegArgs', () => {
   const base = { framesDir: '/w/frames', outputPath: '/w/out.mp4', fps: 30, width: 1280, height: 720, durationS: 5 };
   it('H.264 yuv420p faststart', () => {
     const args = buildFfmpegArgs(base);
-    expect(args).toContain('libx264');
+    expect(args).toContain('libopenh264');
+    expect(args).not.toContain('libx264');
     expect(args).toContain('+faststart');
     expect(args).toContain('/w/frames/frame_%06d.png');
     expect(args.at(-1)).toBe('/w/out.mp4');
     expect(args).not.toContain('-filter_complex');
+  });
+  it('từ chối encoder GPL (libx264/libx265) và encoder ngoài danh sách', () => {
+    expect(() => buildFfmpegArgs({ ...base, videoCodec: 'libx264' })).toThrow(/danh sách cho phép/);
+    expect(() => buildFfmpegArgs({ ...base, videoCodec: 'libx265' })).toThrow();
+    expect(buildFfmpegArgs({ ...base, videoCodec: 'h264_nvenc' })).toContain('h264_nvenc');
   });
   it('thêm overlay logo cuối video', () => {
     const args = buildFfmpegArgs({ ...base, logoPath: '/l.png' });

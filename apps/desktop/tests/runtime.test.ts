@@ -1,9 +1,10 @@
-import { createHash, generateKeyPairSync, sign } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { afterEach, describe, expect, it } from 'vitest';
+import { makeKey } from './helpers-trust.js';
 import { AppError, type RuntimeManifest, type RuntimeProgress } from '@aps/shared';
 import { RuntimeManager, type RuntimeManagerOptions } from '../src/orchestrator/runtime/manager.js';
 import { parseSignedManifest, selectArtifact } from '../src/orchestrator/runtime/manifest.js';
@@ -176,32 +177,42 @@ describe('RuntimeManager', () => {
 });
 
 describe('manifest ký', () => {
-  const { publicKey, privateKey } = generateKeyPairSync('ed25519');
-  const pem = publicKey.export({ type: 'spki', format: 'pem' }).toString();
+  const prod = makeKey('prod-2026');
   const text = JSON.stringify(manifest());
-  const signature = sign(null, Buffer.from(text), privateKey).toString('base64');
+  const env = prod.signText(text);
+  const trust = { keys: [prod.trusted] };
 
-  it('chấp nhận chữ ký đúng', () => {
-    const m = parseSignedManifest({ manifest: text, signature }, pem);
+  it('chấp nhận chữ ký đúng của khóa production có keyId khớp', () => {
+    const m = parseSignedManifest(env, trust);
     expect(m.blender.version).toBe('4.5.16');
     expect(selectArtifact(m, 'linux-x64').sha256).toBe(SHA);
   });
 
   it('từ chối manifest bị sửa sau khi ký', () => {
     const tampered = text.replace(SHA, 'f'.repeat(64));
-    expect(() => parseSignedManifest({ manifest: tampered, signature }, pem)).toThrowError(/chữ ký/);
+    expect(() => parseSignedManifest({ ...env, manifest: tampered }, trust)).toThrowError(/chữ ký/);
   });
 
-  it('từ chối chữ ký của khóa khác và thiếu khóa công khai', () => {
-    const other = generateKeyPairSync('ed25519').publicKey.export({ type: 'spki', format: 'pem' }).toString();
-    expect(() => parseSignedManifest({ manifest: text, signature }, other)).toThrow();
-    expect(() => parseSignedManifest({ manifest: text, signature }, null)).toThrow();
+  it('từ chối chữ ký của khóa khác (cùng keyId) và keyId lạ / thiếu keyId', () => {
+    const other = makeKey('prod-2026');
+    expect(() => parseSignedManifest(env, { keys: [other.trusted] })).toThrowError(/chữ ký/);
+    expect(() => parseSignedManifest({ ...env, keyId: 'unknown' }, trust)).toThrowError(/không được tin cậy/);
+    const { keyId: _omit, ...noId } = env;
+    expect(() => parseSignedManifest(noId, trust)).toThrowError(/không được tin cậy/);
+  });
+
+  it('chưa cấu hình khóa production -> MANIFEST_NO_TRUSTED_KEY (không mở cửa mặc định)', () => {
+    expect(() => parseSignedManifest(env, { keys: [] })).toThrowError(expect.objectContaining({ code: 'MANIFEST_NO_TRUSTED_KEY' }));
+  });
+
+  it('manifest ký bằng khóa DEV bị từ chối khi tập tin cậy chỉ có khóa production', () => {
+    const dev = makeKey('dev-1');
+    expect(() => parseSignedManifest(dev.signText(text), trust)).toThrowError(expect.objectContaining({ code: 'MANIFEST_UNTRUSTED_KEY' }));
   });
 
   it('từ chối manifest hợp lệ chữ ký nhưng sai schema (Blender 5.x)', () => {
-    const bad = JSON.stringify(manifest('5.0.1'));
-    const sig = sign(null, Buffer.from(bad), privateKey).toString('base64');
-    expect(() => parseSignedManifest({ manifest: bad, signature: sig }, pem)).toThrow(AppError);
+    const bad = prod.signText(JSON.stringify(manifest('5.0.1')));
+    expect(() => parseSignedManifest(bad, trust)).toThrow(AppError);
   });
 });
 

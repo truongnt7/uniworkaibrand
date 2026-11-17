@@ -9,6 +9,7 @@ import {
   compileWorkerJob,
   parseFfmpegProgress,
 } from '@aps/render-core';
+import { assertLgplFfmpeg } from './ffmpeg.js';
 import type { JobRunner, RunControl } from './queue.js';
 import { isBlenderProcess, killPid, runProcess } from './process.js';
 
@@ -17,7 +18,10 @@ export interface BlenderRunnerOptions {
   /** Đường dẫn tuyệt đối tới blender-worker/worker.py (nằm trong bundle, người dùng không chọn được). */
   workerScript: string;
   getBlenderBinary: () => Promise<string>;
-  ffmpegPath: string;
+  /** Đường dẫn ffmpeg (runtime đã cài hoặc APS_FFMPEG); luôn bị kiểm chính sách LGPL trước khi dùng. */
+  getFfmpegPath: () => Promise<string>;
+  /** Chỉ test: bỏ kiểm LGPL. Không có đường cấu hình nào bật cờ này trong app. */
+  enforceLgpl?: boolean;
   onLog?: (jobId: string, line: string) => void;
 }
 
@@ -145,7 +149,10 @@ export class BlenderRunner implements JobRunner {
     const { output } = job.request;
     const part = `${outPath}.part.mp4`;
     await rm(part, { force: true });
+    const ffmpegPath = await this.opts.getFfmpegPath();
+    const { encoder } = this.opts.enforceLgpl === false ? { encoder: 'libopenh264' as const } : await assertLgplFfmpeg(ffmpegPath);
     const args = buildFfmpegArgs({
+      videoCodec: encoder,
       framesDir,
       outputPath: part,
       fps: output.fps,
@@ -155,7 +162,7 @@ export class BlenderRunner implements JobRunner {
       logoPath: output.logoPath,
     });
     let buf = '';
-    const result = await runProcess(this.opts.ffmpegPath, args, {
+    const result = await runProcess(ffmpegPath, args, {
       signal: ctl.signal,
       onStdoutChunk: (c) => {
         buf += c.toString('utf8');

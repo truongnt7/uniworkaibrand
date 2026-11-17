@@ -41,3 +41,9 @@ export async function extractArchive(archive: string, type: ArchiveType, destDir
     }
   }
 }
+
+/** Gói runtime offline (`.apspack`) là tar KHÔNG nén: các archive bên trong đã nén sẵn. */
+export async function extractTar(archive: string, destDir: string, signal?: AbortSignal): Promise<void> {
+  await mkdir(destDir, { recursive: true });
+  return sh('tar', ['-xf', archive, '-C', destDir], signal);
+}

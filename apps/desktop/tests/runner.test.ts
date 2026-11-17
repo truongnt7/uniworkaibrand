@@ -12,7 +12,10 @@ import { BlenderRunner } from '../src/orchestrator/blenderRunner.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const fakeBlenderJs = join(here, 'fixtures', 'fake-blender.mjs');
-const hasFfmpeg = spawnSync('ffmpeg', ['-version']).status === 0;
+/** Binary LGPL đã ghim trong manifest (tải bằng tools/ffmpeg/fetch-lgpl.mjs); không có thì bỏ qua các test mã hóa thật. */
+const LGPL_FFMPEG = process.env.APS_TEST_FFMPEG_LGPL ?? '';
+const hasFfmpeg = LGPL_FFMPEG !== '' && spawnSync(LGPL_FFMPEG, ['-version']).status === 0;
+const systemFfmpegIsGpl = /--enable-gpl/.test(spawnSync('ffmpeg', ['-version']).stdout?.toString() ?? '');
 const posix = process.platform !== 'win32';
 
 const dirs: string[] = [];
@@ -20,7 +23,7 @@ afterEach(() => {
   for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true });
 });
 
-function env(extra: Record<string, string> = {}) {
+function env(extra: Record<string, string> = {}, ffmpegBin = LGPL_FFMPEG || 'ffmpeg') {
   const dir = mkdtempSync(join(tmpdir(), 'aps-runner-'));
   dirs.push(dir);
   const bin = join(dir, 'blender');
@@ -36,7 +39,7 @@ function env(extra: Record<string, string> = {}) {
     jobsDir: join(dir, 'jobs'),
     workerScript: '/unused/worker.py',
     getBlenderBinary: async () => bin,
-    ffmpegPath: 'ffmpeg',
+    getFfmpegPath: async () => ffmpegBin,
     onLog: (_id, l) => logs.push(l),
   });
   const queue = new JobQueue({ store, runner, emitThrottleMs: 0 });
@@ -90,7 +93,7 @@ describe.skipIf(!posix)('BlenderRunner (Blender giả + ffmpeg thật)', () => {
     expect(queue.get(job.id)).toMatchObject({ status: 'failed', errorCode: 'GLB_NOT_FOUND' });
   });
 
-  it('resume sau khi crash: retry chỉ render các khung còn thiếu và bỏ khung .part dở dang', async () => {
+  it.skipIf(!hasFfmpeg)('resume sau khi crash: retry chỉ render các khung còn thiếu và bỏ khung .part dở dang', async () => {
     const { queue, req, dir } = env({ FAKE_CRASH_AT: '6' });
     const job = queue.enqueue(req({ kind: 'video' }));
     await queue.idle();
@@ -110,6 +113,28 @@ describe.skipIf(!posix)('BlenderRunner (Blender giả + ffmpeg thật)', () => {
     expect(pngs()).toHaveLength(10);
     expect(readdirSync(frames).some((f) => f.endsWith('.part'))).toBe(false);
     expect(statSync(join(frames, 'frame_000001.png')).mtimeMs).toBe(firstFrameMtime);
+  });
+
+  it('ffmpeg bật --enable-gpl bị từ chối trước khi mã hóa (FFMPEG_LICENSE_VIOLATION, không thử lại)', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'aps-fakeff-'));
+    dirs.push(dir);
+    const fake = join(dir, 'ffmpeg');
+    writeFileSync(
+      fake,
+      `#!/bin/sh\ncase "$1$2" in\n*-version*) echo "ffmpeg version 7.0 fake"; echo "configuration: --enable-gpl --enable-libx264";;\n*-buildconf*) echo "--enable-gpl";;\n*-encoders*) echo " V....D libx264  x264";;\nesac\nexit 0\n`,
+    );
+    chmodSync(fake, 0o755);
+    const { queue, req } = env({}, fake);
+    const job = queue.enqueue(req({ kind: 'video' }));
+    await queue.idle();
+    expect(queue.get(job.id)).toMatchObject({ status: 'failed', errorCode: 'FFMPEG_LICENSE_VIOLATION', failures: 1 });
+  });
+
+  it.skipIf(!systemFfmpegIsGpl)('ffmpeg hệ thống (GPL) không bao giờ được dùng để render', async () => {
+    const { queue, req } = env({}, 'ffmpeg');
+    const job = queue.enqueue(req({ kind: 'video' }));
+    await queue.idle();
+    expect(queue.get(job.id)).toMatchObject({ status: 'failed', errorCode: 'FFMPEG_LICENSE_VIOLATION' });
   });
 
   it('reclaim: giết Blender mồ côi theo PID file sau khi app bị kill, bỏ qua PID không phải Blender', async () => {
@@ -136,7 +161,7 @@ describe.skipIf(!posix)('BlenderRunner (Blender giả + ffmpeg thật)', () => {
     };
 
     writeFileSync(join(jobDir, 'blender.pid'), String(unrelated.pid));
-    const runner = new BlenderRunner({ jobsDir: join(dir, 'jobs'), workerScript: 'x', getBlenderBinary: async () => 'x', ffmpegPath: 'ffmpeg' });
+    const runner = new BlenderRunner({ jobsDir: join(dir, 'jobs'), workerScript: 'x', getBlenderBinary: async () => 'x', getFfmpegPath: async () => 'ffmpeg' });
     await runner.reclaim(job);
     expect(alive(unrelated.pid!)).toBe(true);
     expect(existsSync(join(jobDir, 'blender.pid'))).toBe(false);

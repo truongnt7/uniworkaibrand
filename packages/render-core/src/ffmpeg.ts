@@ -1,5 +1,7 @@
 import type { OutputSpec } from '@aps/shared';
+import { AppError } from '@aps/shared';
 import { FRAME_PATTERN } from './compile.js';
+import { isAllowedEncoder } from './ffmpeg-policy.js';
 
 export interface FfmpegArgsOptions {
   framesDir: string;
@@ -9,7 +11,7 @@ export interface FfmpegArgsOptions {
   height: number;
   durationS: number;
   logoPath?: string | undefined;
-  /** Mặc định libx264; có thể đổi sang encoder LGPL/phần cứng khi chốt giấy phép (P0-12). */
+  /** Chỉ nhận encoder trong danh sách cho phép (LGPL-safe); mặc định libopenh264. libx264 (GPL) bị từ chối. */
   videoCodec?: string;
 }
 
@@ -24,7 +26,10 @@ export function sep(dir: string): string {
 export function buildFfmpegArgs(o: FfmpegArgsOptions): string[] {
   const input = `${o.framesDir}${sep(o.framesDir)}${FRAME_PATTERN}`;
   const args = ['-y', '-hide_banner', '-loglevel', 'error', '-progress', 'pipe:1', '-nostats', '-framerate', String(o.fps), '-i', input];
-  const codec = o.videoCodec ?? 'libx264';
+  const codec = o.videoCodec ?? 'libopenh264';
+  if (!isAllowedEncoder(codec)) {
+    throw new AppError('FFMPEG_NO_ALLOWED_ENCODER', `encoder không nằm trong danh sách cho phép (LGPL): ${codec}`);
+  }
   if (o.logoPath) {
     const logoStart = Math.max(0, o.durationS - 1.2);
     const logoHeight = Math.round(o.height * 0.14);
@@ -42,7 +47,7 @@ export function buildFfmpegArgs(o: FfmpegArgsOptions): string[] {
   args.push(
     '-c:v',
     codec,
-    ...(codec === 'libx264' ? ['-preset', 'medium', '-crf', '18'] : []),
+    ...encoderArgs(codec, o),
     '-pix_fmt',
     'yuv420p',
     '-r',
@@ -52,6 +57,24 @@ export function buildFfmpegArgs(o: FfmpegArgsOptions): string[] {
     o.outputPath,
   );
   return args;
+}
+
+/** ~0,15 bit/pixel/khung: 1080p30 ≈ 9 Mb/s, đủ sắc nét cho nhãn chữ nhỏ; encoder LGPL không có CRF nên dùng bitrate. */
+export function targetBitrate(width: number, height: number, fps: number): number {
+  return Math.round(Math.min(40_000_000, Math.max(1_000_000, width * height * fps * 0.15)));
+}
+
+function encoderArgs(codec: string, o: Pick<FfmpegArgsOptions, 'fps' | 'width' | 'height'>): string[] {
+  const bitrate = String(targetBitrate(o.width, o.height, o.fps));
+  const gop = String(Math.max(1, o.fps * 2));
+  switch (codec) {
+    case 'libopenh264':
+      return ['-b:v', bitrate, '-g', gop, '-profile:v', 'high', '-allow_skip_frames', '0'];
+    case 'h264_nvenc':
+      return ['-b:v', bitrate, '-g', gop, '-preset', 'p5'];
+    default:
+      return ['-b:v', bitrate, '-g', gop];
+  }
 }
 
 /** Ffmpeg `-progress pipe:1` in các dòng key=value; lấy số khung đã ghép. */

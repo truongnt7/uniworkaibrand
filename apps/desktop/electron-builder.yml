@@ -1,0 +1,33 @@
+# Đóng gói app (PoC: chỉ target `dir` để kiểm chứng trên Linux; installer ký số/notarize là P0-19 chưa làm).
+# Chạy qua `pnpm package` (scripts/package.mjs) để có kiểm tra trước/sau khi đóng gói.
+appId: vn.aiproductstudio.app
+productName: AI Product Studio
+electronVersion: 43.8.10
+electronDist: node_modules/electron/dist
+directories:
+  output: ../../release-build
+asar: true
+npmRebuild: false
+files:
+  - out/**
+  - package.json
+extraResources:
+  - from: ../../blender-worker
+    to: blender-worker
+    filter:
+      - "**/*.py"
+      - LICENSE
+      - README.md
+      - "!**/__pycache__/**"
+      - "!tests/**"
+  - from: ${env.APS_PACKAGE_KEYS_DIR}
+    to: keys/production
+    filter:
+      - "*.pub.pem"
+  - from: ${env.APS_PACKAGE_MANIFEST}
+    to: runtime-manifest.signed.json
+  - from: ../../THIRD_PARTY_NOTICES.md
+    to: THIRD_PARTY_NOTICES.md
+linux:
+  target: dir
+  category: Graphics
