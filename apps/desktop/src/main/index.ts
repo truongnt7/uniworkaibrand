@@ -1,7 +1,8 @@
-import { existsSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
+import { existsSync, statSync } from 'node:fs';
+import { copyFile, mkdir, readFile } from 'node:fs/promises';
+import { extname, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { BrowserWindow, app, dialog, ipcMain, net, protocol, session, shell } from 'electron';
+import { BrowserWindow, app, clipboard, dialog, ipcMain, nativeImage, net, protocol, session, shell } from 'electron';
 import {
   AppError,
   INVOKE_CHANNEL_NAMES,
@@ -26,6 +27,11 @@ const devServerUrl = process.env.ELECTRON_RENDERER_URL ?? null;
 const resourceRoot = app.isPackaged ? process.resourcesPath : app.getAppPath();
 const repoRoot = resolve(app.getAppPath(), '..', '..');
 const jobs = new Map<string, JobRecord>();
+/** Phông Be Vietnam Pro Bold (SIL OFL 1.1) đi kèm app cho chữ trên video; xem THIRD_PARTY_NOTICES.md. */
+const VIDEO_FONT = 'BeVietnamPro-Bold.ttf';
+/** Tệp người dùng đã lưu qua hộp thoại, chỉ những đường dẫn này (và kết quả job) mới được mở trong thư mục. */
+const savedPaths = new Set<string>();
+const e2eQueues = new Map<string, string[]>();
 let client: OrchestratorClient | null = null;
 let mainWindow: BrowserWindow | null = null;
 
@@ -55,22 +61,79 @@ function buildConfig(): OrchestratorConfig {
     release,
     blenderOverride: release ? null : (process.env.APS_BLENDER_BIN ?? null),
     ffmpegOverride: release ? null : (process.env.APS_FFMPEG ?? null),
+    fontPath: join(res, 'fonts', VIDEO_FONT),
   };
 }
 
-async function pickFile(kind: 'glb' | 'image' | 'runtime'): Promise<string | null> {
-  // Hook cho e2e tự động (không thể điều khiển hộp thoại hệ điều hành): APS_E2E_FILES='{"glb":"...","image":"..."}'
-  if (process.env.APS_E2E_FILES && (!app.isPackaged || process.env.APS_E2E === '1')) {
-    const map = JSON.parse(process.env.APS_E2E_FILES) as Record<string, string>;
-    return map[kind] ?? null;
+const e2eHook = (): boolean => Boolean(process.env.APS_E2E_FILES) && (!app.isPackaged || process.env.APS_E2E === '1');
+
+async function pickFile(kind: 'glb' | 'image' | 'runtime' | 'photo' | 'logo' | 'audio'): Promise<string | null> {
+  // Hook cho e2e tự động (không thể điều khiển hộp thoại hệ điều hành): APS_E2E_FILES='{"glb":"...","photo":["a.jpg","b.jpg"]}'
+  // (giá trị mảng được lấy lần lượt mỗi lần mở hộp thoại).
+  if (e2eHook()) {
+    const map = JSON.parse(process.env.APS_E2E_FILES as string) as Record<string, string | string[]>;
+    const v = map[kind];
+    if (Array.isArray(v)) {
+      let q = e2eQueues.get(kind);
+      if (!q) e2eQueues.set(kind, (q = [...v]));
+      return q.shift() ?? null;
+    }
+    return v ?? null;
   }
   const filters = {
     glb: [{ name: 'Model 3D (.glb)', extensions: ['glb'] }],
     image: [{ name: 'Ảnh', extensions: ['png', 'jpg', 'jpeg'] }],
+    photo: [{ name: 'Ảnh', extensions: ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif'] }],
+    logo: [{ name: 'Logo', extensions: ['png', 'jpg', 'jpeg', 'webp'] }],
+    audio: [{ name: 'Nhạc', extensions: ['mp3', 'wav', 'm4a', 'aac', 'ogg'] }],
     runtime: [{ name: 'Blender runtime', extensions: ['xz', 'zip', 'dmg'] }],
   }[kind];
   const res = await dialog.showOpenDialog({ properties: ['openFile'], filters });
   return res.canceled ? null : (res.filePaths[0] ?? null);
+}
+
+const THUMB_EXT: Record<string, string> = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' };
+
+async function thumbnail(path: string, maxSide: number): Promise<{ dataUrl: string | null; width: number | null; height: number | null }> {
+  const none = { dataUrl: null, width: null, height: null };
+  const ext = extname(path).toLowerCase();
+  const mime = THUMB_EXT[ext];
+  try {
+    if (!mime || !statSync(path).isFile()) return none;
+    const img = nativeImage.createFromPath(path);
+    if (img.isEmpty()) {
+      // Chromium của Electron chưa giải mã được mọi ảnh WEBP qua nativeImage: gửi nguyên tệp nếu nhỏ.
+      if (ext !== '.webp' || statSync(path).size > 6_000_000) return none;
+      return { dataUrl: `data:image/webp;base64,${(await readFile(path)).toString('base64')}`, width: null, height: null };
+    }
+    const { width, height } = img.getSize();
+    const k = Math.min(1, maxSide / Math.max(width, height));
+    const small = k < 1 ? img.resize({ width: Math.max(1, Math.round(width * k)), height: Math.max(1, Math.round(height * k)) }) : img;
+    const data = ext === '.png' ? small.toPNG() : small.toJPEG(82);
+    return { dataUrl: `data:${ext === '.png' ? 'image/png' : 'image/jpeg'};base64,${data.toString('base64')}`, width, height };
+  } catch {
+    return none;
+  }
+}
+
+async function saveVideo(jobId: string, suggestedName?: string): Promise<string | null> {
+  const job = jobs.get(jobId);
+  if (!job || job.status !== 'done' || !job.outputPath || !existsSync(job.outputPath)) throw new AppError('OUTPUT_MISSING', 'Chưa có video để lưu. Hãy tạo video trước.');
+  const safe = (suggestedName ?? job.name).replace(/[\\/:*?"<>|]+/g, ' ').replace(/\p{Cc}+/gu, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || 'video';
+  const fileName = safe.toLowerCase().endsWith('.mp4') ? safe : `${safe}.mp4`;
+  let dest: string | null;
+  if (e2eHook() && process.env.APS_E2E_SAVE_DIR) {
+    dest = join(process.env.APS_E2E_SAVE_DIR, fileName);
+    await mkdir(process.env.APS_E2E_SAVE_DIR, { recursive: true });
+  } else {
+    const res = await dialog.showSaveDialog({ defaultPath: join(app.getPath('videos'), fileName), filters: [{ name: 'Video MP4', extensions: ['mp4'] }] });
+    dest = res.canceled || !res.filePath ? null : res.filePath;
+  }
+  if (!dest) return null;
+  if (!dest.toLowerCase().endsWith('.mp4')) dest = `${dest}.mp4`;
+  await copyFile(job.outputPath, dest);
+  savedPaths.add(resolve(dest));
+  return dest;
 }
 
 function registerIpc(): void {
@@ -91,7 +154,24 @@ function registerIpc(): void {
     'runtime:status': forward('runtime:status') as never,
     'runtime:install': forward('runtime:install') as never,
     'runtime:importFile': forward('runtime:importFile') as never,
+    'slideshow:validate': forward('slideshow:validate') as never,
+    'slideshow:create': forward('slideshow:create') as never,
+    'slideshow:caption': forward('slideshow:caption') as never,
+    'profile:get': forward('profile:get') as never,
+    'profile:set': forward('profile:set') as never,
     'dialog:pickFile': async ({ kind }) => ({ path: await pickFile(kind) }),
+    'video:save': async ({ jobId, suggestedName }) => ({ path: await saveVideo(jobId, suggestedName) }),
+    'video:reveal': ({ jobId, path }) => {
+      const target = jobId ? jobs.get(jobId)?.outputPath : path && savedPaths.has(resolve(path)) ? path : null;
+      if (!target || !existsSync(target)) return { ok: false };
+      if (!e2eHook()) shell.showItemInFolder(target);
+      return { ok: true };
+    },
+    'clipboard:writeText': ({ text }) => {
+      clipboard.writeText(text);
+      return { ok: true };
+    },
+    'photo:thumbnail': async ({ path, maxSide }) => thumbnail(path, maxSide),
     'app:info': () => ({ version: app.getVersion(), platform: `${process.platform}-${process.arch}`, dataDir: app.getPath('userData') }),
   };
   for (const channel of INVOKE_CHANNEL_NAMES) {

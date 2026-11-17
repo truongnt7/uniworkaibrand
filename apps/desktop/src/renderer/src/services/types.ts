@@ -1,3 +1,5 @@
+import type { CreateService } from './create';
+
 /**
  * Mô hình miền + interface dịch vụ cho UI shell.
  * Renderer chỉ phụ thuộc các interface này; bản mock (services/mock) sẽ được thay bằng SQLite/API sau.
@@ -325,4 +327,5 @@ export interface Services {
   director: DirectorService;
   exporter: ExportService;
   publish: PublishService;
+  create: CreateService;
 }

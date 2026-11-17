@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react';
 
-export type RoutePath = '/' | '/products' | '/studio' | '/templates' | '/library' | '/publish' | '/poc';
-export const ROUTE_PATHS: readonly RoutePath[] = ['/', '/products', '/studio', '/templates', '/library', '/publish', '/poc'];
+export type RoutePath = '/' | '/create' | '/products' | '/studio' | '/templates' | '/library' | '/publish' | '/poc';
+export const ROUTE_PATHS: readonly RoutePath[] = ['/', '/create', '/products', '/studio', '/templates', '/library', '/publish', '/poc'];
 
 export interface Route {
   path: RoutePath;

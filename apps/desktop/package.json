@@ -20,7 +20,8 @@
     "dev:keys": "node ../../tools/runtime/dev-keys.mjs",
     "qc:label": "tsx scripts/label-qc.mts",
     "e2e:packaged": "node scripts/e2e-packaged.mjs",
-    "e2e:ui": "node scripts/e2e-ui.mjs"
+    "e2e:ui": "node scripts/e2e-ui.mjs",
+    "e2e:create": "node scripts/e2e-create.mjs"
   },
   "dependencies": {},
   "devDependencies": {

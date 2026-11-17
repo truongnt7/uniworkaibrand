@@ -8,6 +8,7 @@ import { ServicesProvider, createServices } from './services';
 import './app.css';
 
 document.documentElement.lang = initialLocale;
+if (!window.location.hash) window.location.hash = '#/create';
 const root = document.getElementById('root');
 if (!root) throw new Error('missing #root');
 createRoot(root).render(

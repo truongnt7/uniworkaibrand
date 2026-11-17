@@ -85,7 +85,7 @@ Không có khoá LLM thì Đạo diễn chạy rule-based offline (`APS_AI_MODE=
 
 ## 7. Giới hạn / chưa làm
 
-- Chưa có UI renderer cho prompt/timeline (renderer đang do nhánh `mvp/ui-shell` thiết kế); mới có IPC, CLI và e2e. Chưa có UI sửa timeline/chữ/ánh sáng.
+- UI cho prompt: có mục gập "Video sản phẩm 3D (nâng cao)" trong màn hình "Tạo video" (nhánh `mvp/app-create-flow`) gọi `jobs:createFromPrompt` (có trường `target`; cloud chỉ lưu chỗ, chưa chạy). Chưa có UI sửa timeline/chữ/ánh sáng. Job Blender và job ảnh sang video (`pipeline: slideshow`) dùng chung hàng đợi SQLite; xem [industry-templates.md](industry-templates.md) mục 2.6.
 - Chưa gọi LLM thật (chưa có khoá): đường LLM được test bằng `MockProvider` và server giả.
 - Mẫu cảnh `nature-soft`, `minimal-white`, `luxury-dark` hiện chỉ khác **màu nền, độ bóng đổ, hệ số đèn**; chưa có lá/đạo cụ/HDRI thật (chờ Kho mẫu). `leaves`/`props` bị bỏ qua có cảnh báo.
 - Chữ overlay dựng bằng vật thể chữ Blender (phụ thuộc font Inter đi kèm Blender; font thiếu thì dùng font mặc định, mất dấu tiếng Việt). Chưa kiểm ở độ phân giải thật (chỉ 256×144 và 640×360) và chưa có tuỳ chọn font.

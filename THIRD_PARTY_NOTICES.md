@@ -31,6 +31,15 @@ thiết kế hiện tại; **phải rà soát lại theo đúng bản phân ph�
   2. Binary BtbN gộp nhiều thư viện (openssl, libvmaf, libaom, SVT-AV1, ...): cần đưa đủ thông báo bản quyền/giấy phép của từng thư viện vào bản phân phối.
   3. LGPL cho phép người dùng thay thế thư viện FFmpeg: app gọi ffmpeg như tiến trình riêng, binary nằm trong thư mục runtime có thể thay thế; nhưng việc kiểm chính sách LGPL của app sẽ từ chối bản GPL do người dùng tự thay.
 
+## Phông chữ Be Vietnam Pro (SIL Open Font License 1.1)
+
+- **Tệp đi kèm**: `BeVietnamPro-Regular.ttf`, `BeVietnamPro-SemiBold.ttf`, `BeVietnamPro-Bold.ttf` trong `apps/desktop/resources/fonts/` (đóng gói thành `resources/fonts/`), kèm nguyên văn giấy phép ở `OFL.txt` cùng thư mục.
+- **Tác giả/giấy phép**: Copyright 2021 The Be Vietnam Pro Project Authors (https://github.com/bettergui/BeVietnamPro); **SIL Open Font License, Version 1.1** (https://openfontlicense.org).
+- **Nguồn tải**: https://github.com/google/fonts/tree/main/ofl/bevietnampro (bản gốc, không sửa).
+- **Dùng ở đâu**: (1) giao diện app (Regular, SemiBold; nạp bằng `@font-face` từ gói renderer, không tải từ mạng); (2) chữ trên video ảnh sang video (Bold, ffmpeg `drawtext`). Được chọn vì thiết kế riêng cho tiếng Việt (đủ dấu, dấu xếp chồng đúng), cho phép đóng gói và dùng thương mại.
+- **Điều kiện OFL cần giữ**: không bán riêng phông; giữ thông báo bản quyền và văn bản giấy phép khi phân phối lại; bản sửa đổi không được dùng tên "Be Vietnam Pro" (app không sửa phông).
+- **Chưa rà soát**: ngoài OFL, chưa có ý kiến pháp lý về việc video do người dùng tạo có nhúng hình chữ (OFL cho phép; ghi để người phát hành xác nhận).
+
 ## Blender (GPL-3.0-or-later)
 
 Blender 4.5 LTS được **tải về lúc chạy** (hoặc nhập từ gói offline) và chạy như một tiến trình riêng; không được liên kết vào app. Thư mục `blender-worker/` (script `bpy`)

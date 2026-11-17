@@ -3,6 +3,11 @@ export const INVOKE_CHANNEL_NAMES = [
   'jobs:list',
   'jobs:create',
   'jobs:createFromPrompt',
+  'slideshow:validate',
+  'slideshow:create',
+  'slideshow:caption',
+  'profile:get',
+  'profile:set',
   'jobs:cancel',
   'jobs:retry',
   'jobs:pause',
@@ -12,6 +17,10 @@ export const INVOKE_CHANNEL_NAMES = [
   'runtime:install',
   'runtime:importFile',
   'dialog:pickFile',
+  'video:save',
+  'video:reveal',
+  'clipboard:writeText',
+  'photo:thumbnail',
   'app:info',
 ] as const;
 export const EVENT_CHANNEL_NAMES = ['jobs:changed', 'runtime:progress'] as const;

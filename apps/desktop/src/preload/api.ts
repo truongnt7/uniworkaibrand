@@ -4,4 +4,6 @@ import type { EventChannelName, InvokeChannelName } from '@aps/shared/channels';
 export interface ApsBridge {
   invoke(channel: InvokeChannelName, payload?: unknown): Promise<unknown>;
   on(channel: EventChannelName, listener: (payload: unknown) => void): () => void;
+  /** Đường dẫn thật của tệp người dùng kéo thả vào cửa sổ (renderer sandbox không đọc được `File.path`). Chuỗi rỗng nếu không xác định. */
+  pathForFile(file: File): string;
 }

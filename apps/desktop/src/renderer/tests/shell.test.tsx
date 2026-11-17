@@ -4,13 +4,13 @@ import { describe, expect, it } from 'vitest';
 import { renderApp } from './helpers';
 
 describe('App shell', () => {
-  it('hiển thị sidebar tiếng Việt với 6 mục theo đúng thứ tự thiết kế', async () => {
+  it('hiển thị sidebar tiếng Việt với 7 mục (Tạo video đứng đầu rồi 6 mục theo thiết kế)', async () => {
     renderApp('#/');
     const nav = await screen.findByRole('navigation', { name: 'Điều hướng chính' });
     const labels = within(nav)
       .getAllByRole('link')
       .map((a) => a.textContent);
-    expect(labels).toEqual(['Tổng quan', 'Sản phẩm', 'Studio sáng tạo', 'Kho mẫu', 'Thư viện', 'Chuẩn bị đăng thủ công']);
+    expect(labels).toEqual(['Tạo video', 'Tổng quan', 'Sản phẩm', 'Studio sáng tạo', 'Kho mẫu', 'Thư viện', 'Chuẩn bị đăng thủ công']);
     expect(document.documentElement.lang).toBe('vi');
   });
 

@@ -109,9 +109,24 @@
     "SCRIPT_ERROR": "The Blender script failed.",
     "WORKER_EXIT": "Blender exited abnormally.",
     "FFMPEG_FAILED": "ffmpeg failed to encode the video.",
-    "FFMPEG_MISSING": "ffmpeg not found.",
+    "FFMPEG_MISSING": "The video component is not ready. Install it (one-time) and try again.",
     "TARGET_UNSUPPORTED": "Only running on this machine is supported in this version.",
-    "INTERRUPTED": "The app was closed while rendering."
+    "INTERRUPTED": "The app was closed while rendering.",
+    "TEMPLATE_INPUT_INVALID": "Some details are missing or incorrect. Check the red messages and fix them.",
+    "TEMPLATE_NOT_FOUND": "This video template was not found. Please choose another one.",
+    "LOGO_FORMAT": "The logo must be a PNG, JPG or WEBP image (up to 20 MB). Please choose another file.",
+    "OUTPUT_MISSING": "There is no video to save yet. Create the video first.",
+    "SLIDESHOW_PHOTO_MISSING": "One of the photos could not be found. It may have been deleted or moved; please choose it again.",
+    "SLIDESHOW_LOGO_MISSING": "The logo file was not found. Choose the logo again or remove it.",
+    "SLIDESHOW_AUDIO_MISSING": "The music file was not found. Choose it again or select \"no music\".",
+    "SLIDESHOW_FONT_MISSING": "The app font was not found. Please reinstall the app.",
+    "SLIDESHOW_FFMPEG_FAILED": "The video could not be built. Try again; if it still fails, use a different photo (some photos are damaged or in an unusual format).",
+    "SLIDESHOW_TOO_COMPLEX": "The video has too many scenes or too much text. Remove some scenes or shorten the text.",
+    "SLIDESHOW_BAD_PATH": "A file path has characters that cannot be used. Rename the file or folder and choose it again.",
+    "SLIDESHOW_CANCELED": "Video creation was canceled.",
+    "FFMPEG_LICENSE_VIOLATION": "The video component is not ready. Open Settings to install or update it.",
+    "FFMPEG_NO_ALLOWED_ENCODER": "The video component is not ready. Open Settings to install or update it.",
+    "DISK_FULL": "The disk is full. Delete some files and try again."
   },
   "warnings": {
     "CPU_FALLBACK": "Rendering on CPU (GPU not usable)."

@@ -64,7 +64,8 @@ const goto = async (key) => {
 
 await step('shell: sidebar và workspace switcher', async () => {
   await page.waitForSelector(T('sidebar'));
-  for (const k of ['overview', 'products', 'studio', 'templates', 'library', 'publish']) await page.waitForSelector(T(`nav-${k}`));
+  for (const k of ['create', 'overview', 'products', 'studio', 'templates', 'library', 'publish']) await page.waitForSelector(T(`nav-${k}`));
+  await page.click(T('nav-overview'));
   await page.waitForSelector(T('overview'));
   if (!/Tổng quan/.test(await text(T('nav-overview')))) throw new Error('i18n vi mặc định');
   await shot('01-overview');

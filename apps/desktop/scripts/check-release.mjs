@@ -80,6 +80,7 @@ if (mode === '--pre') {
     if (pubs.length === 0) fail('bản phát hành không chứa khóa công khai production');
     if (pubs.some((f) => f.startsWith('dev'))) fail('bản phát hành chứa khóa dev');
     if (!existsSync(join(root, 'runtime-manifest.signed.json'))) fail('bản phát hành thiếu runtime-manifest.signed.json');
+    for (const f of ['BeVietnamPro-Bold.ttf', 'OFL.txt']) if (!existsSync(join(root, 'fonts', f))) fail(`bản phát hành thiếu phông tiếng Việt: fonts/${f}`);
     if (!existsSync(join(root, 'THIRD_PARTY_NOTICES.md'))) fail('bản phát hành thiếu THIRD_PARTY_NOTICES.md');
   }
 } else {

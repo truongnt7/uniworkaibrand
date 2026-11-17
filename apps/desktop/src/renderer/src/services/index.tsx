@@ -4,6 +4,7 @@ import { MockDirectorService } from './mock/director';
 import { MockFileService } from './mock/files';
 import { MockPublishService } from './mock/publish';
 import { MockLibraryRepository, MockProductRepository, MockTemplateRepository, MockWorkspaceService } from './mock/repositories';
+import { IpcCreateService, UnavailableCreateService } from './create';
 import { createIpcQueueBridge, hasIpcBridge } from './queueBridge';
 import type { Services } from './types';
 
@@ -27,6 +28,7 @@ export function createServices(options: CreateServicesOptions = {}): Services {
     director: new MockDirectorService(),
     exporter: useQueue ? new QueueExportService(library, createIpcQueueBridge(), mockExport) : mockExport,
     publish: new MockPublishService(),
+    create: hasIpcBridge() ? new IpcCreateService() : new UnavailableCreateService(),
   };
 }
 

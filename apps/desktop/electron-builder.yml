@@ -25,6 +25,9 @@ extraResources:
     to: keys/production
   - from: .package-staging/runtime-manifest.signed.json
     to: runtime-manifest.signed.json
+  # Phông tiếng Việt (SIL OFL 1.1) cho chữ trên video; giữ OFL.txt cùng thư mục.
+  - from: resources/fonts
+    to: fonts
   - from: ../../THIRD_PARTY_NOTICES.md
     to: THIRD_PARTY_NOTICES.md
 linux:

@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
+import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from 'electron';
 import { EVENT_CHANNEL_NAMES, INVOKE_CHANNEL_NAMES } from '@aps/shared/channels';
 import type { ApsBridge } from './api';
 
@@ -15,6 +15,13 @@ const bridge: ApsBridge = {
     const wrapped = (_e: IpcRendererEvent, payload: unknown) => listener(payload);
     ipcRenderer.on(channel, wrapped);
     return () => ipcRenderer.removeListener(channel, wrapped);
+  },
+  pathForFile(file) {
+    try {
+      return webUtils.getPathForFile(file);
+    } catch {
+      return '';
+    }
   },
 };
 

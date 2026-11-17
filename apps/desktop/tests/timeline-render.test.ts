@@ -5,7 +5,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 import { MockProvider, type TimelineInput } from '@aps/ai';
-import { WorkerJob, type InvokeReq, type JobRecord, type WorkerJobV2 } from '@aps/shared';
+import { WorkerJob, type RenderRequest, type InvokeReq, type JobRecord, type WorkerJobV2 } from '@aps/shared';
 import { createOrchestrator, type Orchestrator } from '../src/orchestrator/orchestrator.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -109,7 +109,7 @@ describe.skipIf(!posix)('Đạo diễn AI -> job v2 -> render -> ffmpeg (Blender
       render: { shortSide: 90, fps: 15 },
     })) as { job: JobRecord; director: { source: string; warnings: string[] } };
     expect(res.director.source).toBe('rules');
-    expect(res.job.request.timeline).toMatchObject({ version: 1, aspect: '16:9' });
+    expect((res.job.request as RenderRequest).timeline).toMatchObject({ version: 1, aspect: '16:9' });
 
     await orch.queue.idle();
     const done = orch.queue.get(res.job.id)!;

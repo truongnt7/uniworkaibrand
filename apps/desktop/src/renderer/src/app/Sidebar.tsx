@@ -15,6 +15,7 @@ interface NavItem {
 }
 
 const NAV: NavItem[] = [
+  { path: '/create', key: 'create', icon: Clapperboard },
   { path: '/', key: 'overview', icon: LayoutDashboard },
   { path: '/products', key: 'products', icon: Package },
   { path: '/studio', key: 'studio', icon: Sparkles },

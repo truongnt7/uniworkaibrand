@@ -1,7 +1,7 @@
 import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { copyFile, mkdir, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { AppError, type JobRecord, type LogoOverlay, type WorkerEvent, type WorkerJobV1, type WorkerJobV2 } from '@aps/shared';
+import { AppError, isSlideshowRequest, type JobRecord, type RenderRequest, type LogoOverlay, type WorkerEvent, type WorkerJobV1, type WorkerJobV2 } from '@aps/shared';
 import {
   JsonLinesParser,
   blenderArgs,
@@ -37,11 +37,16 @@ async function exists(path: string): Promise<boolean> {
   }
 }
 
+function blenderRequest(job: JobRecord): RenderRequest {
+  if (isSlideshowRequest(job.request)) throw new AppError('INVALID_JOB', 'job slideshow không chạy bằng BlenderRunner');
+  return job.request;
+}
+
 export class BlenderRunner implements JobRunner {
   constructor(private readonly opts: BlenderRunnerOptions) {}
 
   async run(job: JobRecord, ctl: RunControl): Promise<{ outputPath: string }> {
-    const { request } = job;
+    const request = blenderRequest(job);
     if (job.target !== 'local') throw new AppError('TARGET_UNSUPPORTED', 'only local target is runnable');
 
     const blender = await this.opts.getBlenderBinary();
@@ -161,7 +166,7 @@ export class BlenderRunner implements JobRunner {
   }
 
   private async encode(job: JobRecord, framesDir: string, outPath: string, ctl: RunControl, logos?: readonly LogoOverlay[]): Promise<void> {
-    const { output } = job.request;
+    const { output } = blenderRequest(job);
     const part = `${outPath}.part.mp4`;
     await rm(part, { force: true });
     const ffmpegPath = await this.opts.getFfmpegPath();

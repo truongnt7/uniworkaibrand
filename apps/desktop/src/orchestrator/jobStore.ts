@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { JobRecord, RenderRequest, totalFramesFor, type JobStatus } from '@aps/shared';
+import { JobRecord, RenderRequest, SlideshowRequest, isSlideshowRequest, slideshowDurationS, totalFramesFor, type JobStatus } from '@aps/shared';
 import type { Db } from './db.js';
 
 interface Row {
@@ -10,6 +10,7 @@ interface Row {
   status: string;
   kind: string;
   engine: string;
+  pipeline: string;
   request_json: string;
   frame: number;
   total_frames: number;
@@ -78,6 +79,7 @@ function toRecord(r: Row): JobRecord {
     status: r.status,
     kind: r.kind,
     engine: r.engine,
+    pipeline: r.pipeline,
     request: JSON.parse(r.request_json),
     frame: r.frame,
     totalFrames: r.total_frames,
@@ -104,22 +106,24 @@ export class JobStore {
     private readonly now: () => number = Date.now,
   ) {}
 
-  insert(request: RenderRequest, id: string = randomUUID()): JobRecord {
+  insert(request: RenderRequest | SlideshowRequest, id: string = randomUUID()): JobRecord {
     const t = this.now();
+    const slideshow = isSlideshowRequest(request);
     this.db
       .prepare(
-        `INSERT INTO jobs (id, name, target, priority, status, kind, engine, request_json, total_frames, created_at, updated_at)
-         VALUES (?, ?, ?, ?, 'queued', ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO jobs (id, name, target, priority, status, kind, engine, pipeline, request_json, total_frames, created_at, updated_at)
+         VALUES (?, ?, ?, ?, 'queued', ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         id,
         request.name,
         request.target,
         request.priority,
-        request.output.kind,
-        request.output.engine,
+        slideshow ? 'video' : request.output.kind,
+        slideshow ? 'ffmpeg' : request.output.engine,
+        slideshow ? 'slideshow' : 'blender',
         JSON.stringify(request),
-        totalFramesFor(request.output),
+        slideshow ? Math.max(1, Math.round(slideshowDurationS(request.job) * request.job.output.fps)) : totalFramesFor(request.output),
         t,
         t,
       );
