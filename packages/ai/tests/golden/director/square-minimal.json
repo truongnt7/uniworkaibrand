@@ -1,0 +1,38 @@
+{
+  "prompt": "Video vuông 8 giây, nền tối giản màu trắng, hộp xoay từ từ, logo ở giữa video",
+  "context": null,
+  "timeline": {
+    "version": 1,
+    "aspect": "1:1",
+    "duration_s": 8,
+    "fps": 30,
+    "tracks": {
+      "product": [
+        {
+          "t": 0,
+          "t_end": 8,
+          "motion": "spin360",
+          "turns": 1,
+          "speed": "slow",
+          "ease": "smooth"
+        }
+      ],
+      "camera": [],
+      "logo": [
+        {
+          "t": 6,
+          "t_end": 8,
+          "anim": "fade_in",
+          "position": "center"
+        }
+      ]
+    },
+    "scene": {
+      "template_id": "minimal-white",
+      "hide": [],
+      "palette": "brand"
+    },
+    "lock_label": true
+  },
+  "warnings": []
+}

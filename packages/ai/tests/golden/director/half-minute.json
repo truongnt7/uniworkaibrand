@@ -1,0 +1,41 @@
+{
+  "prompt": "Xoay đều sản phẩm trong nửa phút, camera cố định",
+  "context": null,
+  "timeline": {
+    "version": 1,
+    "aspect": "16:9",
+    "duration_s": 30,
+    "fps": 30,
+    "tracks": {
+      "product": [
+        {
+          "t": 0,
+          "t_end": 30,
+          "motion": "spin360",
+          "turns": 1,
+          "speed": "normal",
+          "ease": "linear"
+        }
+      ],
+      "camera": [
+        {
+          "t": 0,
+          "t_end": 30,
+          "move": "static",
+          "from": "eye_level",
+          "degrees": 90,
+          "amount": 0.3,
+          "ease": "smooth"
+        }
+      ],
+      "logo": []
+    },
+    "scene": {
+      "template_id": "studio-soft",
+      "hide": [],
+      "palette": "brand"
+    },
+    "lock_label": true
+  },
+  "warnings": []
+}

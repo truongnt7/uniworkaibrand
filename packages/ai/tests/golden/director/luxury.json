@@ -1,0 +1,48 @@
+{
+  "prompt": "Phong cách cao cấp sang trọng nền tối, xoay chậm 360 độ, camera cận cảnh, hiện logo cuối video",
+  "context": null,
+  "timeline": {
+    "version": 1,
+    "aspect": "16:9",
+    "duration_s": 12,
+    "fps": 30,
+    "tracks": {
+      "product": [
+        {
+          "t": 0,
+          "t_end": 12,
+          "motion": "spin360",
+          "turns": 1,
+          "speed": "slow",
+          "ease": "smooth"
+        }
+      ],
+      "camera": [
+        {
+          "t": 0,
+          "t_end": 12,
+          "move": "dolly_in",
+          "from": "eye_level",
+          "degrees": 90,
+          "amount": 0.45,
+          "ease": "smooth"
+        }
+      ],
+      "logo": [
+        {
+          "t": 9,
+          "t_end": 12,
+          "anim": "fade_in",
+          "position": "center"
+        }
+      ]
+    },
+    "scene": {
+      "template_id": "luxury-dark",
+      "hide": [],
+      "palette": "brand"
+    },
+    "lock_label": true
+  },
+  "warnings": []
+}

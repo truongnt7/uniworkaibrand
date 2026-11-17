@@ -1,0 +1,39 @@
+{
+  "input": {
+    "channel": "instagram",
+    "brand": {
+      "name": "Trà Xanh Zui",
+      "tone": "youthful",
+      "address": "ban",
+      "emoji": "rich",
+      "cta": "Đặt hàng ngay trên fanpage nhé!"
+    },
+    "product": {
+      "name": "Trà đào cam sả",
+      "category": "Đồ uống",
+      "highlights": [
+        "Vị chua ngọt cân bằng",
+        "Đóng chai tiện mang đi"
+      ]
+    }
+  },
+  "result": {
+    "channel": "instagram",
+    "caption": "🔥 Chốt đơn ngay Trà đào cam sả thôi nào!\n\n💥 Vị chua ngọt cân bằng\n💥 Đóng chai tiện mang đi\n\n👉 Đặt hàng ngay trên fanpage nhé!",
+    "hashtags": [
+      "#TràĐàoCamSả",
+      "#TràXanhZui",
+      "#ĐồUống",
+      "#SảnPhẩmĐẹp",
+      "#ReviewSảnPhẩm",
+      "#MuaSắmOnline",
+      "#ShopViệtNam",
+      "#Video3D",
+      "#XuHướng",
+      "#QuảngCáoSảnPhẩm"
+    ],
+    "text": "🔥 Chốt đơn ngay Trà đào cam sả thôi nào!\n\n💥 Vị chua ngọt cân bằng\n💥 Đóng chai tiện mang đi\n\n👉 Đặt hàng ngay trên fanpage nhé!\n\n#TràĐàoCamSả #TràXanhZui #ĐồUống #SảnPhẩmĐẹp #ReviewSảnPhẩm #MuaSắmOnline #ShopViệtNam #Video3D #XuHướng #QuảngCáoSảnPhẩm",
+    "source": "template",
+    "warnings": []
+  }
+}

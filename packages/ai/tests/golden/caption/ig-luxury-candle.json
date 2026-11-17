@@ -1,0 +1,45 @@
+{
+  "input": {
+    "channel": "instagram",
+    "brand": {
+      "name": "Maison Nến",
+      "tone": "luxury",
+      "address": "quy_khach",
+      "emoji": "none",
+      "baseHashtags": [
+        "MaisonNen",
+        "NenThom"
+      ]
+    },
+    "product": {
+      "name": "Nến thơm Gỗ Đàn Hương",
+      "category": "Quà tặng",
+      "highlights": [
+        "Sáp đậu nành",
+        "Hộp quà sẵn sàng tặng"
+      ],
+      "promo": "Tặng thiệp viết tay"
+    }
+  },
+  "result": {
+    "channel": "instagram",
+    "caption": "Maison Nến trân trọng giới thiệu Nến thơm Gỗ Đàn Hương.\n\n• Sáp đậu nành\n• Hộp quà sẵn sàng tặng\n\nTặng thiệp viết tay\n\nNhắn tin (DM) cho Maison Nến để được tư vấn nhé.",
+    "hashtags": [
+      "#MaisonNen",
+      "#NenThom",
+      "#NếnThơmGỗĐànHương",
+      "#MaisonNến",
+      "#QuàTặng",
+      "#SảnPhẩmĐẹp",
+      "#ReviewSảnPhẩm",
+      "#MuaSắmOnline",
+      "#ShopViệtNam",
+      "#Video3D",
+      "#XuHướng",
+      "#QuảngCáoSảnPhẩm"
+    ],
+    "text": "Maison Nến trân trọng giới thiệu Nến thơm Gỗ Đàn Hương.\n\n• Sáp đậu nành\n• Hộp quà sẵn sàng tặng\n\nTặng thiệp viết tay\n\nNhắn tin (DM) cho Maison Nến để được tư vấn nhé.\n\n#MaisonNen #NenThom #NếnThơmGỗĐànHương #MaisonNến #QuàTặng #SảnPhẩmĐẹp #ReviewSảnPhẩm #MuaSắmOnline #ShopViệtNam #Video3D #XuHướng #QuảngCáoSảnPhẩm",
+    "source": "template",
+    "warnings": []
+  }
+}

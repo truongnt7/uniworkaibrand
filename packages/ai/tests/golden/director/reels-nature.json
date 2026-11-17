@@ -1,0 +1,57 @@
+{
+  "prompt": "Video dọc 15 giây cho Reels: chai serum xoay chậm trên nền thiên nhiên, camera tiến gần rồi quay quanh 120 độ, cuối video hiện logo ở giữa.",
+  "context": null,
+  "timeline": {
+    "version": 1,
+    "aspect": "9:16",
+    "duration_s": 15,
+    "fps": 30,
+    "tracks": {
+      "product": [
+        {
+          "t": 0,
+          "t_end": 15,
+          "motion": "spin360",
+          "turns": 1,
+          "speed": "slow",
+          "ease": "smooth"
+        }
+      ],
+      "camera": [
+        {
+          "t": 0,
+          "t_end": 7.5,
+          "move": "dolly_in",
+          "from": "eye_level",
+          "degrees": 90,
+          "amount": 0.3,
+          "ease": "smooth"
+        },
+        {
+          "t": 7.5,
+          "t_end": 15,
+          "move": "orbit",
+          "from": "eye_level",
+          "degrees": 120,
+          "amount": 0.3,
+          "ease": "smooth"
+        }
+      ],
+      "logo": [
+        {
+          "t": 11.25,
+          "t_end": 15,
+          "anim": "fade_in",
+          "position": "center"
+        }
+      ]
+    },
+    "scene": {
+      "template_id": "nature-soft",
+      "hide": [],
+      "palette": "brand"
+    },
+    "lock_label": true
+  },
+  "warnings": []
+}

@@ -1,0 +1,253 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "number",
+      "const": 1
+    },
+    "aspect": {
+      "type": "string",
+      "enum": [
+        "16:9",
+        "9:16",
+        "1:1",
+        "4:5"
+      ]
+    },
+    "duration_s": {
+      "type": "number",
+      "minimum": 2,
+      "maximum": 60
+    },
+    "fps": {
+      "type": "integer",
+      "minimum": 15,
+      "maximum": 60
+    },
+    "tracks": {
+      "type": "object",
+      "properties": {
+        "product": {
+          "default": [],
+          "maxItems": 8,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "t": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 60
+              },
+              "t_end": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 60
+              },
+              "motion": {
+                "type": "string",
+                "enum": [
+                  "spin360",
+                  "still"
+                ]
+              },
+              "turns": {
+                "default": 1,
+                "type": "number",
+                "minimum": 0.25,
+                "maximum": 4
+              },
+              "speed": {
+                "default": "normal",
+                "type": "string",
+                "enum": [
+                  "slow",
+                  "normal",
+                  "fast"
+                ]
+              },
+              "ease": {
+                "default": "smooth",
+                "type": "string",
+                "enum": [
+                  "linear",
+                  "smooth",
+                  "ease_in",
+                  "ease_out"
+                ]
+              }
+            },
+            "required": [
+              "t",
+              "t_end",
+              "motion"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "camera": {
+          "default": [],
+          "maxItems": 8,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "t": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 60
+              },
+              "t_end": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 60
+              },
+              "move": {
+                "type": "string",
+                "enum": [
+                  "static",
+                  "dolly_in",
+                  "dolly_out",
+                  "orbit"
+                ]
+              },
+              "from": {
+                "default": "eye_level",
+                "type": "string",
+                "enum": [
+                  "eye_level",
+                  "high",
+                  "low"
+                ]
+              },
+              "degrees": {
+                "default": 90,
+                "type": "number",
+                "minimum": -360,
+                "maximum": 360
+              },
+              "amount": {
+                "default": 0.3,
+                "type": "number",
+                "minimum": 0.05,
+                "maximum": 0.6
+              },
+              "ease": {
+                "default": "smooth",
+                "type": "string",
+                "enum": [
+                  "linear",
+                  "smooth",
+                  "ease_in",
+                  "ease_out"
+                ]
+              }
+            },
+            "required": [
+              "t",
+              "t_end",
+              "move"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "logo": {
+          "default": [],
+          "maxItems": 2,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "t": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 60
+              },
+              "t_end": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 60
+              },
+              "anim": {
+                "default": "fade_in",
+                "type": "string",
+                "enum": [
+                  "fade_in",
+                  "slide_up",
+                  "none"
+                ]
+              },
+              "position": {
+                "default": "center",
+                "type": "string",
+                "enum": [
+                  "center",
+                  "bottom_center",
+                  "bottom_right",
+                  "bottom_left",
+                  "top_right",
+                  "top_left"
+                ]
+              }
+            },
+            "required": [
+              "t",
+              "t_end"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "scene": {
+      "default": {},
+      "type": "object",
+      "properties": {
+        "template_id": {
+          "default": "studio-soft",
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{0,39}$"
+        },
+        "hide": {
+          "default": [],
+          "maxItems": 3,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "platform",
+              "leaves",
+              "props"
+            ]
+          }
+        },
+        "palette": {
+          "default": "brand",
+          "type": "string",
+          "enum": [
+            "brand",
+            "warm",
+            "cool",
+            "neutral",
+            "dark"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "lock_label": {
+      "default": true,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "version",
+    "aspect",
+    "duration_s",
+    "fps",
+    "tracks"
+  ],
+  "additionalProperties": false
+}

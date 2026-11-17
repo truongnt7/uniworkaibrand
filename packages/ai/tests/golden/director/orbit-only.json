@@ -1,0 +1,41 @@
+{
+  "prompt": "Camera quay quanh sản phẩm một vòng, sản phẩm đứng yên, 20 giây, góc thấp",
+  "context": null,
+  "timeline": {
+    "version": 1,
+    "aspect": "16:9",
+    "duration_s": 20,
+    "fps": 30,
+    "tracks": {
+      "product": [
+        {
+          "t": 0,
+          "t_end": 20,
+          "motion": "still",
+          "turns": 1,
+          "speed": "normal",
+          "ease": "smooth"
+        }
+      ],
+      "camera": [
+        {
+          "t": 0,
+          "t_end": 20,
+          "move": "orbit",
+          "from": "eye_level",
+          "degrees": 360,
+          "amount": 0.3,
+          "ease": "smooth"
+        }
+      ],
+      "logo": []
+    },
+    "scene": {
+      "template_id": "studio-soft",
+      "hide": [],
+      "palette": "brand"
+    },
+    "lock_label": true
+  },
+  "warnings": []
+}

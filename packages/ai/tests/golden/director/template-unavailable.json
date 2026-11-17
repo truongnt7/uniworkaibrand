@@ -1,0 +1,38 @@
+{
+  "prompt": "Nền cao cấp sang trọng, xoay chai chậm",
+  "context": {
+    "availableTemplates": [
+      "studio-soft",
+      "nature-soft"
+    ]
+  },
+  "timeline": {
+    "version": 1,
+    "aspect": "16:9",
+    "duration_s": 12,
+    "fps": 30,
+    "tracks": {
+      "product": [
+        {
+          "t": 0,
+          "t_end": 12,
+          "motion": "spin360",
+          "turns": 1,
+          "speed": "slow",
+          "ease": "smooth"
+        }
+      ],
+      "camera": [],
+      "logo": []
+    },
+    "scene": {
+      "template_id": "studio-soft",
+      "hide": [],
+      "palette": "brand"
+    },
+    "lock_label": true
+  },
+  "warnings": [
+    "template_unavailable: mẫu \"luxury-dark\" chưa có, dùng mẫu mặc định"
+  ]
+}

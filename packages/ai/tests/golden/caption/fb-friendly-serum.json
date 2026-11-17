@@ -1,0 +1,39 @@
+{
+  "input": {
+    "channel": "facebook",
+    "brand": {
+      "name": "Lumi Beauty",
+      "tone": "friendly",
+      "address": "ban",
+      "emoji": "light",
+      "baseHashtags": [
+        "LumiBeauty"
+      ],
+      "tagline": "Đẹp tự nhiên mỗi ngày."
+    },
+    "product": {
+      "name": "Serum Vitamin C",
+      "category": "Mỹ phẩm",
+      "highlights": [
+        "Chai thủy tinh 30ml",
+        "Kết cấu nhẹ, thấm nhanh"
+      ],
+      "price": "299.000đ"
+    },
+    "contentNote": "Video xoay 360 độ"
+  },
+  "result": {
+    "channel": "facebook",
+    "caption": "✨ Mình xin giới thiệu Serum Vitamin C đến bạn.\nVideo xoay 360 độ.\n\n💛 Chai thủy tinh 30ml\n💛 Kết cấu nhẹ, thấm nhanh\nGiá: 299.000đ\n\nĐẹp tự nhiên mỗi ngày.\n\n👉 Nhắn tin cho Lumi Beauty để được tư vấn chi tiết nhé.",
+    "hashtags": [
+      "#LumiBeauty",
+      "#SerumVitaminC",
+      "#MỹPhẩm",
+      "#SảnPhẩmChấtLượng",
+      "#MuaSắmOnline"
+    ],
+    "text": "✨ Mình xin giới thiệu Serum Vitamin C đến bạn.\nVideo xoay 360 độ.\n\n💛 Chai thủy tinh 30ml\n💛 Kết cấu nhẹ, thấm nhanh\nGiá: 299.000đ\n\nĐẹp tự nhiên mỗi ngày.\n\n👉 Nhắn tin cho Lumi Beauty để được tư vấn chi tiết nhé.\n\n#LumiBeauty #SerumVitaminC #MỹPhẩm #SảnPhẩmChấtLượng #MuaSắmOnline",
+    "source": "template",
+    "warnings": []
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "prompt": "Clip TikTok nhanh, sôi động: xoay nhanh, camera zoom vào, logo trượt lên cuối",
+  "context": null,
+  "timeline": {
+    "version": 1,
+    "aspect": "9:16",
+    "duration_s": 8,
+    "fps": 30,
+    "tracks": {
+      "product": [
+        {
+          "t": 0,
+          "t_end": 8,
+          "motion": "spin360",
+          "turns": 2,
+          "speed": "fast",
+          "ease": "smooth"
+        }
+      ],
+      "camera": [
+        {
+          "t": 0,
+          "t_end": 8,
+          "move": "dolly_in",
+          "from": "eye_level",
+          "degrees": 90,
+          "amount": 0.3,
+          "ease": "smooth"
+        }
+      ],
+      "logo": [
+        {
+          "t": 6,
+          "t_end": 8,
+          "anim": "slide_up",
+          "position": "center"
+        }
+      ]
+    },
+    "scene": {
+      "template_id": "studio-soft",
+      "hide": [],
+      "palette": "brand"
+    },
+    "lock_label": true
+  },
+  "warnings": []
+}

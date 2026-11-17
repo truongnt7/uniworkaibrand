@@ -1,0 +1,33 @@
+{
+  "prompt": "Xoay chai, bỏ nhãn đi cho đẹp",
+  "context": null,
+  "timeline": {
+    "version": 1,
+    "aspect": "16:9",
+    "duration_s": 10,
+    "fps": 30,
+    "tracks": {
+      "product": [
+        {
+          "t": 0,
+          "t_end": 10,
+          "motion": "spin360",
+          "turns": 1,
+          "speed": "normal",
+          "ease": "smooth"
+        }
+      ],
+      "camera": [],
+      "logo": []
+    },
+    "scene": {
+      "template_id": "studio-soft",
+      "hide": [],
+      "palette": "brand"
+    },
+    "lock_label": true
+  },
+  "warnings": [
+    "label_locked: Giữ nguyên nhãn luôn bật, yêu cầu đổi/bỏ nhãn bị bỏ qua"
+  ]
+}
