@@ -1,0 +1,57 @@
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: sudo apt-get update && sudo apt-get install -y python3
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm build
+      - run: python3 -m unittest discover -s blender-worker/tests -v
+
+  ffmpeg-license:
+    # Tải đúng binary LGPL đã ghim (URL + sha256 trong tools/runtime/manifest.json) rồi kiểm tự động:
+    # không --enable-gpl/--enable-nonfree, không libx264/libx265, có ít nhất một encoder H.264 cho phép và encode thử được.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: echo "FFMPEG_BIN=$(node tools/ffmpeg/fetch-lgpl.mjs)" >> "$GITHUB_ENV"
+      - run: pnpm --filter @aps/desktop verify:ffmpeg "$FFMPEG_BIN"
+      - run: pnpm --filter @aps/desktop test
+        env:
+          APS_TEST_FFMPEG_LGPL: ${{ env.FFMPEG_BIN }}
+      - name: Kiểm tra bản GPL bị từ chối (đảm bảo bài kiểm có răng)
+        run: |
+          sudo apt-get update && sudo apt-get install -y ffmpeg
+          if pnpm --filter @aps/desktop verify:ffmpeg "$(command -v ffmpeg)"; then echo "ffmpeg GPL của hệ thống đã lọt qua kiểm tra" && exit 1; fi
+
+  build-cross-os:
+    # Chưa được kiểm chứng trên Windows/macOS: chỉ cài + typecheck + build, không chạy test render.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm build
