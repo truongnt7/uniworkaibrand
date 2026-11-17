@@ -4,7 +4,7 @@
 //   Mặc định: apps/desktop/resources/keys/production/ và apps/desktop/resources/runtime-manifest.signed.json
 //   Ghi đè (CI/test): APS_PACKAGE_KEYS_DIR, APS_PACKAGE_MANIFEST
 import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
@@ -21,6 +21,14 @@ const run = (cmd, args, opts = {}) => {
 const pnpm = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
 
 run('node', ['scripts/check-release.mjs', '--pre', env.APS_PACKAGE_KEYS_DIR, env.APS_PACKAGE_MANIFEST]);
+const staging = join(root, '.package-staging');
+rmSync(staging, { recursive: true, force: true });
+rmSync(join(repo, 'release-build'), { recursive: true, force: true });
+mkdirSync(join(staging, 'keys', 'production'), { recursive: true });
+for (const f of readdirSync(env.APS_PACKAGE_KEYS_DIR)) {
+  if (f.endsWith('.pub.pem')) copyFileSync(join(env.APS_PACKAGE_KEYS_DIR, f), join(staging, 'keys', 'production', f));
+}
+copyFileSync(env.APS_PACKAGE_MANIFEST, join(staging, 'runtime-manifest.signed.json'));
 run(pnpm, ['exec', 'electron-vite', 'build', '--mode', 'production']);
 run(pnpm, ['exec', 'electron-builder', '--dir', '--config', 'electron-builder.yml']);
 

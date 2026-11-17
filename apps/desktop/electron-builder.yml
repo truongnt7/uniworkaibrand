@@ -20,14 +20,14 @@ extraResources:
       - README.md
       - "!**/__pycache__/**"
       - "!tests/**"
-  - from: ${env.APS_PACKAGE_KEYS_DIR}
+  # scripts/package.mjs chép CHỈ *.pub.pem và manifest đã ký vào thư mục staging này sau khi kiểm tra.
+  - from: .package-staging/keys/production
     to: keys/production
-    filter:
-      - "*.pub.pem"
-  - from: ${env.APS_PACKAGE_MANIFEST}
+  - from: .package-staging/runtime-manifest.signed.json
     to: runtime-manifest.signed.json
   - from: ../../THIRD_PARTY_NOTICES.md
     to: THIRD_PARTY_NOTICES.md
 linux:
+  executableName: ai-product-studio
   target: dir
   category: Graphics

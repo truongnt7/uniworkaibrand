@@ -6,6 +6,8 @@ export const WorkerJob = z.object({
   version: z.literal(1),
   mode: z.enum(['render', 'smoke']),
   jobId: z.string(),
+  /** Chỉ dùng cho QC nhãn: worker ghi `<khung>.png.grid.json` (lưới chiếu nhãn) cạnh mỗi khung. */
+  qcGrid: z.boolean().optional(),
   product: z
     .object({
       glbPath: z.string(),

@@ -60,7 +60,7 @@ function buildConfig(): OrchestratorConfig {
 
 async function pickFile(kind: 'glb' | 'image' | 'runtime'): Promise<string | null> {
   // Hook cho e2e tự động (không thể điều khiển hộp thoại hệ điều hành): APS_E2E_FILES='{"glb":"...","image":"..."}'
-  if (process.env.APS_E2E_FILES) {
+  if (process.env.APS_E2E_FILES && (!app.isPackaged || process.env.APS_E2E === '1')) {
     const map = JSON.parse(process.env.APS_E2E_FILES) as Record<string, string>;
     return map[kind] ?? null;
   }

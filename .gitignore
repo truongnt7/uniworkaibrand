@@ -59,3 +59,4 @@ tools/runtime/*.pem
 # Gói runtime offline và bản đóng gói
 *.apspack
 release-build/
+.package-staging/
