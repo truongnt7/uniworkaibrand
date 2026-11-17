@@ -35,6 +35,13 @@ jobs:
       - run: pnpm --filter @aps/desktop test
         env:
           APS_TEST_FFMPEG_LGPL: ${{ env.FFMPEG_BIN }}
+      - name: Ảnh sang video (mẫu -> mp4) với ffmpeg LGPL thật
+        run: |
+          sudo apt-get update && sudo apt-get install -y fonts-dejavu-core
+          pnpm --filter @aps/render-core test
+          pnpm --filter @aps/templates test
+        env:
+          APS_TEST_FFMPEG_LGPL: ${{ env.FFMPEG_BIN }}
       - name: Kiểm tra bản GPL bị từ chối (đảm bảo bài kiểm có răng)
         run: |
           sudo apt-get update && sudo apt-get install -y ffmpeg

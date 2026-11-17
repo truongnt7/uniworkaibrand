@@ -1,0 +1,696 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "industry": {
+      "type": "string",
+      "enum": [
+        "ban-hang-online",
+        "nha-hang",
+        "nhom-kinh",
+        "xay-dung",
+        "ngoai-ngu"
+      ]
+    },
+    "templates": {
+      "minItems": 3,
+      "maxItems": 12,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,39}$"
+          },
+          "industry": {
+            "type": "string",
+            "enum": [
+              "ban-hang-online",
+              "nha-hang",
+              "nhom-kinh",
+              "xay-dung",
+              "ngoai-ngu"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 60
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 200
+          },
+          "goal": {
+            "type": "string",
+            "enum": [
+              "gioi-thieu",
+              "khuyen-mai",
+              "truoc-sau",
+              "thuc-don",
+              "tien-do",
+              "tuyen-sinh",
+              "tuyen-dung",
+              "bao-gia"
+            ]
+          },
+          "evidence": {
+            "type": "string",
+            "enum": [
+              "assumption",
+              "confirmed"
+            ]
+          },
+          "aspects": {
+            "minItems": 1,
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "9:16",
+                "1:1",
+                "4:5",
+                "16:9"
+              ]
+            }
+          },
+          "defaultAspect": {
+            "type": "string",
+            "enum": [
+              "9:16",
+              "1:1",
+              "4:5",
+              "16:9"
+            ]
+          },
+          "channels": {
+            "minItems": 1,
+            "maxItems": 3,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "facebook",
+                "zalo",
+                "tiktok"
+              ]
+            }
+          },
+          "palette": {
+            "type": "object",
+            "properties": {
+              "primary": {
+                "type": "string",
+                "pattern": "^#[0-9a-fA-F]{6}$"
+              },
+              "accent": {
+                "type": "string",
+                "pattern": "^#[0-9a-fA-F]{6}$"
+              }
+            },
+            "required": [
+              "primary",
+              "accent"
+            ],
+            "additionalProperties": false
+          },
+          "fields": {
+            "minItems": 2,
+            "maxItems": 7,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "enum": [
+                    "businessName",
+                    "phone",
+                    "address",
+                    "itemName",
+                    "price",
+                    "promo",
+                    "detail"
+                  ]
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 60
+                },
+                "hint": {
+                  "type": "string",
+                  "maxLength": 160
+                },
+                "example": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "required": {
+                  "default": false,
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "key",
+                "label",
+                "example"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "photos": {
+            "default": [],
+            "maxItems": 8,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,39}$"
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 60
+                },
+                "hint": {
+                  "type": "string",
+                  "maxLength": 160
+                },
+                "required": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "caption": {
+                  "type": "object",
+                  "properties": {
+                    "label": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 60
+                    },
+                    "example": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 60
+                    },
+                    "maxChars": {
+                      "default": 50,
+                      "type": "integer",
+                      "minimum": 10,
+                      "maximum": 80
+                    }
+                  },
+                  "required": [
+                    "label",
+                    "example"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "id",
+                "label"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "scenes": {
+            "minItems": 1,
+            "maxItems": 12,
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "photo"
+                    },
+                    "slot": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9][a-z0-9-]{0,39}$"
+                    },
+                    "fit": {
+                      "type": "string",
+                      "enum": [
+                        "cover",
+                        "contain_blur"
+                      ]
+                    },
+                    "motion": {
+                      "type": "string",
+                      "enum": [
+                        "zoom_in",
+                        "zoom_out",
+                        "pan_left",
+                        "pan_right",
+                        "none"
+                      ]
+                    },
+                    "zoom": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 0.3
+                    },
+                    "shade": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 0.8
+                    },
+                    "durationS": {
+                      "type": "number",
+                      "minimum": 1,
+                      "maximum": 20
+                    },
+                    "transition": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "fade",
+                        "wipeleft",
+                        "slideleft",
+                        "zoomin"
+                      ]
+                    },
+                    "transitionS": {
+                      "type": "number",
+                      "minimum": 0.2,
+                      "maximum": 1.5
+                    },
+                    "texts": {
+                      "default": [],
+                      "maxItems": 4,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "text": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 120
+                          },
+                          "position": {
+                            "default": "bottom",
+                            "type": "string",
+                            "enum": [
+                              "top",
+                              "center",
+                              "lower_third",
+                              "bottom"
+                            ]
+                          },
+                          "style": {
+                            "default": "body",
+                            "type": "string",
+                            "enum": [
+                              "title",
+                              "body",
+                              "small"
+                            ]
+                          },
+                          "color": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "pattern": "^#[0-9a-fA-F]{6}$"
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "primary",
+                                  "accent"
+                                ]
+                              }
+                            ]
+                          },
+                          "box": {
+                            "type": "boolean"
+                          },
+                          "boxOpacity": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1
+                          },
+                          "t": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 20
+                          },
+                          "tEnd": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 20
+                          }
+                        },
+                        "required": [
+                          "text"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "slot",
+                    "durationS"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "collage"
+                    },
+                    "slots": {
+                      "minItems": 2,
+                      "maxItems": 4,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "pattern": "^[a-z0-9][a-z0-9-]{0,39}$"
+                      }
+                    },
+                    "motion": {
+                      "type": "string",
+                      "enum": [
+                        "zoom_in",
+                        "zoom_out",
+                        "pan_left",
+                        "pan_right",
+                        "none"
+                      ]
+                    },
+                    "zoom": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 0.3
+                    },
+                    "shade": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 0.8
+                    },
+                    "durationS": {
+                      "type": "number",
+                      "minimum": 1,
+                      "maximum": 20
+                    },
+                    "transition": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "fade",
+                        "wipeleft",
+                        "slideleft",
+                        "zoomin"
+                      ]
+                    },
+                    "transitionS": {
+                      "type": "number",
+                      "minimum": 0.2,
+                      "maximum": 1.5
+                    },
+                    "texts": {
+                      "default": [],
+                      "maxItems": 4,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "text": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 120
+                          },
+                          "position": {
+                            "default": "bottom",
+                            "type": "string",
+                            "enum": [
+                              "top",
+                              "center",
+                              "lower_third",
+                              "bottom"
+                            ]
+                          },
+                          "style": {
+                            "default": "body",
+                            "type": "string",
+                            "enum": [
+                              "title",
+                              "body",
+                              "small"
+                            ]
+                          },
+                          "color": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "pattern": "^#[0-9a-fA-F]{6}$"
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "primary",
+                                  "accent"
+                                ]
+                              }
+                            ]
+                          },
+                          "box": {
+                            "type": "boolean"
+                          },
+                          "boxOpacity": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1
+                          },
+                          "t": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 20
+                          },
+                          "tEnd": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 20
+                          }
+                        },
+                        "required": [
+                          "text"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "slots",
+                    "durationS"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "card"
+                    },
+                    "background": {
+                      "default": "primary",
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^#[0-9a-fA-F]{6}$"
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "primary",
+                            "accent"
+                          ]
+                        }
+                      ]
+                    },
+                    "durationS": {
+                      "type": "number",
+                      "minimum": 1,
+                      "maximum": 20
+                    },
+                    "transition": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "fade",
+                        "wipeleft",
+                        "slideleft",
+                        "zoomin"
+                      ]
+                    },
+                    "transitionS": {
+                      "type": "number",
+                      "minimum": 0.2,
+                      "maximum": 1.5
+                    },
+                    "texts": {
+                      "default": [],
+                      "maxItems": 4,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "text": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 120
+                          },
+                          "position": {
+                            "default": "bottom",
+                            "type": "string",
+                            "enum": [
+                              "top",
+                              "center",
+                              "lower_third",
+                              "bottom"
+                            ]
+                          },
+                          "style": {
+                            "default": "body",
+                            "type": "string",
+                            "enum": [
+                              "title",
+                              "body",
+                              "small"
+                            ]
+                          },
+                          "color": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "pattern": "^#[0-9a-fA-F]{6}$"
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "primary",
+                                  "accent"
+                                ]
+                              }
+                            ]
+                          },
+                          "box": {
+                            "type": "boolean"
+                          },
+                          "boxOpacity": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1
+                          },
+                          "t": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 20
+                          },
+                          "tEnd": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 20
+                          }
+                        },
+                        "required": [
+                          "text"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "durationS"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "logo": {
+            "default": "end_card",
+            "type": "string",
+            "enum": [
+              "end_card",
+              "all",
+              "none"
+            ]
+          },
+          "music": {
+            "default": "optional",
+            "type": "string",
+            "enum": [
+              "none",
+              "optional"
+            ]
+          },
+          "caption": {
+            "type": "object",
+            "properties": {
+              "lines": {
+                "minItems": 1,
+                "maxItems": 8,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 160
+                }
+              },
+              "hashtags": {
+                "default": [],
+                "maxItems": 5,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^#[\\p{L}\\p{N}_]{2,30}$"
+                }
+              }
+            },
+            "required": [
+              "lines"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "industry",
+          "name",
+          "summary",
+          "goal",
+          "evidence",
+          "aspects",
+          "defaultAspect",
+          "channels",
+          "palette",
+          "fields",
+          "scenes",
+          "caption"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "industry",
+    "templates"
+  ],
+  "additionalProperties": false
+}

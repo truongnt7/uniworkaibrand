@@ -1,0 +1,471 @@
+{
+  "industry": "ban-hang-online",
+  "templates": [
+    {
+      "id": "bhol-gioi-thieu-san-pham",
+      "industry": "ban-hang-online",
+      "name": "Giới thiệu sản phẩm",
+      "summary": "Một sản phẩm, 1–3 ảnh, tên + giá + cách liên hệ. Dùng cho bài đăng giới thiệu hàng mới.",
+      "goal": "gioi-thieu",
+      "evidence": "assumption",
+      "aspects": [
+        "9:16",
+        "4:5",
+        "1:1"
+      ],
+      "defaultAspect": "9:16",
+      "channels": [
+        "facebook",
+        "zalo",
+        "tiktok"
+      ],
+      "palette": {
+        "primary": "#c2255c",
+        "accent": "#ffd43b"
+      },
+      "fields": [
+        {
+          "key": "businessName",
+          "label": "Tên cơ sở / thương hiệu",
+          "example": "Cửa hàng Mẫu",
+          "required": true
+        },
+        {
+          "key": "phone",
+          "label": "Số điện thoại liên hệ",
+          "example": "0901 234 567",
+          "required": true,
+          "hint": "Số khách gọi hoặc nhắn Zalo cho bạn."
+        },
+        {
+          "key": "itemName",
+          "label": "Tên sản phẩm",
+          "example": "Áo thun cotton basic",
+          "required": true
+        },
+        {
+          "key": "price",
+          "label": "Giá",
+          "example": "199.000đ",
+          "required": false,
+          "hint": "Ghi đủ đơn vị: 199.000đ hoặc 199k."
+        },
+        {
+          "key": "promo",
+          "label": "Ưu đãi (nếu có)",
+          "example": "Tặng kèm túi vải",
+          "required": false,
+          "hint": "Chỉ ghi ưu đãi bạn thật sự áp dụng."
+        },
+        {
+          "key": "address",
+          "label": "Địa chỉ (nếu có cửa hàng/văn phòng)",
+          "example": "12 Đường Số 1, Phường A, Quận B",
+          "required": false,
+          "hint": "Ghi đủ để khách tìm đến. Bỏ trống nếu chỉ bán qua mạng."
+        }
+      ],
+      "photos": [
+        {
+          "id": "anh1",
+          "label": "Ảnh chính của sản phẩm",
+          "required": true,
+          "hint": "Chụp thẳng, đủ sáng, sản phẩm nằm giữa khung."
+        },
+        {
+          "id": "anh2",
+          "label": "Ảnh góc khác (không bắt buộc)",
+          "required": false
+        },
+        {
+          "id": "anh3",
+          "label": "Ảnh khác (không bắt buộc)",
+          "required": false
+        }
+      ],
+      "scenes": [
+        {
+          "type": "photo",
+          "slot": "anh1",
+          "durationS": 3.5,
+          "texts": [
+            {
+              "text": "{{itemName}}",
+              "position": "lower_third",
+              "style": "title"
+            },
+            {
+              "text": "{{price}}",
+              "position": "bottom",
+              "style": "title",
+              "color": "accent"
+            }
+          ]
+        },
+        {
+          "type": "photo",
+          "slot": "anh2",
+          "durationS": 3.0,
+          "texts": [
+            {
+              "text": "{{promo}}",
+              "position": "lower_third",
+              "style": "body",
+              "color": "accent"
+            }
+          ]
+        },
+        {
+          "type": "photo",
+          "slot": "anh3",
+          "durationS": 3.0,
+          "texts": [
+            {
+              "text": "{{itemName}}",
+              "position": "lower_third",
+              "style": "body"
+            }
+          ]
+        },
+        {
+          "type": "card",
+          "durationS": 4.0,
+          "texts": [
+            {
+              "text": "{{businessName}}",
+              "position": "center",
+              "style": "title"
+            },
+            {
+              "text": "Liên hệ: {{phone}}",
+              "position": "lower_third",
+              "style": "body",
+              "color": "accent"
+            },
+            {
+              "text": "{{address}}",
+              "position": "bottom",
+              "style": "small"
+            }
+          ],
+          "background": "primary"
+        }
+      ],
+      "logo": "end_card",
+      "music": "optional",
+      "caption": {
+        "lines": [
+          "{{itemName}}",
+          "Giá: {{price}}",
+          "{{promo}}",
+          "Liên hệ: {{phone}}",
+          "Địa chỉ: {{address}}"
+        ],
+        "hashtags": [
+          "#banhangonline"
+        ]
+      }
+    },
+    {
+      "id": "bhol-khuyen-mai",
+      "industry": "ban-hang-online",
+      "name": "Thông báo khuyến mãi",
+      "summary": "Nhấn mạnh ưu đãi bằng chữ lớn trên ảnh sản phẩm. Bắt buộc nhập nội dung ưu đãi.",
+      "goal": "khuyen-mai",
+      "evidence": "assumption",
+      "aspects": [
+        "9:16",
+        "4:5",
+        "1:1"
+      ],
+      "defaultAspect": "9:16",
+      "channels": [
+        "facebook",
+        "zalo",
+        "tiktok"
+      ],
+      "palette": {
+        "primary": "#c2255c",
+        "accent": "#ffd43b"
+      },
+      "fields": [
+        {
+          "key": "businessName",
+          "label": "Tên cơ sở / thương hiệu",
+          "example": "Cửa hàng Mẫu",
+          "required": true
+        },
+        {
+          "key": "phone",
+          "label": "Số điện thoại liên hệ",
+          "example": "0901 234 567",
+          "required": true,
+          "hint": "Số khách gọi hoặc nhắn Zalo cho bạn."
+        },
+        {
+          "key": "promo",
+          "label": "Nội dung ưu đãi",
+          "example": "Giảm 50.000đ cho đơn đầu tiên",
+          "required": true,
+          "hint": "Viết đúng điều bạn sẽ thực hiện. Có thời hạn thì ghi vào đây."
+        },
+        {
+          "key": "itemName",
+          "label": "Sản phẩm áp dụng (nếu có)",
+          "example": "Áo thun cotton basic",
+          "required": false
+        },
+        {
+          "key": "detail",
+          "label": "Thời gian áp dụng (nếu có)",
+          "example": "Từ 20/11 đến 25/11",
+          "required": false
+        },
+        {
+          "key": "address",
+          "label": "Địa chỉ (nếu có cửa hàng/văn phòng)",
+          "example": "12 Đường Số 1, Phường A, Quận B",
+          "required": false,
+          "hint": "Ghi đủ để khách tìm đến. Bỏ trống nếu chỉ bán qua mạng."
+        }
+      ],
+      "photos": [
+        {
+          "id": "anh1",
+          "label": "Ảnh sản phẩm 1",
+          "required": true
+        },
+        {
+          "id": "anh2",
+          "label": "Ảnh sản phẩm 2 (không bắt buộc)",
+          "required": false
+        }
+      ],
+      "scenes": [
+        {
+          "type": "photo",
+          "slot": "anh1",
+          "durationS": 3.5,
+          "texts": [
+            {
+              "text": "{{promo}}",
+              "position": "center",
+              "style": "title",
+              "color": "accent"
+            }
+          ],
+          "shade": 0.35,
+          "motion": "zoom_in"
+        },
+        {
+          "type": "photo",
+          "slot": "anh2",
+          "durationS": 3.0,
+          "texts": [
+            {
+              "text": "{{itemName}}",
+              "position": "lower_third",
+              "style": "title"
+            },
+            {
+              "text": "{{detail}}",
+              "position": "bottom",
+              "style": "body"
+            }
+          ],
+          "shade": 0.2
+        },
+        {
+          "type": "card",
+          "durationS": 4.0,
+          "texts": [
+            {
+              "text": "{{businessName}}",
+              "position": "center",
+              "style": "title"
+            },
+            {
+              "text": "Liên hệ: {{phone}}",
+              "position": "lower_third",
+              "style": "body",
+              "color": "accent"
+            },
+            {
+              "text": "{{address}}",
+              "position": "bottom",
+              "style": "small"
+            }
+          ],
+          "background": "primary"
+        }
+      ],
+      "logo": "end_card",
+      "music": "optional",
+      "caption": {
+        "lines": [
+          "{{promo}}",
+          "{{itemName}}",
+          "Thời gian: {{detail}}",
+          "Liên hệ: {{phone}}",
+          "Địa chỉ: {{address}}"
+        ],
+        "hashtags": [
+          "#khuyenmai"
+        ]
+      }
+    },
+    {
+      "id": "bhol-bo-suu-tap",
+      "industry": "ban-hang-online",
+      "name": "Bộ sưu tập 2–4 ảnh",
+      "summary": "Ghép nhiều sản phẩm trong một khung để khách xem nhanh cả nhóm hàng.",
+      "goal": "gioi-thieu",
+      "evidence": "assumption",
+      "aspects": [
+        "4:5",
+        "1:1",
+        "9:16"
+      ],
+      "defaultAspect": "4:5",
+      "channels": [
+        "facebook",
+        "zalo",
+        "tiktok"
+      ],
+      "palette": {
+        "primary": "#c2255c",
+        "accent": "#ffd43b"
+      },
+      "fields": [
+        {
+          "key": "businessName",
+          "label": "Tên cơ sở / thương hiệu",
+          "example": "Cửa hàng Mẫu",
+          "required": true
+        },
+        {
+          "key": "phone",
+          "label": "Số điện thoại liên hệ",
+          "example": "0901 234 567",
+          "required": true,
+          "hint": "Số khách gọi hoặc nhắn Zalo cho bạn."
+        },
+        {
+          "key": "itemName",
+          "label": "Tên nhóm hàng",
+          "example": "Phụ kiện mùa lạnh",
+          "required": true
+        },
+        {
+          "key": "price",
+          "label": "Giá (nếu cùng một mức)",
+          "example": "Từ 99.000đ",
+          "required": false,
+          "hint": "Chỉ ghi nếu đúng với tất cả sản phẩm trong ảnh."
+        },
+        {
+          "key": "address",
+          "label": "Địa chỉ (nếu có cửa hàng/văn phòng)",
+          "example": "12 Đường Số 1, Phường A, Quận B",
+          "required": false,
+          "hint": "Ghi đủ để khách tìm đến. Bỏ trống nếu chỉ bán qua mạng."
+        }
+      ],
+      "photos": [
+        {
+          "id": "a1",
+          "label": "Ảnh 1",
+          "required": true
+        },
+        {
+          "id": "a2",
+          "label": "Ảnh 2",
+          "required": true
+        },
+        {
+          "id": "a3",
+          "label": "Ảnh 3 (không bắt buộc)",
+          "required": false
+        },
+        {
+          "id": "a4",
+          "label": "Ảnh 4 (không bắt buộc)",
+          "required": false
+        }
+      ],
+      "scenes": [
+        {
+          "type": "collage",
+          "slots": [
+            "a1",
+            "a2",
+            "a3",
+            "a4"
+          ],
+          "durationS": 4.5,
+          "texts": [
+            {
+              "text": "{{itemName}}",
+              "position": "bottom",
+              "style": "title"
+            },
+            {
+              "text": "{{price}}",
+              "position": "lower_third",
+              "style": "body",
+              "color": "accent"
+            }
+          ]
+        },
+        {
+          "type": "photo",
+          "slot": "a1",
+          "durationS": 3.0,
+          "texts": [
+            {
+              "text": "{{itemName}}",
+              "position": "lower_third",
+              "style": "body"
+            }
+          ]
+        },
+        {
+          "type": "card",
+          "durationS": 4.0,
+          "texts": [
+            {
+              "text": "{{businessName}}",
+              "position": "center",
+              "style": "title"
+            },
+            {
+              "text": "Liên hệ: {{phone}}",
+              "position": "lower_third",
+              "style": "body",
+              "color": "accent"
+            },
+            {
+              "text": "{{address}}",
+              "position": "bottom",
+              "style": "small"
+            }
+          ],
+          "background": "primary"
+        }
+      ],
+      "logo": "end_card",
+      "music": "optional",
+      "caption": {
+        "lines": [
+          "{{itemName}}",
+          "Giá: {{price}}",
+          "Liên hệ: {{phone}}",
+          "Địa chỉ: {{address}}"
+        ],
+        "hashtags": [
+          "#banhangonline"
+        ]
+      }
+    }
+  ]
+}

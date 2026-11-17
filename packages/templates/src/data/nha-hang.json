@@ -1,0 +1,627 @@
+{
+  "industry": "nha-hang",
+  "templates": [
+    {
+      "id": "nh-mon-moi",
+      "industry": "nha-hang",
+      "name": "Giới thiệu món ăn",
+      "summary": "Giới thiệu một món với 1–3 ảnh, tên món, giá, địa chỉ quán.",
+      "goal": "gioi-thieu",
+      "evidence": "assumption",
+      "aspects": [
+        "9:16",
+        "4:5",
+        "1:1"
+      ],
+      "defaultAspect": "9:16",
+      "channels": [
+        "facebook",
+        "zalo",
+        "tiktok"
+      ],
+      "palette": {
+        "primary": "#8a1c1c",
+        "accent": "#f5c542"
+      },
+      "fields": [
+        {
+          "key": "businessName",
+          "label": "Tên cơ sở / thương hiệu",
+          "example": "Cửa hàng Mẫu",
+          "required": true
+        },
+        {
+          "key": "phone",
+          "label": "Số điện thoại liên hệ",
+          "example": "0901 234 567",
+          "required": true,
+          "hint": "Số khách gọi hoặc nhắn Zalo cho bạn."
+        },
+        {
+          "key": "itemName",
+          "label": "Tên món",
+          "example": "Bún bò đặc biệt",
+          "required": true
+        },
+        {
+          "key": "price",
+          "label": "Giá",
+          "example": "55.000đ",
+          "required": false
+        },
+        {
+          "key": "address",
+          "label": "Địa chỉ quán",
+          "example": "25 Đường Trần Phú, Phường 3",
+          "required": true,
+          "hint": "Khách cần địa chỉ để tìm tới quán."
+        },
+        {
+          "key": "detail",
+          "label": "Giờ mở cửa (nếu có)",
+          "example": "6:00 - 21:00",
+          "required": false
+        }
+      ],
+      "photos": [
+        {
+          "id": "anh1",
+          "label": "Ảnh món ăn",
+          "required": true,
+          "hint": "Chụp gần, ánh sáng tự nhiên, thấy rõ món."
+        },
+        {
+          "id": "anh2",
+          "label": "Ảnh góc khác (không bắt buộc)",
+          "required": false
+        },
+        {
+          "id": "anh3",
+          "label": "Ảnh khác (không bắt buộc)",
+          "required": false
+        }
+      ],
+      "scenes": [
+        {
+          "type": "photo",
+          "slot": "anh1",
+          "durationS": 3.5,
+          "texts": [
+            {
+              "text": "{{itemName}}",
+              "position": "lower_third",
+              "style": "title"
+            },
+            {
+              "text": "{{price}}",
+              "position": "bottom",
+              "style": "title",
+              "color": "accent"
+            }
+          ]
+        },
+        {
+          "type": "photo",
+          "slot": "anh2",
+          "durationS": 3.0,
+          "texts": [
+            {
+              "text": "{{itemName}}",
+              "position": "lower_third",
+              "style": "body"
+            }
+          ]
+        },
+        {
+          "type": "photo",
+          "slot": "anh3",
+          "durationS": 3.0,
+          "texts": []
+        },
+        {
+          "type": "card",
+          "durationS": 4.0,
+          "texts": [
+            {
+              "text": "{{businessName}}",
+              "position": "center",
+              "style": "title"
+            },
+            {
+              "text": "Liên hệ: {{phone}}",
+              "position": "lower_third",
+              "style": "body",
+              "color": "accent"
+            },
+            {
+              "text": "{{address}}",
+              "position": "bottom",
+              "style": "small"
+            }
+          ],
+          "background": "primary"
+        }
+      ],
+      "logo": "end_card",
+      "music": "optional",
+      "caption": {
+        "lines": [
+          "{{itemName}}",
+          "Giá: {{price}}",
+          "Giờ mở cửa: {{detail}}",
+          "Địa chỉ: {{address}}",
+          "Liên hệ: {{phone}}"
+        ],
+        "hashtags": [
+          "#monngon"
+        ]
+      }
+    },
+    {
+      "id": "nh-thuc-don",
+      "industry": "nha-hang",
+      "name": "Thực đơn nổi bật",
+      "summary": "Mỗi ảnh một món, kèm dòng \"tên món - giá\" do bạn tự nhập cho từng ảnh.",
+      "goal": "thuc-don",
+      "evidence": "assumption",
+      "aspects": [
+        "9:16",
+        "4:5",
+        "1:1"
+      ],
+      "defaultAspect": "9:16",
+      "channels": [
+        "facebook",
+        "zalo",
+        "tiktok"
+      ],
+      "palette": {
+        "primary": "#8a1c1c",
+        "accent": "#f5c542"
+      },
+      "fields": [
+        {
+          "key": "businessName",
+          "label": "Tên cơ sở / thương hiệu",
+          "example": "Cửa hàng Mẫu",
+          "required": true
+        },
+        {
+          "key": "phone",
+          "label": "Số điện thoại liên hệ",
+          "example": "0901 234 567",
+          "required": true,
+          "hint": "Số khách gọi hoặc nhắn Zalo cho bạn."
+        },
+        {
+          "key": "address",
+          "label": "Địa chỉ quán",
+          "example": "25 Đường Trần Phú, Phường 3",
+          "required": true
+        },
+        {
+          "key": "detail",
+          "label": "Giờ mở cửa (nếu có)",
+          "example": "6:00 - 21:00",
+          "required": false
+        }
+      ],
+      "photos": [
+        {
+          "id": "m1",
+          "label": "Món 1",
+          "required": true,
+          "caption": {
+            "label": "Tên món và giá",
+            "example": "Bún bò - 55.000đ",
+            "maxChars": 50
+          }
+        },
+        {
+          "id": "m2",
+          "label": "Món 2",
+          "required": true,
+          "caption": {
+            "label": "Tên món và giá",
+            "example": "Bánh canh - 45.000đ",
+            "maxChars": 50
+          }
+        },
+        {
+          "id": "m3",
+          "label": "Món 3 (không bắt buộc)",
+          "required": false,
+          "caption": {
+            "label": "Tên món và giá",
+            "example": "Chả giò - 30.000đ",
+            "maxChars": 50
+          }
+        },
+        {
+          "id": "m4",
+          "label": "Món 4 (không bắt buộc)",
+          "required": false,
+          "caption": {
+            "label": "Tên món và giá",
+            "example": "Trà đá - 5.000đ",
+            "maxChars": 50
+          }
+        }
+      ],
+      "scenes": [
+        {
+          "type": "photo",
+          "slot": "m1",
+          "durationS": 3.0,
+          "texts": [
+            {
+              "text": "{{caption:m1}}",
+              "position": "lower_third",
+              "style": "title"
+            }
+          ]
+        },
+        {
+          "type": "photo",
+          "slot": "m2",
+          "durationS": 3.0,
+          "texts": [
+            {
+              "text": "{{caption:m2}}",
+              "position": "lower_third",
+              "style": "title"
+            }
+          ]
+        },
+        {
+          "type": "photo",
+          "slot": "m3",
+          "durationS": 3.0,
+          "texts": [
+            {
+              "text": "{{caption:m3}}",
+              "position": "lower_third",
+              "style": "title"
+            }
+          ]
+        },
+        {
+          "type": "photo",
+          "slot": "m4",
+          "durationS": 3.0,
+          "texts": [
+            {
+              "text": "{{caption:m4}}",
+              "position": "lower_third",
+              "style": "title"
+            }
+          ]
+        },
+        {
+          "type": "card",
+          "durationS": 4.0,
+          "texts": [
+            {
+              "text": "{{businessName}}",
+              "position": "center",
+              "style": "title"
+            },
+            {
+              "text": "Liên hệ: {{phone}}",
+              "position": "lower_third",
+              "style": "body",
+              "color": "accent"
+            },
+            {
+              "text": "{{address}}",
+              "position": "bottom",
+              "style": "small"
+            }
+          ],
+          "background": "primary"
+        }
+      ],
+      "logo": "end_card",
+      "music": "optional",
+      "caption": {
+        "lines": [
+          "Thực đơn tại {{businessName}}:",
+          "{{caption:m1}}",
+          "{{caption:m2}}",
+          "{{caption:m3}}",
+          "{{caption:m4}}",
+          "Địa chỉ: {{address}}",
+          "Giờ mở cửa: {{detail}}",
+          "Liên hệ: {{phone}}"
+        ],
+        "hashtags": [
+          "#thucdon"
+        ]
+      }
+    },
+    {
+      "id": "nh-gioi-thieu-quan",
+      "industry": "nha-hang",
+      "name": "Giới thiệu quán",
+      "summary": "Ảnh không gian và món ăn, kèm địa chỉ và giờ mở cửa. Phù hợp khi mới mở hoặc đổi chỗ.",
+      "goal": "gioi-thieu",
+      "evidence": "assumption",
+      "aspects": [
+        "9:16",
+        "16:9",
+        "1:1",
+        "4:5"
+      ],
+      "defaultAspect": "9:16",
+      "channels": [
+        "facebook",
+        "zalo",
+        "tiktok"
+      ],
+      "palette": {
+        "primary": "#8a1c1c",
+        "accent": "#f5c542"
+      },
+      "fields": [
+        {
+          "key": "businessName",
+          "label": "Tên cơ sở / thương hiệu",
+          "example": "Cửa hàng Mẫu",
+          "required": true
+        },
+        {
+          "key": "phone",
+          "label": "Số điện thoại liên hệ",
+          "example": "0901 234 567",
+          "required": true,
+          "hint": "Số khách gọi hoặc nhắn Zalo cho bạn."
+        },
+        {
+          "key": "address",
+          "label": "Địa chỉ quán",
+          "example": "25 Đường Trần Phú, Phường 3",
+          "required": true
+        },
+        {
+          "key": "detail",
+          "label": "Giờ mở cửa",
+          "example": "6:00 - 21:00",
+          "required": true
+        }
+      ],
+      "photos": [
+        {
+          "id": "khong-gian",
+          "label": "Ảnh không gian quán",
+          "required": true
+        },
+        {
+          "id": "mon-an",
+          "label": "Ảnh món ăn (không bắt buộc)",
+          "required": false
+        },
+        {
+          "id": "anh3",
+          "label": "Ảnh khác (không bắt buộc)",
+          "required": false
+        }
+      ],
+      "scenes": [
+        {
+          "type": "photo",
+          "slot": "khong-gian",
+          "durationS": 4.0,
+          "texts": [
+            {
+              "text": "{{businessName}}",
+              "position": "lower_third",
+              "style": "title"
+            }
+          ],
+          "motion": "pan_right"
+        },
+        {
+          "type": "photo",
+          "slot": "mon-an",
+          "durationS": 3.5,
+          "texts": [
+            {
+              "text": "Giờ mở cửa: {{detail}}",
+              "position": "lower_third",
+              "style": "body"
+            }
+          ]
+        },
+        {
+          "type": "photo",
+          "slot": "anh3",
+          "durationS": 3.0,
+          "texts": []
+        },
+        {
+          "type": "card",
+          "durationS": 4.0,
+          "texts": [
+            {
+              "text": "{{businessName}}",
+              "position": "center",
+              "style": "title"
+            },
+            {
+              "text": "{{address}}",
+              "position": "lower_third",
+              "style": "body",
+              "color": "accent"
+            },
+            {
+              "text": "Liên hệ: {{phone}}",
+              "position": "bottom",
+              "style": "body"
+            }
+          ],
+          "background": "primary"
+        }
+      ],
+      "logo": "end_card",
+      "music": "optional",
+      "caption": {
+        "lines": [
+          "{{businessName}}",
+          "Địa chỉ: {{address}}",
+          "Giờ mở cửa: {{detail}}",
+          "Liên hệ: {{phone}}"
+        ],
+        "hashtags": [
+          "#quanan"
+        ]
+      }
+    },
+    {
+      "id": "nh-uu-dai",
+      "industry": "nha-hang",
+      "name": "Ưu đãi / combo",
+      "summary": "Thông báo ưu đãi hoặc combo, nội dung do bạn tự nhập. Bắt buộc có nội dung ưu đãi.",
+      "goal": "khuyen-mai",
+      "evidence": "assumption",
+      "aspects": [
+        "9:16",
+        "4:5",
+        "1:1"
+      ],
+      "defaultAspect": "9:16",
+      "channels": [
+        "facebook",
+        "zalo",
+        "tiktok"
+      ],
+      "palette": {
+        "primary": "#8a1c1c",
+        "accent": "#f5c542"
+      },
+      "fields": [
+        {
+          "key": "businessName",
+          "label": "Tên cơ sở / thương hiệu",
+          "example": "Cửa hàng Mẫu",
+          "required": true
+        },
+        {
+          "key": "phone",
+          "label": "Số điện thoại liên hệ",
+          "example": "0901 234 567",
+          "required": true,
+          "hint": "Số khách gọi hoặc nhắn Zalo cho bạn."
+        },
+        {
+          "key": "promo",
+          "label": "Nội dung ưu đãi / combo",
+          "example": "Combo 2 người: 1 lẩu + 2 nước",
+          "required": true,
+          "hint": "Chỉ ghi điều quán thật sự áp dụng."
+        },
+        {
+          "key": "price",
+          "label": "Giá combo",
+          "example": "299.000đ",
+          "required": false
+        },
+        {
+          "key": "detail",
+          "label": "Thời gian áp dụng (nếu có)",
+          "example": "Cuối tuần",
+          "required": false
+        },
+        {
+          "key": "address",
+          "label": "Địa chỉ quán",
+          "example": "25 Đường Trần Phú, Phường 3",
+          "required": true
+        }
+      ],
+      "photos": [
+        {
+          "id": "anh1",
+          "label": "Ảnh combo / món",
+          "required": true
+        },
+        {
+          "id": "anh2",
+          "label": "Ảnh thêm (không bắt buộc)",
+          "required": false
+        }
+      ],
+      "scenes": [
+        {
+          "type": "photo",
+          "slot": "anh1",
+          "durationS": 3.5,
+          "texts": [
+            {
+              "text": "{{promo}}",
+              "position": "center",
+              "style": "title",
+              "color": "accent"
+            }
+          ],
+          "shade": 0.35
+        },
+        {
+          "type": "photo",
+          "slot": "anh2",
+          "durationS": 3.0,
+          "texts": [
+            {
+              "text": "{{price}}",
+              "position": "lower_third",
+              "style": "title",
+              "color": "accent"
+            },
+            {
+              "text": "{{detail}}",
+              "position": "bottom",
+              "style": "body"
+            }
+          ],
+          "shade": 0.2
+        },
+        {
+          "type": "card",
+          "durationS": 4.0,
+          "texts": [
+            {
+              "text": "{{businessName}}",
+              "position": "center",
+              "style": "title"
+            },
+            {
+              "text": "Liên hệ: {{phone}}",
+              "position": "lower_third",
+              "style": "body",
+              "color": "accent"
+            },
+            {
+              "text": "{{address}}",
+              "position": "bottom",
+              "style": "small"
+            }
+          ],
+          "background": "primary"
+        }
+      ],
+      "logo": "end_card",
+      "music": "optional",
+      "caption": {
+        "lines": [
+          "{{promo}}",
+          "Giá: {{price}}",
+          "Thời gian: {{detail}}",
+          "Địa chỉ: {{address}}",
+          "Liên hệ: {{phone}}"
+        ],
+        "hashtags": [
+          "#uudai"
+        ]
+      }
+    }
+  ]
+}

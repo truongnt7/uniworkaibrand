@@ -1,0 +1,635 @@
+{
+  "industry": "xay-dung",
+  "templates": [
+    {
+      "id": "xd-tien-do",
+      "industry": "xay-dung",
+      "name": "Tiến độ công trình",
+      "summary": "Kể công trình qua các giai đoạn, mỗi ảnh một dòng chú thích do bạn tự nhập.",
+      "goal": "tien-do",
+      "evidence": "assumption",
+      "aspects": [
+        "9:16",
+        "4:5",
+        "1:1"
+      ],
+      "defaultAspect": "9:16",
+      "channels": [
+        "facebook",
+        "zalo",
+        "tiktok"
+      ],
+      "palette": {
+        "primary": "#2b2f36",
+        "accent": "#f59f00"
+      },
+      "fields": [
+        {
+          "key": "businessName",
+          "label": "Tên cơ sở / thương hiệu",
+          "example": "Cửa hàng Mẫu",
+          "required": true
+        },
+        {
+          "key": "phone",
+          "label": "Số điện thoại liên hệ",
+          "example": "0901 234 567",
+          "required": true,
+          "hint": "Số khách gọi hoặc nhắn Zalo cho bạn."
+        },
+        {
+          "key": "itemName",
+          "label": "Tên công trình",
+          "example": "Nhà phố 1 trệt 2 lầu",
+          "required": true
+        },
+        {
+          "key": "detail",
+          "label": "Địa điểm (không bắt buộc)",
+          "example": "Tỉnh Đồng Nai",
+          "required": false,
+          "hint": "Chỉ ghi khu vực nếu chủ nhà đồng ý."
+        }
+      ],
+      "photos": [
+        {
+          "id": "g1",
+          "label": "Ảnh giai đoạn 1",
+          "required": true,
+          "caption": {
+            "label": "Chú thích giai đoạn",
+            "example": "Đổ móng",
+            "maxChars": 50
+          }
+        },
+        {
+          "id": "g2",
+          "label": "Ảnh giai đoạn 2",
+          "required": true,
+          "caption": {
+            "label": "Chú thích giai đoạn",
+            "example": "Xây phần thô",
+            "maxChars": 50
+          }
+        },
+        {
+          "id": "g3",
+          "label": "Ảnh giai đoạn 3 (không bắt buộc)",
+          "required": false,
+          "caption": {
+            "label": "Chú thích giai đoạn",
+            "example": "Hoàn thiện",
+            "maxChars": 50
+          }
+        }
+      ],
+      "scenes": [
+        {
+          "type": "photo",
+          "slot": "g1",
+          "durationS": 3.5,
+          "texts": [
+            {
+              "text": "{{itemName}}",
+              "position": "top",
+              "style": "body"
+            },
+            {
+              "text": "{{caption:g1}}",
+              "position": "lower_third",
+              "style": "title"
+            }
+          ]
+        },
+        {
+          "type": "photo",
+          "slot": "g2",
+          "durationS": 3.5,
+          "texts": [
+            {
+              "text": "{{itemName}}",
+              "position": "top",
+              "style": "body"
+            },
+            {
+              "text": "{{caption:g2}}",
+              "position": "lower_third",
+              "style": "title"
+            }
+          ]
+        },
+        {
+          "type": "photo",
+          "slot": "g3",
+          "durationS": 3.5,
+          "texts": [
+            {
+              "text": "{{itemName}}",
+              "position": "top",
+              "style": "body"
+            },
+            {
+              "text": "{{caption:g3}}",
+              "position": "lower_third",
+              "style": "title"
+            }
+          ]
+        },
+        {
+          "type": "card",
+          "durationS": 4.0,
+          "texts": [
+            {
+              "text": "{{businessName}}",
+              "position": "center",
+              "style": "title"
+            },
+            {
+              "text": "Liên hệ: {{phone}}",
+              "position": "lower_third",
+              "style": "body",
+              "color": "accent"
+            },
+            {
+              "text": "{{detail}}",
+              "position": "bottom",
+              "style": "small"
+            }
+          ],
+          "background": "primary"
+        }
+      ],
+      "logo": "end_card",
+      "music": "optional",
+      "caption": {
+        "lines": [
+          "{{itemName}}",
+          "{{caption:g1}}",
+          "{{caption:g2}}",
+          "{{caption:g3}}",
+          "Địa điểm: {{detail}}",
+          "Liên hệ: {{phone}}"
+        ],
+        "hashtags": [
+          "#xaydung"
+        ]
+      }
+    },
+    {
+      "id": "xd-truoc-sau",
+      "industry": "xay-dung",
+      "name": "Cải tạo trước và sau",
+      "summary": "So sánh trước và sau khi cải tạo, sửa chữa.",
+      "goal": "truoc-sau",
+      "evidence": "assumption",
+      "aspects": [
+        "9:16",
+        "1:1",
+        "4:5",
+        "16:9"
+      ],
+      "defaultAspect": "9:16",
+      "channels": [
+        "facebook",
+        "zalo",
+        "tiktok"
+      ],
+      "palette": {
+        "primary": "#2b2f36",
+        "accent": "#f59f00"
+      },
+      "fields": [
+        {
+          "key": "businessName",
+          "label": "Tên cơ sở / thương hiệu",
+          "example": "Cửa hàng Mẫu",
+          "required": true
+        },
+        {
+          "key": "phone",
+          "label": "Số điện thoại liên hệ",
+          "example": "0901 234 567",
+          "required": true,
+          "hint": "Số khách gọi hoặc nhắn Zalo cho bạn."
+        },
+        {
+          "key": "itemName",
+          "label": "Hạng mục cải tạo",
+          "example": "Cải tạo phòng bếp",
+          "required": true
+        },
+        {
+          "key": "detail",
+          "label": "Địa điểm (không bắt buộc)",
+          "example": "Tỉnh Đồng Nai",
+          "required": false
+        },
+        {
+          "key": "address",
+          "label": "Địa chỉ (nếu có cửa hàng/văn phòng)",
+          "example": "12 Đường Số 1, Phường A, Quận B",
+          "required": false,
+          "hint": "Ghi đủ để khách tìm đến. Bỏ trống nếu chỉ bán qua mạng."
+        }
+      ],
+      "photos": [
+        {
+          "id": "truoc",
+          "label": "Ảnh TRƯỚC khi cải tạo",
+          "required": true,
+          "hint": "Chụp cùng góc với ảnh sau."
+        },
+        {
+          "id": "sau",
+          "label": "Ảnh SAU khi cải tạo",
+          "required": true
+        }
+      ],
+      "scenes": [
+        {
+          "type": "photo",
+          "slot": "truoc",
+          "durationS": 3.0,
+          "texts": [
+            {
+              "text": "TRƯỚC",
+              "position": "top",
+              "style": "title"
+            }
+          ]
+        },
+        {
+          "type": "photo",
+          "slot": "sau",
+          "durationS": 3.5,
+          "texts": [
+            {
+              "text": "SAU",
+              "position": "top",
+              "style": "title",
+              "color": "accent"
+            }
+          ],
+          "transition": "wipeleft"
+        },
+        {
+          "type": "collage",
+          "slots": [
+            "truoc",
+            "sau"
+          ],
+          "durationS": 4.0,
+          "texts": [
+            {
+              "text": "{{itemName}}",
+              "position": "bottom",
+              "style": "body"
+            }
+          ]
+        },
+        {
+          "type": "card",
+          "durationS": 4.0,
+          "texts": [
+            {
+              "text": "{{businessName}}",
+              "position": "center",
+              "style": "title"
+            },
+            {
+              "text": "Liên hệ: {{phone}}",
+              "position": "lower_third",
+              "style": "body",
+              "color": "accent"
+            },
+            {
+              "text": "{{address}}",
+              "position": "bottom",
+              "style": "small"
+            }
+          ],
+          "background": "primary"
+        }
+      ],
+      "logo": "end_card",
+      "music": "optional",
+      "caption": {
+        "lines": [
+          "{{itemName}}: trước và sau",
+          "Địa điểm: {{detail}}",
+          "Liên hệ: {{phone}}",
+          "Địa chỉ: {{address}}"
+        ],
+        "hashtags": [
+          "#truocvasau",
+          "#xaydung"
+        ]
+      }
+    },
+    {
+      "id": "xd-gioi-thieu-du-an",
+      "industry": "xay-dung",
+      "name": "Giới thiệu dự án",
+      "summary": "Giới thiệu một công trình đã làm với 1–4 ảnh, quy mô và địa điểm.",
+      "goal": "gioi-thieu",
+      "evidence": "assumption",
+      "aspects": [
+        "9:16",
+        "16:9",
+        "1:1",
+        "4:5"
+      ],
+      "defaultAspect": "9:16",
+      "channels": [
+        "facebook",
+        "zalo",
+        "tiktok"
+      ],
+      "palette": {
+        "primary": "#2b2f36",
+        "accent": "#f59f00"
+      },
+      "fields": [
+        {
+          "key": "businessName",
+          "label": "Tên cơ sở / thương hiệu",
+          "example": "Cửa hàng Mẫu",
+          "required": true
+        },
+        {
+          "key": "phone",
+          "label": "Số điện thoại liên hệ",
+          "example": "0901 234 567",
+          "required": true,
+          "hint": "Số khách gọi hoặc nhắn Zalo cho bạn."
+        },
+        {
+          "key": "itemName",
+          "label": "Tên công trình",
+          "example": "Biệt thự sân vườn",
+          "required": true
+        },
+        {
+          "key": "detail",
+          "label": "Quy mô / địa điểm (không bắt buộc)",
+          "example": "1 trệt 1 lầu, Tỉnh Đồng Nai",
+          "required": false
+        },
+        {
+          "key": "price",
+          "label": "Chi phí tham khảo (không bắt buộc)",
+          "example": "1,2 tỷ đồng",
+          "required": false,
+          "hint": "Chỉ ghi nếu chủ nhà đồng ý công khai."
+        },
+        {
+          "key": "address",
+          "label": "Địa chỉ (nếu có cửa hàng/văn phòng)",
+          "example": "12 Đường Số 1, Phường A, Quận B",
+          "required": false,
+          "hint": "Ghi đủ để khách tìm đến. Bỏ trống nếu chỉ bán qua mạng."
+        }
+      ],
+      "photos": [
+        {
+          "id": "d1",
+          "label": "Ảnh toàn cảnh",
+          "required": true
+        },
+        {
+          "id": "d2",
+          "label": "Ảnh chi tiết 1 (không bắt buộc)",
+          "required": false
+        },
+        {
+          "id": "d3",
+          "label": "Ảnh chi tiết 2 (không bắt buộc)",
+          "required": false
+        },
+        {
+          "id": "d4",
+          "label": "Ảnh chi tiết 3 (không bắt buộc)",
+          "required": false
+        }
+      ],
+      "scenes": [
+        {
+          "type": "photo",
+          "slot": "d1",
+          "durationS": 4.0,
+          "texts": [
+            {
+              "text": "{{itemName}}",
+              "position": "lower_third",
+              "style": "title"
+            },
+            {
+              "text": "{{detail}}",
+              "position": "bottom",
+              "style": "body"
+            }
+          ],
+          "motion": "pan_right"
+        },
+        {
+          "type": "photo",
+          "slot": "d2",
+          "durationS": 3.0,
+          "texts": [
+            {
+              "text": "{{price}}",
+              "position": "lower_third",
+              "style": "title",
+              "color": "accent"
+            }
+          ]
+        },
+        {
+          "type": "photo",
+          "slot": "d3",
+          "durationS": 3.0,
+          "texts": []
+        },
+        {
+          "type": "photo",
+          "slot": "d4",
+          "durationS": 3.0,
+          "texts": []
+        },
+        {
+          "type": "card",
+          "durationS": 4.0,
+          "texts": [
+            {
+              "text": "{{businessName}}",
+              "position": "center",
+              "style": "title"
+            },
+            {
+              "text": "Liên hệ: {{phone}}",
+              "position": "lower_third",
+              "style": "body",
+              "color": "accent"
+            },
+            {
+              "text": "{{address}}",
+              "position": "bottom",
+              "style": "small"
+            }
+          ],
+          "background": "primary"
+        }
+      ],
+      "logo": "end_card",
+      "music": "optional",
+      "caption": {
+        "lines": [
+          "{{itemName}}",
+          "{{detail}}",
+          "Chi phí tham khảo: {{price}}",
+          "Liên hệ: {{phone}}",
+          "Địa chỉ: {{address}}"
+        ],
+        "hashtags": [
+          "#xaydung"
+        ]
+      }
+    },
+    {
+      "id": "xd-tuyen-tho",
+      "industry": "xay-dung",
+      "name": "Tuyển thợ / nhân sự",
+      "summary": "Thông báo tuyển người chỉ bằng chữ (ảnh nền không bắt buộc). Lương, yêu cầu do bạn tự nhập.",
+      "goal": "tuyen-dung",
+      "evidence": "assumption",
+      "aspects": [
+        "9:16",
+        "4:5",
+        "1:1"
+      ],
+      "defaultAspect": "9:16",
+      "channels": [
+        "facebook",
+        "zalo",
+        "tiktok"
+      ],
+      "palette": {
+        "primary": "#2b2f36",
+        "accent": "#f59f00"
+      },
+      "fields": [
+        {
+          "key": "businessName",
+          "label": "Tên cơ sở / thương hiệu",
+          "example": "Cửa hàng Mẫu",
+          "required": true
+        },
+        {
+          "key": "phone",
+          "label": "Số điện thoại liên hệ",
+          "example": "0901 234 567",
+          "required": true,
+          "hint": "Số khách gọi hoặc nhắn Zalo cho bạn."
+        },
+        {
+          "key": "itemName",
+          "label": "Vị trí cần tuyển",
+          "example": "Thợ xây",
+          "required": true
+        },
+        {
+          "key": "detail",
+          "label": "Yêu cầu / mức lương / nơi làm việc",
+          "example": "Làm tại Đồng Nai, lương thoả thuận",
+          "required": true,
+          "hint": "Viết đúng điều bạn đang áp dụng."
+        },
+        {
+          "key": "address",
+          "label": "Địa chỉ (nếu có cửa hàng/văn phòng)",
+          "example": "12 Đường Số 1, Phường A, Quận B",
+          "required": false,
+          "hint": "Ghi đủ để khách tìm đến. Bỏ trống nếu chỉ bán qua mạng."
+        }
+      ],
+      "photos": [
+        {
+          "id": "nen",
+          "label": "Ảnh nền (không bắt buộc)",
+          "required": false,
+          "hint": "Ví dụ ảnh công trình đang làm."
+        }
+      ],
+      "scenes": [
+        {
+          "type": "card",
+          "durationS": 3.5,
+          "texts": [
+            {
+              "text": "Cần tuyển",
+              "position": "top",
+              "style": "body",
+              "color": "accent"
+            },
+            {
+              "text": "{{itemName}}",
+              "position": "center",
+              "style": "title"
+            }
+          ],
+          "background": "primary"
+        },
+        {
+          "type": "photo",
+          "slot": "nen",
+          "durationS": 3.5,
+          "texts": [
+            {
+              "text": "{{detail}}",
+              "position": "center",
+              "style": "body"
+            }
+          ],
+          "shade": 0.5,
+          "motion": "zoom_in"
+        },
+        {
+          "type": "card",
+          "durationS": 4.0,
+          "texts": [
+            {
+              "text": "{{businessName}}",
+              "position": "center",
+              "style": "title"
+            },
+            {
+              "text": "Liên hệ: {{phone}}",
+              "position": "lower_third",
+              "style": "body",
+              "color": "accent"
+            },
+            {
+              "text": "{{address}}",
+              "position": "bottom",
+              "style": "small"
+            }
+          ],
+          "background": "primary"
+        }
+      ],
+      "logo": "none",
+      "music": "none",
+      "caption": {
+        "lines": [
+          "Cần tuyển: {{itemName}}",
+          "{{detail}}",
+          "Liên hệ: {{phone}}",
+          "Địa chỉ: {{address}}"
+        ],
+        "hashtags": [
+          "#tuyendung"
+        ]
+      }
+    }
+  ]
+}

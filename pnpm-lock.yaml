@@ -166,6 +166,28 @@ importers:
         specifier: ^3.2.4
         version: 3.2.7(@types/debug@4.1.13)(@types/node@24.19.2)(jiti@2.7.0)(tsx@4.23.15)
 
+  packages/templates:
+    dependencies:
+      '@aps/shared':
+        specifier: workspace:*
+        version: link:../shared
+      zod:
+        specifier: ^4.1.0
+        version: 4.6.7
+    devDependencies:
+      '@aps/render-core':
+        specifier: workspace:*
+        version: link:../render-core
+      '@types/node':
+        specifier: ^24.9.0
+        version: 24.19.2
+      tsx:
+        specifier: ^4.20.0
+        version: 4.23.15
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.7(@types/debug@4.1.13)(@types/node@24.19.2)(jiti@2.7.0)(tsx@4.23.15)
+
 packages:
 
   '@babel/code-frame@7.29.7':
