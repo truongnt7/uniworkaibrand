@@ -1,0 +1,25 @@
+# blender-worker (GPL-3.0-or-later)
+
+Script Python chạy **bên trong** Blender 4.5 LTS (`bpy`). Thư mục này được tách riêng khỏi app Electron
+vì lý do giấy phép: script dùng API `bpy` nên được phát hành theo GPL-3.0 (quyết định D6 trong
+`docs/project-context.md`; cần luật sư rà soát trước phát hành). App Electron chỉ giao tiếp với worker qua
+`job.json` (vào) và **JSON-lines trên stdout** (ra) + mã thoát; không import mã của nhau.
+
+```bash
+blender -b -noaudio --factory-startup --python-exit-code 1 --python blender-worker/worker.py -- job.json
+```
+
+| File | Vai trò |
+|---|---|
+| `worker.py` | Điểm vào: đọc job, dựng cảnh, vòng lặp render từng khung (bỏ qua khung đã có để resume) |
+| `job.py` | Kiểm tra `job.json` (không phụ thuộc `bpy`, có unit test) |
+| `protocol.py` | Phát sự kiện JSON-lines (`log`, `device`, `progress`, `frame_done`, `warning`, `error`, `done`) |
+| `gpu_setup.py` | Chọn EEVEE/Cycles + thiết bị, cảnh báo khi âm thầm chạy CPU/bộ dựng phần mềm |
+| `scene/glb_import.py` | Nhập `.glb`, kiểm giới hạn, chuẩn hóa pivot/tỉ lệ (mm) |
+| `scene/studio.py` | Sàn, bục, đèn 3 điểm, camera rig |
+| `label_decal/decal.py` | Decal nhãn chiếu trụ/phẳng bằng node shader |
+| `motions/turntable.py` | `orbit` (camera quay quanh) và `spin360` (sản phẩm xoay) |
+
+Schema chính thức của job và sự kiện nằm trong `packages/shared/src/worker-protocol.ts`.
+
+Test phần logic không cần Blender: `python3 -m unittest discover -s blender-worker/tests -v`.
