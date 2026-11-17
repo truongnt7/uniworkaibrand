@@ -1,6 +1,5 @@
 // Blender giả cho test tích hợp: nói đúng giao thức job.json -> JSON-lines, ghi PNG hợp lệ nhỏ.
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
-import { dirname } from 'node:path';
 import { crc32, deflateSync } from 'node:zlib';
 
 const argv = process.argv.slice(2);

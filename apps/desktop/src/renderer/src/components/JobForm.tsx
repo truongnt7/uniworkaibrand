@@ -135,7 +135,7 @@ export function JobForm({ runtimeReady }: { runtimeReady: boolean }) {
           <span>{t('job.engine')}</span>
           <select value={engine} onChange={(e) => setEngine(e.target.value as 'eevee' | 'cycles')} data-testid="engine">
             <option value="eevee">EEVEE</option>
-            <option value="cycles">Cycles</option>
+            <option value="cycles">{"Cycles"}</option>
           </select>
         </label>
       </div>

@@ -55,7 +55,7 @@ function handler(req: IncomingMessage, res: ServerResponse) {
     res.writeHead(200, { 'Content-Length': body.length });
   }
   if (behavior.dropAfter && idx < behavior.dropAfter.times) {
-    res.write(body.subarray(0, behavior.dropAfter.bytes), () => req.socket.destroy());
+    res.write(body.subarray(0, behavior.dropAfter.bytes), () => setTimeout(() => req.socket.destroy(), 40));
     return;
   }
   res.end(body);
