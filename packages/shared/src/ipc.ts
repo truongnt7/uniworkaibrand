@@ -11,6 +11,8 @@ export const invokeContract = {
   'jobs:create': { req: RenderRequest, res: JobRecord },
   'jobs:cancel': { req: IdPayload, res: z.object({ ok: z.boolean() }) },
   'jobs:retry': { req: IdPayload, res: z.object({ ok: z.boolean() }) },
+  'jobs:pause': { req: IdPayload, res: z.object({ ok: z.boolean() }) },
+  'jobs:resume': { req: IdPayload, res: z.object({ ok: z.boolean() }) },
   'jobs:remove': { req: IdPayload, res: z.object({ ok: z.boolean() }) },
   'runtime:status': { req: Empty, res: RuntimeStatus },
   'runtime:install': { req: Empty, res: RuntimeStatus },

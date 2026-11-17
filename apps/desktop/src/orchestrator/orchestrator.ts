@@ -72,6 +72,8 @@ export function createOrchestrator(config: OrchestratorConfig, emit: EmitFn): Or
     'jobs:create': (req) => queue.enqueue(req),
     'jobs:cancel': async ({ id }) => ({ ok: await queue.cancel(id) }),
     'jobs:retry': ({ id }) => ({ ok: queue.retry(id) }),
+    'jobs:pause': async ({ id }) => ({ ok: await queue.pause(id) }),
+    'jobs:resume': ({ id }) => ({ ok: queue.resume(id) }),
     'jobs:remove': async ({ id }) => ({ ok: await queue.remove(id) }),
     'runtime:status': () => runtime.status(),
     'runtime:install': () => runtime.install(),

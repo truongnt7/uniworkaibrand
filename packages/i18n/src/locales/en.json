@@ -63,7 +63,11 @@
     "device": "Device: {{device}}",
     "output": "Result",
     "needRuntime": "Install the Blender runtime first.",
-    "needGlb": "Please choose a .glb file."
+    "needGlb": "Please choose a .glb file.",
+    "pause": "Pause",
+    "resume": "Resume",
+    "attention": "This job failed repeatedly and was set aside so it does not block the queue. Check the error, then press Retry.",
+    "failures": "Consecutive failures: {{count}}"
   },
   "status": {
     "queued": "Queued",
@@ -72,7 +76,9 @@
     "encoding": "Encoding video",
     "done": "Done",
     "failed": "Failed",
-    "canceled": "Canceled"
+    "canceled": "Canceled",
+    "paused": "Paused",
+    "needs_attention": "Needs attention"
   },
   "errors": {
     "UNKNOWN": "An unknown error occurred.",

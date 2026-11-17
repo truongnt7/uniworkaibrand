@@ -80,7 +80,7 @@ describe.skipIf(!posix)('BlenderRunner (Blender giả + ffmpeg thật)', () => {
     const { queue, req } = env({ FAKE_CRASH_AT: '3' });
     const job = queue.enqueue(req({ kind: 'video' }));
     await queue.idle();
-    expect(queue.get(job.id)).toMatchObject({ status: 'failed', errorCode: 'WORKER_EXIT' });
+    expect(queue.get(job.id)).toMatchObject({ status: 'needs_attention', errorCode: 'WORKER_EXIT', failures: 3, attempts: 3 });
   });
 
   it('file .glb không tồn tại -> GLB_NOT_FOUND trước khi spawn Blender', async () => {
@@ -94,7 +94,7 @@ describe.skipIf(!posix)('BlenderRunner (Blender giả + ffmpeg thật)', () => {
     const { queue, req, dir } = env({ FAKE_CRASH_AT: '6' });
     const job = queue.enqueue(req({ kind: 'video' }));
     await queue.idle();
-    expect(queue.get(job.id)!.status).toBe('failed');
+    expect(queue.get(job.id)).toMatchObject({ status: 'needs_attention', failures: 3 });
     const frames = join(dir, 'jobs', job.id, 'frames');
     const pngs = () => readdirSync(frames).filter((f) => f.endsWith('.png'));
     expect(pngs()).toHaveLength(5);
@@ -106,7 +106,7 @@ describe.skipIf(!posix)('BlenderRunner (Blender giả + ffmpeg thật)', () => {
     await queue.idle();
 
     const done = queue.get(job.id)!;
-    expect(done).toMatchObject({ status: 'done', attempts: 2 });
+    expect(done).toMatchObject({ status: 'done', attempts: 4, failures: 0 });
     expect(pngs()).toHaveLength(10);
     expect(readdirSync(frames).some((f) => f.endsWith('.part'))).toBe(false);
     expect(statSync(join(frames, 'frame_000001.png')).mtimeMs).toBe(firstFrameMtime);

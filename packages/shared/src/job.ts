@@ -8,11 +8,15 @@ export const JOB_STATUSES = [
   'done',
   'failed',
   'canceled',
+  'paused',
+  'needs_attention',
 ] as const;
 export const JobStatus = z.enum(JOB_STATUSES);
 export type JobStatus = z.infer<typeof JobStatus>;
 
 export const ACTIVE_JOB_STATUSES = ['preparing', 'rendering', 'encoding'] as const satisfies readonly JobStatus[];
+/** Không chạy cho tới khi người dùng can thiệp (tiếp tục / thử lại) nên không chặn hàng đợi. */
+export const HELD_JOB_STATUSES = ['paused', 'needs_attention'] as const satisfies readonly JobStatus[];
 export const TERMINAL_JOB_STATUSES = ['done', 'failed', 'canceled'] as const satisfies readonly JobStatus[];
 
 export const JobTarget = z.enum(['local', 'cloud']);
@@ -113,6 +117,8 @@ export const JobRecord = z.object({
   workDir: z.string().nullable(),
   outputPath: z.string().nullable(),
   attempts: z.number().int().min(0),
+  /** Số lần lỗi liên tiếp (kể cả bị gián đoạn do crash); chạm ngưỡng thì chuyển `needs_attention`. */
+  failures: z.number().int().min(0).default(0),
   createdAt: z.number(),
   updatedAt: z.number(),
   startedAt: z.number().nullable(),

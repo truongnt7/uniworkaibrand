@@ -6,8 +6,11 @@ import { invoke } from '../api';
 function JobItem({ job }: { job: JobRecord }) {
   const { t, i18n } = useTranslation();
   const active = ['preparing', 'rendering', 'encoding'].includes(job.status);
-  const canCancel = job.status === 'queued' || active;
-  const canRetry = job.status === 'failed' || job.status === 'canceled';
+  const held = job.status === 'paused' || job.status === 'needs_attention';
+  const canCancel = job.status === 'queued' || active || held;
+  const canPause = job.status === 'queued' || active;
+  const canResume = job.status === 'paused';
+  const canRetry = job.status === 'failed' || job.status === 'canceled' || job.status === 'needs_attention';
 
   return (
     <li className={`job job-${job.status}`} data-testid="job-item" data-status={job.status}>
@@ -30,6 +33,7 @@ function JobItem({ job }: { job: JobRecord }) {
         {job.deviceInfo && <span>{t('job.device', { device: job.deviceInfo })}</span>}
       </div>
       {job.errorCode && <p className="error" data-testid="job-error">{translateError(t, job.errorCode)}</p>}
+      {job.status === 'needs_attention' && <p className="warn" data-testid="job-attention">{t('job.attention')}</p>}
       {job.status === 'done' && (
         <div className="preview" data-testid="job-preview">
           {job.kind === 'video' ? (
@@ -43,6 +47,16 @@ function JobItem({ job }: { job: JobRecord }) {
         {canCancel && (
           <button type="button" className="secondary" onClick={() => void invoke('jobs:cancel', { id: job.id })} data-testid="job-cancel">
             {t('job.cancel')}
+          </button>
+        )}
+        {canPause && (
+          <button type="button" className="secondary" onClick={() => void invoke('jobs:pause', { id: job.id })} data-testid="job-pause">
+            {t('job.pause')}
+          </button>
+        )}
+        {canResume && (
+          <button type="button" className="secondary" onClick={() => void invoke('jobs:resume', { id: job.id })} data-testid="job-resume">
+            {t('job.resume')}
           </button>
         )}
         {canRetry && (

@@ -79,6 +79,8 @@ function registerIpc(): void {
     'jobs:create': forward('jobs:create') as never,
     'jobs:cancel': forward('jobs:cancel') as never,
     'jobs:retry': forward('jobs:retry') as never,
+    'jobs:pause': forward('jobs:pause') as never,
+    'jobs:resume': forward('jobs:resume') as never,
     'jobs:remove': forward('jobs:remove') as never,
     'runtime:status': forward('runtime:status') as never,
     'runtime:install': forward('runtime:install') as never,
