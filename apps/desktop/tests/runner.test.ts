@@ -1,5 +1,5 @@
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -110,6 +110,43 @@ describe.skipIf(!posix)('BlenderRunner (Blender giả + ffmpeg thật)', () => {
     expect(pngs()).toHaveLength(10);
     expect(readdirSync(frames).some((f) => f.endsWith('.part'))).toBe(false);
     expect(statSync(join(frames, 'frame_000001.png')).mtimeMs).toBe(firstFrameMtime);
+  });
+
+  it('reclaim: giết Blender mồ côi theo PID file sau khi app bị kill, bỏ qua PID không phải Blender', async () => {
+    const { queue, req, dir, store } = env();
+    const job = store.insert(
+      (await import('@aps/shared')).RenderRequest.parse(req({ kind: 'image' })),
+    );
+    const jobDir = join(dir, 'jobs', job.id);
+    mkdirSync(jobDir, { recursive: true });
+
+    const fakeBlender = join(dir, 'blender-orphan.sh');
+    writeFileSync(fakeBlender, '#!/bin/sh\nsleep 30\n');
+    chmodSync(fakeBlender, 0o755);
+    const orphan = spawn(fakeBlender, [], { detached: true, stdio: 'ignore' });
+    const unrelated = spawn('sleep', ['30'], { detached: true, stdio: 'ignore' });
+    await new Promise((r) => setTimeout(r, 200));
+    const alive = (pid: number) => {
+      try {
+        process.kill(pid, 0);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    writeFileSync(join(jobDir, 'blender.pid'), String(unrelated.pid));
+    const runner = new BlenderRunner({ jobsDir: join(dir, 'jobs'), workerScript: 'x', getBlenderBinary: async () => 'x', ffmpegPath: 'ffmpeg' });
+    await runner.reclaim(job);
+    expect(alive(unrelated.pid!)).toBe(true);
+    expect(existsSync(join(jobDir, 'blender.pid'))).toBe(false);
+
+    writeFileSync(join(jobDir, 'blender.pid'), String(orphan.pid));
+    await runner.reclaim(job);
+    await new Promise((r) => setTimeout(r, 300));
+    expect(spawnSync('ps', ['-o', 'stat=', '-p', String(orphan.pid)]).stdout.toString().trim()).toMatch(/^(Z|)$/);
+    process.kill(-unrelated.pid!, 'SIGKILL');
+    void queue;
   });
 
   it('hủy job đang render dừng cả tiến trình Blender trong <= 3 giây', async () => {

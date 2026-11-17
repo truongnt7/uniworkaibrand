@@ -7,6 +7,10 @@ import {
   IpcValidationError,
   totalFramesFor,
   RuntimeManifest,
+  INVOKE_CHANNEL_NAMES,
+  EVENT_CHANNEL_NAMES,
+  invokeContract,
+  eventContract,
 } from '../src/index.js';
 
 const baseRequest = {
@@ -110,5 +114,12 @@ describe('RuntimeManifest', () => {
     const art = { url: 'https://x/y.tar.xz', size: 1, sha256: 'a'.repeat(64), archive: 'tar.xz', binary: 'blender' };
     expect(RuntimeManifest.safeParse({ schemaVersion: 1, blender: { version: '4.5.16', channel: 'LTS', artifacts: { 'linux-x64': art } } }).success).toBe(true);
     expect(RuntimeManifest.safeParse({ schemaVersion: 1, blender: { version: '5.0.1', channel: 'LTS', artifacts: { 'linux-x64': art } } }).success).toBe(false);
+  });
+});
+
+describe('danh sách kênh IPC', () => {
+  it('khớp hợp đồng zod', () => {
+    expect([...INVOKE_CHANNEL_NAMES].sort()).toEqual(Object.keys(invokeContract).sort());
+    expect([...EVENT_CHANNEL_NAMES].sort()).toEqual(Object.keys(eventContract).sort());
   });
 });

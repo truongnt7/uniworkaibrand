@@ -36,8 +36,6 @@ export type InvokeReq<C extends InvokeChannel> = z.input<(typeof invokeContract)
 export type InvokeRes<C extends InvokeChannel> = z.infer<(typeof invokeContract)[C]['res']>;
 export type EventPayload<C extends EventChannel> = z.infer<(typeof eventContract)[C]>;
 
-export const INVOKE_CHANNELS = Object.keys(invokeContract) as InvokeChannel[];
-export const EVENT_CHANNELS = Object.keys(eventContract) as EventChannel[];
 
 export class IpcValidationError extends Error {
   readonly code = 'IPC_INVALID_PAYLOAD';

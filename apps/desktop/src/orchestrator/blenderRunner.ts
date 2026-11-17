@@ -1,3 +1,4 @@
+import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { copyFile, mkdir, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { AppError, type JobRecord, type WorkerEvent } from '@aps/shared';
@@ -9,7 +10,7 @@ import {
   parseFfmpegProgress,
 } from '@aps/render-core';
 import type { JobRunner, RunControl } from './queue.js';
-import { runProcess } from './process.js';
+import { isBlenderProcess, killPid, runProcess } from './process.js';
 
 export interface BlenderRunnerOptions {
   jobsDir: string;
@@ -71,6 +72,18 @@ export class BlenderRunner implements JobRunner {
     return { outputPath: out };
   }
 
+  /** Dọn Blender mồ côi do lần chạy trước (app bị kill) còn ghi lại PID trong thư mục job. */
+  async reclaim(job: JobRecord): Promise<void> {
+    const pidFile = join(this.opts.jobsDir, job.id, 'blender.pid');
+    try {
+      const pid = Number(readFileSync(pidFile, 'utf8').trim());
+      if (Number.isInteger(pid) && pid > 1 && isBlenderProcess(pid)) killPid(pid);
+    } catch {
+      // không có PID file
+    }
+    rmSync(pidFile, { force: true });
+  }
+
   async cleanup(job: JobRecord): Promise<void> {
     await rm(join(this.opts.jobsDir, job.id), { recursive: true, force: true });
   }
@@ -111,10 +124,13 @@ export class BlenderRunner implements JobRunner {
     const result = await runProcess(blender, blenderArgs(this.opts.workerScript, jobJson), {
       cwd: workDir,
       signal: ctl.signal,
+      onSpawn: (pid) => writeFileSync(join(workDir, 'blender.pid'), String(pid)),
       onStdoutChunk: (c) => parser.push(c).forEach(handle),
-    }).catch((err: NodeJS.ErrnoException) => {
-      throw new AppError('RUNTIME_MISSING', `không chạy được Blender: ${err.message}`);
-    });
+    })
+      .catch((err: NodeJS.ErrnoException) => {
+        throw new AppError('RUNTIME_MISSING', `không chạy được Blender: ${err.message}`);
+      })
+      .finally(() => rmSync(join(workDir, 'blender.pid'), { force: true }));
     parser.flush().forEach(handle);
 
     if (result.aborted) throw new AppError('CANCELED', 'canceled');

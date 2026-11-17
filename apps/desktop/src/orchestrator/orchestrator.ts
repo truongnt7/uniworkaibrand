@@ -29,6 +29,8 @@ export interface Orchestrator {
   queue: JobQueue;
   runtime: RuntimeManager;
   db: Db;
+  /** Dừng êm hàng đợi (giữ job dở dang để tiếp tục lần sau) rồi đóng DB. */
+  shutdown(): Promise<void>;
   close(): void;
 }
 
@@ -76,13 +78,17 @@ export function createOrchestrator(config: OrchestratorConfig, emit: EmitFn): Or
     'runtime:importFile': ({ path }) => runtime.importFromFile(path),
   };
 
-  queue.recover();
+  void queue.recover();
 
   return {
     handlers,
     queue,
     runtime,
     db,
+    shutdown: async () => {
+      await queue.shutdown();
+      db.close();
+    },
     close: () => db.close(),
   };
 }

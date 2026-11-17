@@ -3,3 +3,4 @@ export * from './worker-protocol.js';
 export * from './runtime.js';
 export * from './ipc.js';
 export * from './errors.js';
+export * from './channels.js';

@@ -249,11 +249,59 @@ describe('JobQueue', () => {
       },
       dbPath,
     );
-    const recovered = second.queue.recover();
+    const recovered = await second.queue.recover();
     expect(recovered.map((j) => j.id)).toEqual([job.id]);
     await second.queue.idle();
     expect(second.queue.get(job.id)).toMatchObject({ status: 'done', outputPath: '/resumed' });
     expect(seenFrames).toEqual([4]);
+    first.db.close();
+    second.db.close();
+  });
+
+  it('thoát êm (shutdown): dừng runner nhưng giữ trạng thái dở dang để lần sau tiếp tục; gọi reclaim', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'aps-queue-'));
+    cleanup.push(dir);
+    const dbPath = join(dir, 'q.sqlite');
+    const started = deferred();
+    let aborted = false;
+    const first = setup(
+      {
+        async run(_j, ctl) {
+          ctl.enter('rendering');
+          ctl.progress({ frame: 2 });
+          started.resolve();
+          await new Promise<void>((_r, rej) =>
+            ctl.signal.addEventListener('abort', () => {
+              aborted = true;
+              rej(new AppError('CANCELED', 'x'));
+            }),
+          );
+          return { outputPath: '/never' };
+        },
+      },
+      dbPath,
+    );
+    const job = first.queue.enqueue(req());
+    await started.promise;
+    await first.queue.shutdown();
+    expect(aborted).toBe(true);
+    expect(first.store.get(job.id)).toMatchObject({ status: 'rendering', frame: 2, errorCode: null });
+
+    const reclaimed: string[] = [];
+    const second = setup(
+      {
+        async run(_j, ctl) {
+          ctl.enter('rendering');
+          return { outputPath: '/ok' };
+        },
+        reclaim: (j) => void reclaimed.push(j.id),
+      },
+      dbPath,
+    );
+    await second.queue.recover();
+    await second.queue.idle();
+    expect(reclaimed).toEqual([job.id]);
+    expect(second.queue.get(job.id)!.status).toBe('done');
     first.db.close();
     second.db.close();
   });

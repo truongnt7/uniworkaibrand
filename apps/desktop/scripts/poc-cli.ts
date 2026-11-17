@@ -14,6 +14,8 @@ import { createOrchestrator } from '../src/orchestrator/orchestrator.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, '..', '..', '..');
+const invokedFrom = process.env.INIT_CWD ?? process.cwd();
+const abs = (p: string) => resolve(invokedFrom, p);
 
 const { positionals, values } = parseArgs({
   allowPositionals: true,
@@ -47,12 +49,12 @@ const command = positionals[0] ?? 'render';
 
 const orch = createOrchestrator(
   {
-    dataDir: resolve(values.data as string),
+    dataDir: abs(values.data as string),
     workerScript: join(repoRoot, 'blender-worker', 'worker.py'),
     manifestPath: join(here, '..', 'resources', 'runtime-manifest.signed.json'),
     publicKeyPath: join(here, '..', 'resources', 'manifest-public-key.pem'),
     ffmpegPath: values.ffmpeg as string,
-    blenderOverride: values.blender ? resolve(values.blender) : (process.env.APS_BLENDER_BIN ?? null),
+    blenderOverride: values.blender ? abs(values.blender) : (process.env.APS_BLENDER_BIN ?? null),
     onLog: (_id, line) => {
       if (process.env.APS_VERBOSE) console.log(`  [blender] ${line}`);
     },
@@ -88,12 +90,12 @@ async function main() {
   const request: RenderRequestInput = {
     name: `poc-${values.kind}`,
     product: {
-      glbPath: resolve(values.glb as string),
+      glbPath: abs(values.glb as string),
       ...(values['size-height'] ? { sizeMm: { width: 60, depth: 60, height: Number(values['size-height']) } } : {}),
       ...(values.label
         ? {
             label: {
-              imagePath: resolve(values.label),
+              imagePath: abs(values.label),
               mode: values['label-mode'] as 'cylinder' | 'flat',
               widthMm: num(values['label-width']),
               heightMm: num(values['label-height']),
@@ -113,7 +115,7 @@ async function main() {
       fps: Number(values.fps),
       durationS: Number(values.duration),
       device: values.device as 'auto' | 'cpu',
-      ...(values.logo ? { logoPath: resolve(values.logo) } : {}),
+      ...(values.logo ? { logoPath: abs(values.logo) } : {}),
     },
   };
   const job = orch.queue.enqueue(request);
@@ -126,9 +128,9 @@ async function main() {
   }
   console.log('Kết quả:', done.outputPath);
   if (values.out && done.outputPath) {
-    mkdirSync(dirname(resolve(values.out)), { recursive: true });
-    copyFileSync(done.outputPath, resolve(values.out));
-    console.log('Đã sao chép tới', resolve(values.out));
+    mkdirSync(dirname(abs(values.out)), { recursive: true });
+    copyFileSync(done.outputPath, abs(values.out));
+    console.log('Đã sao chép tới', abs(values.out));
   }
 }
 

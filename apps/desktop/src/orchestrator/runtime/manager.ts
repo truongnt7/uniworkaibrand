@@ -76,7 +76,10 @@ export class RuntimeManager {
   }
 
   async status(): Promise<RuntimeStatus> {
-    const busy = this.installing !== null;
+    return this.readStatus(this.installing !== null);
+  }
+
+  private async readStatus(busy: boolean): Promise<RuntimeStatus> {
     if (this.opts.binaryOverride) {
       return { installed: true, version: 'external', binaryPath: this.opts.binaryOverride, platform: this.platformKey, busy };
     }
@@ -120,7 +123,7 @@ export class RuntimeManager {
         sleep: this.opts.sleep,
         fetchImpl: this.opts.fetchImpl,
         signal,
-        onProgress: (p) => this.emit({ phase: 'downloading', ...p }),
+        onProgress: (p) => this.emitDownload(p),
         onVerifying: () => this.emit({ phase: 'verifying' }),
         onRetry: (r) =>
           this.emit({ phase: 'retrying', attempt: r.attempt, maxAttempts: r.maxAttempts, errorCode: r.error.code, message: r.error.message }),
@@ -195,7 +198,7 @@ export class RuntimeManager {
       if (oldDir) await rm(oldDir, { recursive: true, force: true });
       if (deleteArchive) await rm(archive, { force: true });
       this.emit({ phase: 'done' });
-      return await this.status();
+      return await this.readStatus(false);
     } finally {
       await rm(tmpDir, { recursive: true, force: true });
     }
@@ -216,6 +219,15 @@ export class RuntimeManager {
         this.abort = null;
       });
     return this.installing;
+  }
+
+  private lastDownloadEmit = 0;
+
+  private emitDownload(p: { receivedBytes: number; totalBytes: number; bytesPerSecond: number }): void {
+    const now = Date.now();
+    if (p.receivedBytes < p.totalBytes && now - this.lastDownloadEmit < 150) return;
+    this.lastDownloadEmit = now;
+    this.emit({ phase: 'downloading', ...p });
   }
 
   private emit(p: Partial<RuntimeProgress> & Pick<RuntimeProgress, 'phase'>): void {

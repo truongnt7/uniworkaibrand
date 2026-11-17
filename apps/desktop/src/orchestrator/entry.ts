@@ -21,6 +21,11 @@ const orchestrator = createOrchestrator(config, (channel, payload) => {
 
 parentPort.on('message', async ({ data }) => {
   const msg = data as { kind?: string; id?: number; channel?: string; payload?: unknown };
+  if (msg.kind === 'shutdown') {
+    await orchestrator.shutdown();
+    parentPort.postMessage({ kind: 'shutdown-done' });
+    return;
+  }
   if (msg.kind !== 'invoke' || typeof msg.id !== 'number') return;
   try {
     const result = await dispatchInvoke(orchestrator.handlers, msg.channel, msg.payload);

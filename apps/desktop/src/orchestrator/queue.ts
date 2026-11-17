@@ -17,6 +17,8 @@ export interface RunControl {
 export interface JobRunner {
   run(job: JobRecord, ctl: RunControl): Promise<{ outputPath: string }>;
   cleanup?(job: JobRecord): Promise<void> | void;
+  /** Dọn tài nguyên mồ côi của một job bị gián đoạn trước khi chạy lại. */
+  reclaim?(job: JobRecord): Promise<void> | void;
 }
 
 export interface QueueOptions {
@@ -41,6 +43,7 @@ export class JobQueue {
   private readonly throttle: number;
   private running: Running | null = null;
   private lastEmit = 0;
+  private shuttingDown = false;
 
   constructor(opts: QueueOptions) {
     this.store = opts.store;
@@ -67,15 +70,25 @@ export class JobQueue {
   }
 
   /** Gọi một lần khi khởi động: job đang dở do app bị đóng/crash quay lại hàng đợi và tiếp tục từ khung đã có. */
-  recover(): JobRecord[] {
+  async recover(): Promise<JobRecord[]> {
     const recovered: JobRecord[] = [];
     for (const job of this.store.listByStatus('preparing', 'rendering', 'encoding')) {
+      await this.runner.reclaim?.(job);
       const next = this.store.update(job.id, { status: transition(job.status, 'recover') });
       recovered.push(next);
       this.emit(next, true);
     }
     this.pump();
     return recovered;
+  }
+
+  /** Thoát êm: dừng job đang chạy nhưng GIỮ trạng thái dở dang để lần mở sau `recover()` chạy tiếp từ khung đã có. */
+  async shutdown(): Promise<void> {
+    this.shuttingDown = true;
+    if (this.running) {
+      this.running.abort.abort();
+      await this.running.settled;
+    }
   }
 
   async cancel(id: string): Promise<boolean> {
@@ -131,7 +144,7 @@ export class JobQueue {
   }
 
   private pump(): void {
-    if (this.running) return;
+    if (this.running || this.shuttingDown) return;
     const next = this.store.nextRunnable();
     if (!next) return;
     this.start(next);
@@ -211,6 +224,7 @@ export class JobQueue {
     } catch (err) {
       const cur = this.store.get(id);
       if (!cur) return;
+      if (this.shuttingDown) return;
       if (abort.signal.aborted) {
         apply({ status: transition(cur.status, 'cancel'), estimateS: null, finishedAt: this.now() }, true);
         return;
