@@ -25,6 +25,7 @@ export function buildOpenApi(app: INestApplication) {
 export async function createApp(env: Env): Promise<NestExpressApplication> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule.register(env), {
     logger: env.APS_ENV === 'test' ? ['error', 'warn'] : ['log', 'error', 'warn'],
+    abortOnError: false,
   });
   app.disable('x-powered-by');
   const hops = Number(process.env.TRUST_PROXY ?? 0);
