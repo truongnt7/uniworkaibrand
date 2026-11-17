@@ -6,17 +6,24 @@ import { openDb, type Db } from './db.js';
 import { JobStore } from './jobStore.js';
 import { JobQueue, type JobRunner } from './queue.js';
 import { RuntimeManager, type RuntimeManagerOptions } from './runtime/manager.js';
-import { parseSignedManifest } from './runtime/manifest.js';
+import { parseSignedManifest, type ManifestTrust } from './runtime/manifest.js';
+import { loadTrustedKeys } from './runtime/trust.js';
 
 export interface OrchestratorConfig {
   dataDir: string;
   workerScript: string;
   manifestPath: string;
-  publicKeyPath: string | null;
-  ffmpegPath: string;
+  /** Thư mục khóa công khai production (`<keyId>.pub.pem`). Không có khóa nào -> không cài được runtime (MANIFEST_NO_TRUSTED_KEY). */
+  productionKeysDir: string | null;
+  /** true cho app đóng gói/bản phát hành: không bao giờ nạp khóa dev. */
+  release: boolean;
   /** Dev/test: dùng binary Blender có sẵn thay vì runtime đã tải. */
   blenderOverride?: string | null;
+  /** Dev/test: ffmpeg có sẵn (vẫn bị kiểm chính sách LGPL). */
+  ffmpegOverride?: string | null;
+  /** Chỉ dùng trong test của orchestrator. */
   allowUnsignedManifest?: boolean;
+  env?: NodeJS.ProcessEnv;
   runtimeOverrides?: Partial<RuntimeManagerOptions>;
   runner?: JobRunner;
   onLog?: (jobId: string, line: string) => void;
@@ -38,16 +45,26 @@ export function createOrchestrator(config: OrchestratorConfig, emit: EmitFn): Or
   const db = openDb(join(config.dataDir, 'aps.sqlite'));
   const store = new JobStore(db);
 
+  let trustCache: Promise<ManifestTrust> | null = null;
+  const trust = (): Promise<ManifestTrust> => {
+    trustCache ??= loadTrustedKeys({ productionKeysDir: config.productionKeysDir, release: config.release, env: config.env }).then((keys) => ({
+      keys,
+      allowUnsigned: config.allowUnsignedManifest ?? false,
+    }));
+    return trustCache;
+  };
+
   const runtime = new RuntimeManager({
     dir: join(config.dataDir, 'runtime'),
     workerScript: config.workerScript,
     binaryOverride: config.blenderOverride ?? null,
+    ffmpegOverride: config.ffmpegOverride ?? null,
     onProgress: (p) => emit('runtime:progress', p),
     loadManifest: async () => {
       const raw = JSON.parse(await readFile(config.manifestPath, 'utf8')) as unknown;
-      const key = config.publicKeyPath ? await readFile(config.publicKeyPath, 'utf8') : null;
-      return parseSignedManifest(raw, key, config.allowUnsignedManifest ?? false);
+      return parseSignedManifest(raw, await trust());
     },
+    parseManifest: async (raw) => parseSignedManifest(raw, await trust()),
     ...config.runtimeOverrides,
   });
 
@@ -57,7 +74,7 @@ export function createOrchestrator(config: OrchestratorConfig, emit: EmitFn): Or
       jobsDir: join(config.dataDir, 'jobs'),
       workerScript: config.workerScript,
       getBlenderBinary: () => runtime.getBinaryPath(),
-      ffmpegPath: config.ffmpegPath,
+      getFfmpegPath: () => runtime.getFfmpegPath(),
       onLog: config.onLog,
     });
 
@@ -72,6 +89,8 @@ export function createOrchestrator(config: OrchestratorConfig, emit: EmitFn): Or
     'jobs:create': (req) => queue.enqueue(req),
     'jobs:cancel': async ({ id }) => ({ ok: await queue.cancel(id) }),
     'jobs:retry': ({ id }) => ({ ok: queue.retry(id) }),
+    'jobs:pause': async ({ id }) => ({ ok: await queue.pause(id) }),
+    'jobs:resume': ({ id }) => ({ ok: queue.resume(id) }),
     'jobs:remove': async ({ id }) => ({ ok: await queue.remove(id) }),
     'runtime:status': () => runtime.status(),
     'runtime:install': () => runtime.install(),

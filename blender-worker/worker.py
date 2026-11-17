@@ -25,7 +25,7 @@ def _argv_after_dashes():
     return argv[argv.index("--") + 1 :] if "--" in argv else []
 
 
-def _render_frames(bpy, scene, job, handles):
+def _render_frames(bpy, scene, job, handles, qc=None):
     from motions import turntable
 
     total = job["frames"]["total"]
@@ -35,6 +35,8 @@ def _render_frames(bpy, scene, job, handles):
     for frame in range(1, total + 1):
         final = jobmod.frame_path(job, frame)
         protocol.emit("progress", phase="render", frame=frame - 1, total=total)
+        if qc is not None:
+            _write_qc_grid(bpy, scene, job, handles, qc, frame, final)
         if os.path.isfile(final) and os.path.getsize(final) > 0:
             protocol.emit("frame_done", frame=frame, path=final, ms=0, skipped=True)
             done += 1
@@ -58,6 +60,16 @@ def _render_frames(bpy, scene, job, handles):
         protocol.emit("frame_done", frame=frame, path=final, ms=int((time.time() - t0) * 1000))
     protocol.emit("progress", phase="render", frame=total, total=total)
     return done, int((time.time() - t_all) * 1000)
+
+
+def _write_qc_grid(bpy, scene, job, handles, qc, frame, final):
+    from label_decal import qc_grid
+    from motions import turntable
+
+    turntable.apply_angle(handles, job["motion"], jobmod.frame_angle(job, frame))
+    bpy.context.view_layer.update()
+    grid = qc_grid.compute(scene, scene.camera, qc["obj"], qc["spec"])
+    qc_grid.write(final + ".grid.json", grid)
 
 
 def _smoke(bpy, job):
@@ -94,11 +106,14 @@ def _render(bpy, job):
     dims = glb_import.normalize(new_objects, meshes, job["product"].get("sizeMm"))
 
     protocol.emit("progress", phase="scene", frame=0, total=job["frames"]["total"])
-    decal.apply(job, meshes, dims)
+    spec = decal.apply(job, meshes, dims)
     handles = studio.build(scene, job, dims, meshes)
     gpu_setup.configure_render(scene, job["render"])
 
-    frames, _ = _render_frames(bpy, scene, job, handles)
+    qc = None
+    if job.get("qcGrid") and spec is not None:
+        qc = {"spec": spec, "obj": max(meshes, key=lambda o: len(o.data.vertices))}
+    frames, _ = _render_frames(bpy, scene, job, handles, qc)
     protocol.emit("done", frames=frames, ms=int((time.time() - t0) * 1000))
 
 

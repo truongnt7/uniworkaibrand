@@ -24,6 +24,19 @@ def _estimate_radius(meshes, z_lo, z_hi):
     return (total / n) if n else 0.0
 
 
+def _front_y(meshes, z_lo, z_hi, half_w):
+    """Mặt trước (y nhỏ nhất, camera nhìn từ -Y) của model tại tâm vùng nhãn phẳng, bằng raycast; dùng cho lưới QC."""
+    from mathutils import Vector
+
+    best = None
+    zc = (z_lo + z_hi) / 2.0
+    for obj in meshes:
+        ok, loc, _normal, _idx = obj.ray_cast(Vector((0.0, -10.0, zc)), Vector((0.0, 1.0, 0.0)))
+        if ok:
+            best = loc.y if best is None else min(best, loc.y)
+    return best if best is not None else 0.0
+
+
 def _mat_output(tree):
     for node in tree.nodes:
         if node.type == "OUTPUT_MATERIAL" and node.is_active_output:
@@ -143,6 +156,8 @@ def apply(job, meshes, dims):
         "radius": radius,
         "center_rad": math.radians(label.get("centerDeg", 0.0)),
     }
+    if mode == "flat":
+        spec["front_y"] = _front_y(meshes, bottom, bottom + label_h, label_w / 2.0)
     patched = 0
     done = {}
     for obj in meshes:

@@ -1,0 +1,190 @@
+{
+ "total": 10,
+ "passed": 10,
+ "target": ">= 8/10",
+ "meetsTarget": true,
+ "negativeControls": [
+  {
+   "frames": "serum30",
+   "labelOf": "toner120",
+   "rejected": true,
+   "passRatio": 1,
+   "exit": 1
+  },
+  {
+   "frames": "toner120",
+   "labelOf": "cream50",
+   "rejected": true,
+   "passRatio": 0,
+   "exit": 1
+  },
+  {
+   "frames": "cream50",
+   "labelOf": "lotion250",
+   "rejected": true,
+   "passRatio": 0,
+   "exit": 1
+  },
+  {
+   "frames": "lotion250",
+   "labelOf": "tube100",
+   "rejected": true,
+   "passRatio": 1,
+   "exit": 1
+  },
+  {
+   "frames": "tube100",
+   "labelOf": "can330",
+   "rejected": true,
+   "passRatio": 1,
+   "exit": 1
+  },
+  {
+   "frames": "can330",
+   "labelOf": "bottle500",
+   "rejected": true,
+   "passRatio": 1,
+   "exit": 1
+  },
+  {
+   "frames": "bottle500",
+   "labelOf": "jar200",
+   "rejected": true,
+   "passRatio": 0,
+   "exit": 1
+  },
+  {
+   "frames": "jar200",
+   "labelOf": "box_soap",
+   "rejected": true,
+   "passRatio": 0.4,
+   "exit": 1
+  },
+  {
+   "frames": "box_soap",
+   "labelOf": "box_tea",
+   "rejected": true,
+   "passRatio": 1,
+   "exit": 1
+  },
+  {
+   "frames": "box_tea",
+   "labelOf": "serum30",
+   "rejected": true,
+   "passRatio": 1,
+   "exit": 1
+  }
+ ],
+ "rows": [
+  {
+   "name": "serum30",
+   "mode": "cylinder",
+   "pass": true,
+   "considered": 5,
+   "passed": 5,
+   "tilted": 4,
+   "hidden": 9,
+   "exit": 0,
+   "seconds": 3
+  },
+  {
+   "name": "toner120",
+   "mode": "cylinder",
+   "pass": true,
+   "considered": 5,
+   "passed": 5,
+   "tilted": 4,
+   "hidden": 9,
+   "exit": 0,
+   "seconds": 2
+  },
+  {
+   "name": "cream50",
+   "mode": "cylinder",
+   "pass": true,
+   "considered": 5,
+   "passed": 5,
+   "tilted": 4,
+   "hidden": 9,
+   "exit": 0,
+   "seconds": 2
+  },
+  {
+   "name": "lotion250",
+   "mode": "cylinder",
+   "pass": true,
+   "considered": 5,
+   "passed": 5,
+   "tilted": 4,
+   "hidden": 9,
+   "exit": 0,
+   "seconds": 3
+  },
+  {
+   "name": "tube100",
+   "mode": "cylinder",
+   "pass": true,
+   "considered": 5,
+   "passed": 5,
+   "tilted": 4,
+   "hidden": 9,
+   "exit": 0,
+   "seconds": 3
+  },
+  {
+   "name": "can330",
+   "mode": "cylinder",
+   "pass": true,
+   "considered": 5,
+   "passed": 5,
+   "tilted": 4,
+   "hidden": 9,
+   "exit": 0,
+   "seconds": 2
+  },
+  {
+   "name": "bottle500",
+   "mode": "cylinder",
+   "pass": true,
+   "considered": 5,
+   "passed": 5,
+   "tilted": 4,
+   "hidden": 9,
+   "exit": 0,
+   "seconds": 2
+  },
+  {
+   "name": "jar200",
+   "mode": "cylinder",
+   "pass": true,
+   "considered": 5,
+   "passed": 5,
+   "tilted": 3,
+   "hidden": 10,
+   "exit": 0,
+   "seconds": 2
+  },
+  {
+   "name": "box_soap",
+   "mode": "flat",
+   "pass": true,
+   "considered": 5,
+   "passed": 5,
+   "tilted": 2,
+   "hidden": 11,
+   "exit": 0,
+   "seconds": 3
+  },
+  {
+   "name": "box_tea",
+   "mode": "flat",
+   "pass": true,
+   "considered": 5,
+   "passed": 5,
+   "tilted": 2,
+   "hidden": 11,
+   "exit": 0,
+   "seconds": 3
+  }
+ ]
+}

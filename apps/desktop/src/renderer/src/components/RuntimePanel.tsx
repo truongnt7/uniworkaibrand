@@ -41,7 +41,7 @@ export function RuntimePanel({ runtime }: { runtime: RuntimeState }) {
         <button type="button" onClick={() => void runtime.install()} disabled={!!busy || status?.installed} data-testid="runtime-install">
           {busy ? t('runtime.installing') : t('runtime.install')}
         </button>
-        <button type="button" className="secondary" onClick={() => void runtime.importFile()} disabled={!!busy}>
+        <button type="button" className="secondary" onClick={() => void runtime.importFile()} disabled={!!busy} data-testid="runtime-import">
           {t('runtime.importFile')}
         </button>
       </div>

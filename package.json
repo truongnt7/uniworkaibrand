@@ -5,7 +5,7 @@
   "description": "AI Product Studio - monorepo (Phase 0 PoC: Electron + Blender 4.5 LTS headless)",
   "packageManager": "pnpm@10.33.4",
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=22.13.0 <25"
   },
   "scripts": {
     "build": "turbo run build",
@@ -13,7 +13,10 @@
     "test": "turbo run test",
     "lint": "eslint .",
     "poc:render": "pnpm --filter @aps/desktop poc:cli",
-    "dev": "pnpm --filter @aps/desktop dev"
+    "dev": "pnpm --filter @aps/desktop dev",
+    "dev:keys": "node tools/runtime/dev-keys.mjs",
+    "ffmpeg:fetch": "node tools/ffmpeg/fetch-lgpl.mjs",
+    "runtime:pack": "node tools/runtime/pack-runtime.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",

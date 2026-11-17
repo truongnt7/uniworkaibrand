@@ -41,6 +41,8 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .job { border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
 .badge { display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 999px; font-size: 11px; background: #2a3040; }
 .badge-done { background: #1d3b2e; color: var(--ok); }
+.badge-needs_attention { background: #4a3a17; color: #f0c674; }
+.badge-paused { background: #2a3040; color: #b8c0d8; }
 .badge-failed { background: #3d2323; color: var(--err); }
 .badge-rendering, .badge-encoding, .badge-preparing { background: #26305a; color: #a9bcff; }
 .preview video, .preview img { width: 100%; border-radius: 8px; margin-top: 8px; background: #000; }
