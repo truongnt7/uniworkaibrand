@@ -1,0 +1,600 @@
+{
+  "industry": "ngoai-ngu",
+  "templates": [
+    {
+      "id": "nn-khai-giang",
+      "industry": "ngoai-ngu",
+      "name": "Thông báo khai giảng",
+      "summary": "Khoá học mới: tên khoá, lịch học, học phí, địa chỉ. Ảnh không bắt buộc.",
+      "goal": "tuyen-sinh",
+      "evidence": "assumption",
+      "aspects": [
+        "9:16",
+        "4:5",
+        "1:1"
+      ],
+      "defaultAspect": "9:16",
+      "channels": [
+        "facebook",
+        "zalo",
+        "tiktok"
+      ],
+      "palette": {
+        "primary": "#1c7ed6",
+        "accent": "#fcc419"
+      },
+      "fields": [
+        {
+          "key": "businessName",
+          "label": "Tên cơ sở / thương hiệu",
+          "example": "Cửa hàng Mẫu",
+          "required": true
+        },
+        {
+          "key": "phone",
+          "label": "Số điện thoại liên hệ",
+          "example": "0901 234 567",
+          "required": true,
+          "hint": "Số khách gọi hoặc nhắn Zalo cho bạn."
+        },
+        {
+          "key": "itemName",
+          "label": "Tên khoá học",
+          "example": "Tiếng Anh giao tiếp",
+          "required": true
+        },
+        {
+          "key": "detail",
+          "label": "Lịch học / ngày khai giảng",
+          "example": "Khai giảng 05/12, học tối 2-4-6",
+          "required": true
+        },
+        {
+          "key": "price",
+          "label": "Học phí (không bắt buộc)",
+          "example": "1.500.000đ/tháng",
+          "required": false,
+          "hint": "Ghi rõ đơn vị (tháng, khoá)."
+        },
+        {
+          "key": "promo",
+          "label": "Ưu đãi (nếu có)",
+          "example": "Đăng ký sớm trước 01/12",
+          "required": false
+        },
+        {
+          "key": "address",
+          "label": "Địa chỉ trung tâm",
+          "example": "10 Đường Nguyễn Trãi, Phường 2",
+          "required": true
+        }
+      ],
+      "photos": [
+        {
+          "id": "anh1",
+          "label": "Ảnh lớp học / trung tâm (không bắt buộc)",
+          "required": false,
+          "hint": "Không đăng ảnh học viên nhỏ tuổi nếu chưa được phụ huynh đồng ý."
+        }
+      ],
+      "scenes": [
+        {
+          "type": "card",
+          "durationS": 3.5,
+          "texts": [
+            {
+              "text": "{{itemName}}",
+              "position": "center",
+              "style": "title"
+            },
+            {
+              "text": "{{detail}}",
+              "position": "lower_third",
+              "style": "body",
+              "color": "accent"
+            }
+          ],
+          "background": "primary"
+        },
+        {
+          "type": "photo",
+          "slot": "anh1",
+          "durationS": 3.5,
+          "texts": [
+            {
+              "text": "{{price}}",
+              "position": "lower_third",
+              "style": "title",
+              "color": "accent"
+            },
+            {
+              "text": "{{promo}}",
+              "position": "bottom",
+              "style": "body"
+            }
+          ],
+          "shade": 0.3
+        },
+        {
+          "type": "card",
+          "durationS": 4.0,
+          "texts": [
+            {
+              "text": "{{businessName}}",
+              "position": "center",
+              "style": "title"
+            },
+            {
+              "text": "Liên hệ: {{phone}}",
+              "position": "lower_third",
+              "style": "body",
+              "color": "accent"
+            },
+            {
+              "text": "{{address}}",
+              "position": "bottom",
+              "style": "small"
+            }
+          ],
+          "background": "primary"
+        }
+      ],
+      "logo": "end_card",
+      "music": "optional",
+      "caption": {
+        "lines": [
+          "Khai giảng: {{itemName}}",
+          "{{detail}}",
+          "Học phí: {{price}}",
+          "{{promo}}",
+          "Địa chỉ: {{address}}",
+          "Đăng ký tư vấn: {{phone}}"
+        ],
+        "hashtags": [
+          "#hoctienganh",
+          "#khaigiang"
+        ]
+      }
+    },
+    {
+      "id": "nn-gioi-thieu-lop",
+      "industry": "ngoai-ngu",
+      "name": "Giới thiệu lớp học",
+      "summary": "Ảnh lớp học kèm tên khoá và đối tượng. Dùng khi muốn khách thấy môi trường học.",
+      "goal": "gioi-thieu",
+      "evidence": "assumption",
+      "aspects": [
+        "9:16",
+        "1:1",
+        "4:5",
+        "16:9"
+      ],
+      "defaultAspect": "9:16",
+      "channels": [
+        "facebook",
+        "zalo",
+        "tiktok"
+      ],
+      "palette": {
+        "primary": "#1c7ed6",
+        "accent": "#fcc419"
+      },
+      "fields": [
+        {
+          "key": "businessName",
+          "label": "Tên cơ sở / thương hiệu",
+          "example": "Cửa hàng Mẫu",
+          "required": true
+        },
+        {
+          "key": "phone",
+          "label": "Số điện thoại liên hệ",
+          "example": "0901 234 567",
+          "required": true,
+          "hint": "Số khách gọi hoặc nhắn Zalo cho bạn."
+        },
+        {
+          "key": "itemName",
+          "label": "Tên khoá / lớp",
+          "example": "Tiếng Anh thiếu nhi",
+          "required": true
+        },
+        {
+          "key": "detail",
+          "label": "Đối tượng / lịch (không bắt buộc)",
+          "example": "Từ 6 đến 10 tuổi, học cuối tuần",
+          "required": false
+        },
+        {
+          "key": "address",
+          "label": "Địa chỉ (nếu có cửa hàng/văn phòng)",
+          "example": "12 Đường Số 1, Phường A, Quận B",
+          "required": false,
+          "hint": "Ghi đủ để khách tìm đến. Bỏ trống nếu chỉ bán qua mạng."
+        }
+      ],
+      "photos": [
+        {
+          "id": "l1",
+          "label": "Ảnh lớp học 1",
+          "required": true,
+          "hint": "Chỉ dùng ảnh khi đã được phụ huynh/học viên đồng ý."
+        },
+        {
+          "id": "l2",
+          "label": "Ảnh lớp học 2 (không bắt buộc)",
+          "required": false
+        },
+        {
+          "id": "l3",
+          "label": "Ảnh lớp học 3 (không bắt buộc)",
+          "required": false
+        },
+        {
+          "id": "l4",
+          "label": "Ảnh lớp học 4 (không bắt buộc)",
+          "required": false
+        }
+      ],
+      "scenes": [
+        {
+          "type": "photo",
+          "slot": "l1",
+          "durationS": 3.5,
+          "texts": [
+            {
+              "text": "{{itemName}}",
+              "position": "lower_third",
+              "style": "title"
+            },
+            {
+              "text": "{{detail}}",
+              "position": "bottom",
+              "style": "body"
+            }
+          ]
+        },
+        {
+          "type": "photo",
+          "slot": "l2",
+          "durationS": 3.0,
+          "texts": []
+        },
+        {
+          "type": "photo",
+          "slot": "l3",
+          "durationS": 3.0,
+          "texts": []
+        },
+        {
+          "type": "photo",
+          "slot": "l4",
+          "durationS": 3.0,
+          "texts": []
+        },
+        {
+          "type": "card",
+          "durationS": 4.0,
+          "texts": [
+            {
+              "text": "{{businessName}}",
+              "position": "center",
+              "style": "title"
+            },
+            {
+              "text": "Liên hệ: {{phone}}",
+              "position": "lower_third",
+              "style": "body",
+              "color": "accent"
+            },
+            {
+              "text": "{{address}}",
+              "position": "bottom",
+              "style": "small"
+            }
+          ],
+          "background": "primary"
+        }
+      ],
+      "logo": "end_card",
+      "music": "optional",
+      "caption": {
+        "lines": [
+          "{{itemName}}",
+          "{{detail}}",
+          "Liên hệ: {{phone}}",
+          "Địa chỉ: {{address}}"
+        ],
+        "hashtags": [
+          "#hocngoaingu"
+        ]
+      }
+    },
+    {
+      "id": "nn-hoat-dong",
+      "industry": "ngoai-ngu",
+      "name": "Hoạt động của trung tâm",
+      "summary": "Ghép 2–4 ảnh hoạt động (ngoại khoá, lớp học) trong một khung rồi lần lượt từng ảnh.",
+      "goal": "gioi-thieu",
+      "evidence": "assumption",
+      "aspects": [
+        "4:5",
+        "1:1",
+        "9:16"
+      ],
+      "defaultAspect": "4:5",
+      "channels": [
+        "facebook",
+        "zalo",
+        "tiktok"
+      ],
+      "palette": {
+        "primary": "#1c7ed6",
+        "accent": "#fcc419"
+      },
+      "fields": [
+        {
+          "key": "businessName",
+          "label": "Tên cơ sở / thương hiệu",
+          "example": "Cửa hàng Mẫu",
+          "required": true
+        },
+        {
+          "key": "phone",
+          "label": "Số điện thoại liên hệ",
+          "example": "0901 234 567",
+          "required": true,
+          "hint": "Số khách gọi hoặc nhắn Zalo cho bạn."
+        },
+        {
+          "key": "itemName",
+          "label": "Tên hoạt động",
+          "example": "Ngày hội ngoại khoá",
+          "required": true
+        },
+        {
+          "key": "detail",
+          "label": "Thời gian / ghi chú (không bắt buộc)",
+          "example": "Tháng 11",
+          "required": false
+        },
+        {
+          "key": "address",
+          "label": "Địa chỉ (nếu có cửa hàng/văn phòng)",
+          "example": "12 Đường Số 1, Phường A, Quận B",
+          "required": false,
+          "hint": "Ghi đủ để khách tìm đến. Bỏ trống nếu chỉ bán qua mạng."
+        }
+      ],
+      "photos": [
+        {
+          "id": "h1",
+          "label": "Ảnh 1",
+          "required": true,
+          "hint": "Chỉ dùng ảnh khi đã được phụ huynh/học viên đồng ý."
+        },
+        {
+          "id": "h2",
+          "label": "Ảnh 2",
+          "required": true
+        },
+        {
+          "id": "h3",
+          "label": "Ảnh 3 (không bắt buộc)",
+          "required": false
+        },
+        {
+          "id": "h4",
+          "label": "Ảnh 4 (không bắt buộc)",
+          "required": false
+        }
+      ],
+      "scenes": [
+        {
+          "type": "collage",
+          "slots": [
+            "h1",
+            "h2",
+            "h3",
+            "h4"
+          ],
+          "durationS": 4.5,
+          "texts": [
+            {
+              "text": "{{itemName}}",
+              "position": "bottom",
+              "style": "title"
+            }
+          ]
+        },
+        {
+          "type": "photo",
+          "slot": "h1",
+          "durationS": 3.0,
+          "texts": [
+            {
+              "text": "{{detail}}",
+              "position": "lower_third",
+              "style": "body"
+            }
+          ]
+        },
+        {
+          "type": "card",
+          "durationS": 4.0,
+          "texts": [
+            {
+              "text": "{{businessName}}",
+              "position": "center",
+              "style": "title"
+            },
+            {
+              "text": "Liên hệ: {{phone}}",
+              "position": "lower_third",
+              "style": "body",
+              "color": "accent"
+            },
+            {
+              "text": "{{address}}",
+              "position": "bottom",
+              "style": "small"
+            }
+          ],
+          "background": "primary"
+        }
+      ],
+      "logo": "end_card",
+      "music": "optional",
+      "caption": {
+        "lines": [
+          "{{itemName}}",
+          "{{detail}}",
+          "Liên hệ: {{phone}}",
+          "Địa chỉ: {{address}}"
+        ],
+        "hashtags": [
+          "#hocngoaingu"
+        ]
+      }
+    },
+    {
+      "id": "nn-mo-dang-ky",
+      "industry": "ngoai-ngu",
+      "name": "Mở đăng ký",
+      "summary": "Thông báo mở đăng ký chỉ bằng chữ, gọn trong khoảng 10 giây.",
+      "goal": "tuyen-sinh",
+      "evidence": "assumption",
+      "aspects": [
+        "9:16",
+        "4:5",
+        "1:1"
+      ],
+      "defaultAspect": "9:16",
+      "channels": [
+        "facebook",
+        "zalo",
+        "tiktok"
+      ],
+      "palette": {
+        "primary": "#1c7ed6",
+        "accent": "#fcc419"
+      },
+      "fields": [
+        {
+          "key": "businessName",
+          "label": "Tên cơ sở / thương hiệu",
+          "example": "Cửa hàng Mẫu",
+          "required": true
+        },
+        {
+          "key": "phone",
+          "label": "Số điện thoại liên hệ",
+          "example": "0901 234 567",
+          "required": true,
+          "hint": "Số khách gọi hoặc nhắn Zalo cho bạn."
+        },
+        {
+          "key": "itemName",
+          "label": "Khoá học đang mở đăng ký",
+          "example": "Luyện thi chứng chỉ",
+          "required": true
+        },
+        {
+          "key": "detail",
+          "label": "Thông tin thêm (lịch, đối tượng...)",
+          "example": "Nhận học viên từ lớp 9",
+          "required": false
+        },
+        {
+          "key": "promo",
+          "label": "Ưu đãi (nếu có)",
+          "example": "Học thử một buổi",
+          "required": false
+        },
+        {
+          "key": "address",
+          "label": "Địa chỉ trung tâm",
+          "example": "10 Đường Nguyễn Trãi, Phường 2",
+          "required": true
+        }
+      ],
+      "photos": [],
+      "scenes": [
+        {
+          "type": "card",
+          "durationS": 3.0,
+          "texts": [
+            {
+              "text": "Mở đăng ký",
+              "position": "top",
+              "style": "body",
+              "color": "accent"
+            },
+            {
+              "text": "{{itemName}}",
+              "position": "center",
+              "style": "title"
+            }
+          ],
+          "background": "primary"
+        },
+        {
+          "type": "card",
+          "durationS": 3.5,
+          "texts": [
+            {
+              "text": "{{detail}}",
+              "position": "center",
+              "style": "body",
+              "color": "#1b1b1b"
+            },
+            {
+              "text": "{{promo}}",
+              "position": "lower_third",
+              "style": "body",
+              "color": "#1b1b1b"
+            }
+          ],
+          "background": "accent"
+        },
+        {
+          "type": "card",
+          "durationS": 4.0,
+          "texts": [
+            {
+              "text": "{{businessName}}",
+              "position": "center",
+              "style": "title"
+            },
+            {
+              "text": "Liên hệ: {{phone}}",
+              "position": "lower_third",
+              "style": "body",
+              "color": "accent"
+            },
+            {
+              "text": "{{address}}",
+              "position": "bottom",
+              "style": "small"
+            }
+          ],
+          "background": "primary"
+        }
+      ],
+      "logo": "none",
+      "music": "none",
+      "caption": {
+        "lines": [
+          "Mở đăng ký: {{itemName}}",
+          "{{detail}}",
+          "{{promo}}",
+          "Địa chỉ: {{address}}",
+          "Đăng ký tư vấn: {{phone}}"
+        ],
+        "hashtags": [
+          "#hocngoaingu"
+        ]
+      }
+    }
+  ]
+}

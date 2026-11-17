@@ -15,3 +15,5 @@ Mục tiêu: nền tảng AI + Blender (bản cài Electron) giúp doanh nghiệ
 | Thị trường | Việt Nam trước, giao diện tiếng Việt; cấu trúc đa ngôn ngữ từ đầu |
 
 Tài liệu chính: [ke-hoach-ai-blender-electron.md](ke-hoach-ai-blender-electron.md)
+
+Mẫu theo ngành và chế độ ảnh sang video: [industry-templates.md](industry-templates.md)

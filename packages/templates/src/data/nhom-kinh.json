@@ -1,0 +1,466 @@
+{
+  "industry": "nhom-kinh",
+  "templates": [
+    {
+      "id": "nk-cong-trinh",
+      "industry": "nhom-kinh",
+      "name": "Công trình đã hoàn thiện",
+      "summary": "Giới thiệu một công trình đã làm: 1–4 ảnh, hạng mục, địa điểm và số liên hệ.",
+      "goal": "gioi-thieu",
+      "evidence": "assumption",
+      "aspects": [
+        "9:16",
+        "1:1",
+        "4:5",
+        "16:9"
+      ],
+      "defaultAspect": "9:16",
+      "channels": [
+        "facebook",
+        "zalo",
+        "tiktok"
+      ],
+      "palette": {
+        "primary": "#0b4f8a",
+        "accent": "#9ad1f5"
+      },
+      "fields": [
+        {
+          "key": "businessName",
+          "label": "Tên cơ sở / thương hiệu",
+          "example": "Cửa hàng Mẫu",
+          "required": true
+        },
+        {
+          "key": "phone",
+          "label": "Số điện thoại liên hệ",
+          "example": "0901 234 567",
+          "required": true,
+          "hint": "Số khách gọi hoặc nhắn Zalo cho bạn."
+        },
+        {
+          "key": "itemName",
+          "label": "Hạng mục",
+          "example": "Cửa nhôm kính phòng khách",
+          "required": true,
+          "hint": "Ví dụ: cửa đi, vách tắm kính, lan can kính."
+        },
+        {
+          "key": "detail",
+          "label": "Địa điểm công trình (không bắt buộc)",
+          "example": "Quận 9, TP.HCM",
+          "required": false,
+          "hint": "Chỉ ghi khu vực nếu chủ nhà đồng ý."
+        },
+        {
+          "key": "address",
+          "label": "Địa chỉ (nếu có cửa hàng/văn phòng)",
+          "example": "12 Đường Số 1, Phường A, Quận B",
+          "required": false,
+          "hint": "Ghi đủ để khách tìm đến. Bỏ trống nếu chỉ bán qua mạng."
+        }
+      ],
+      "photos": [
+        {
+          "id": "c1",
+          "label": "Ảnh công trình 1",
+          "required": true,
+          "hint": "Chụp toàn cảnh hạng mục, đủ sáng."
+        },
+        {
+          "id": "c2",
+          "label": "Ảnh công trình 2 (không bắt buộc)",
+          "required": false
+        },
+        {
+          "id": "c3",
+          "label": "Ảnh công trình 3 (không bắt buộc)",
+          "required": false
+        },
+        {
+          "id": "c4",
+          "label": "Ảnh công trình 4 (không bắt buộc)",
+          "required": false
+        }
+      ],
+      "scenes": [
+        {
+          "type": "photo",
+          "slot": "c1",
+          "durationS": 3.5,
+          "texts": [
+            {
+              "text": "{{itemName}}",
+              "position": "lower_third",
+              "style": "title"
+            },
+            {
+              "text": "{{detail}}",
+              "position": "bottom",
+              "style": "body"
+            }
+          ]
+        },
+        {
+          "type": "photo",
+          "slot": "c2",
+          "durationS": 3.0,
+          "texts": []
+        },
+        {
+          "type": "photo",
+          "slot": "c3",
+          "durationS": 3.0,
+          "texts": []
+        },
+        {
+          "type": "photo",
+          "slot": "c4",
+          "durationS": 3.0,
+          "texts": []
+        },
+        {
+          "type": "card",
+          "durationS": 4.0,
+          "texts": [
+            {
+              "text": "{{businessName}}",
+              "position": "center",
+              "style": "title"
+            },
+            {
+              "text": "Liên hệ: {{phone}}",
+              "position": "lower_third",
+              "style": "body",
+              "color": "accent"
+            },
+            {
+              "text": "{{address}}",
+              "position": "bottom",
+              "style": "small"
+            }
+          ],
+          "background": "primary"
+        }
+      ],
+      "logo": "end_card",
+      "music": "optional",
+      "caption": {
+        "lines": [
+          "{{itemName}}",
+          "Địa điểm: {{detail}}",
+          "Liên hệ: {{phone}}",
+          "Địa chỉ: {{address}}"
+        ],
+        "hashtags": [
+          "#nhomkinh"
+        ]
+      }
+    },
+    {
+      "id": "nk-truoc-sau",
+      "industry": "nhom-kinh",
+      "name": "Trước và sau",
+      "summary": "Cho khách thấy thay đổi: ảnh trước, ảnh sau, rồi hai ảnh cạnh nhau.",
+      "goal": "truoc-sau",
+      "evidence": "assumption",
+      "aspects": [
+        "9:16",
+        "1:1",
+        "4:5",
+        "16:9"
+      ],
+      "defaultAspect": "9:16",
+      "channels": [
+        "facebook",
+        "zalo",
+        "tiktok"
+      ],
+      "palette": {
+        "primary": "#0b4f8a",
+        "accent": "#9ad1f5"
+      },
+      "fields": [
+        {
+          "key": "businessName",
+          "label": "Tên cơ sở / thương hiệu",
+          "example": "Cửa hàng Mẫu",
+          "required": true
+        },
+        {
+          "key": "phone",
+          "label": "Số điện thoại liên hệ",
+          "example": "0901 234 567",
+          "required": true,
+          "hint": "Số khách gọi hoặc nhắn Zalo cho bạn."
+        },
+        {
+          "key": "itemName",
+          "label": "Hạng mục",
+          "example": "Thay cửa sổ nhôm kính",
+          "required": true
+        },
+        {
+          "key": "detail",
+          "label": "Địa điểm (không bắt buộc)",
+          "example": "Quận 9, TP.HCM",
+          "required": false
+        },
+        {
+          "key": "address",
+          "label": "Địa chỉ (nếu có cửa hàng/văn phòng)",
+          "example": "12 Đường Số 1, Phường A, Quận B",
+          "required": false,
+          "hint": "Ghi đủ để khách tìm đến. Bỏ trống nếu chỉ bán qua mạng."
+        }
+      ],
+      "photos": [
+        {
+          "id": "truoc",
+          "label": "Ảnh TRƯỚC khi làm",
+          "required": true,
+          "hint": "Chụp cùng góc với ảnh sau để so sánh rõ."
+        },
+        {
+          "id": "sau",
+          "label": "Ảnh SAU khi làm",
+          "required": true,
+          "hint": "Chụp cùng góc với ảnh trước."
+        }
+      ],
+      "scenes": [
+        {
+          "type": "photo",
+          "slot": "truoc",
+          "durationS": 3.0,
+          "texts": [
+            {
+              "text": "TRƯỚC",
+              "position": "top",
+              "style": "title"
+            }
+          ],
+          "motion": "zoom_in"
+        },
+        {
+          "type": "photo",
+          "slot": "sau",
+          "durationS": 3.5,
+          "texts": [
+            {
+              "text": "SAU",
+              "position": "top",
+              "style": "title",
+              "color": "accent"
+            }
+          ],
+          "transition": "wipeleft",
+          "motion": "zoom_in"
+        },
+        {
+          "type": "collage",
+          "slots": [
+            "truoc",
+            "sau"
+          ],
+          "durationS": 4.0,
+          "texts": [
+            {
+              "text": "{{itemName}}",
+              "position": "bottom",
+              "style": "body"
+            }
+          ]
+        },
+        {
+          "type": "card",
+          "durationS": 4.0,
+          "texts": [
+            {
+              "text": "{{businessName}}",
+              "position": "center",
+              "style": "title"
+            },
+            {
+              "text": "Liên hệ: {{phone}}",
+              "position": "lower_third",
+              "style": "body",
+              "color": "accent"
+            },
+            {
+              "text": "{{address}}",
+              "position": "bottom",
+              "style": "small"
+            }
+          ],
+          "background": "primary"
+        }
+      ],
+      "logo": "end_card",
+      "music": "optional",
+      "caption": {
+        "lines": [
+          "{{itemName}}: trước và sau",
+          "Địa điểm: {{detail}}",
+          "Liên hệ: {{phone}}",
+          "Địa chỉ: {{address}}"
+        ],
+        "hashtags": [
+          "#truocvasau",
+          "#nhomkinh"
+        ]
+      }
+    },
+    {
+      "id": "nk-bao-gia",
+      "industry": "nhom-kinh",
+      "name": "Nhận báo giá",
+      "summary": "Ảnh mẫu đã làm kèm lời mời liên hệ báo giá. Giá tham khảo chỉ hiện nếu bạn tự nhập.",
+      "goal": "bao-gia",
+      "evidence": "assumption",
+      "aspects": [
+        "9:16",
+        "4:5",
+        "1:1"
+      ],
+      "defaultAspect": "9:16",
+      "channels": [
+        "facebook",
+        "zalo",
+        "tiktok"
+      ],
+      "palette": {
+        "primary": "#0b4f8a",
+        "accent": "#9ad1f5"
+      },
+      "fields": [
+        {
+          "key": "businessName",
+          "label": "Tên cơ sở / thương hiệu",
+          "example": "Cửa hàng Mẫu",
+          "required": true
+        },
+        {
+          "key": "phone",
+          "label": "Số điện thoại liên hệ",
+          "example": "0901 234 567",
+          "required": true,
+          "hint": "Số khách gọi hoặc nhắn Zalo cho bạn."
+        },
+        {
+          "key": "itemName",
+          "label": "Loại sản phẩm báo giá",
+          "example": "Cửa nhôm kính, vách kính",
+          "required": true
+        },
+        {
+          "key": "price",
+          "label": "Giá tham khảo (không bắt buộc)",
+          "example": "Từ 1.200.000đ/m²",
+          "required": false,
+          "hint": "Chỉ ghi nếu đúng với báo giá hiện tại của bạn."
+        },
+        {
+          "key": "address",
+          "label": "Địa chỉ (nếu có cửa hàng/văn phòng)",
+          "example": "12 Đường Số 1, Phường A, Quận B",
+          "required": false,
+          "hint": "Ghi đủ để khách tìm đến. Bỏ trống nếu chỉ bán qua mạng."
+        }
+      ],
+      "photos": [
+        {
+          "id": "anh1",
+          "label": "Ảnh mẫu 1",
+          "required": true
+        },
+        {
+          "id": "anh2",
+          "label": "Ảnh mẫu 2 (không bắt buộc)",
+          "required": false
+        },
+        {
+          "id": "anh3",
+          "label": "Ảnh mẫu 3 (không bắt buộc)",
+          "required": false
+        }
+      ],
+      "scenes": [
+        {
+          "type": "photo",
+          "slot": "anh1",
+          "durationS": 3.5,
+          "texts": [
+            {
+              "text": "{{itemName}}",
+              "position": "lower_third",
+              "style": "title"
+            }
+          ]
+        },
+        {
+          "type": "photo",
+          "slot": "anh2",
+          "durationS": 3.0,
+          "texts": [
+            {
+              "text": "{{price}}",
+              "position": "lower_third",
+              "style": "title",
+              "color": "accent"
+            }
+          ]
+        },
+        {
+          "type": "photo",
+          "slot": "anh3",
+          "durationS": 3.0,
+          "texts": []
+        },
+        {
+          "type": "card",
+          "durationS": 4.0,
+          "texts": [
+            {
+              "text": "Liên hệ để được báo giá",
+              "position": "top",
+              "style": "body",
+              "color": "accent"
+            },
+            {
+              "text": "{{businessName}}",
+              "position": "center",
+              "style": "title"
+            },
+            {
+              "text": "{{phone}}",
+              "position": "lower_third",
+              "style": "title",
+              "color": "accent"
+            },
+            {
+              "text": "{{address}}",
+              "position": "bottom",
+              "style": "small"
+            }
+          ],
+          "background": "primary"
+        }
+      ],
+      "logo": "none",
+      "music": "optional",
+      "caption": {
+        "lines": [
+          "{{itemName}}",
+          "Giá tham khảo: {{price}}",
+          "Liên hệ để được báo giá: {{phone}}",
+          "Địa chỉ: {{address}}"
+        ],
+        "hashtags": [
+          "#nhomkinh",
+          "#baogia"
+        ]
+      }
+    }
+  ]
+}

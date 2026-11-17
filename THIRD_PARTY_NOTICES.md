@@ -22,7 +22,7 @@ thiết kế hiện tại; **phải rà soát lại theo đúng bản phân ph�
   --enable-libdav1d --enable-libopus --enable-libvorbis --enable-libmp3lame ... --disable-libx264 --disable-libx265 --disable-libxvid --disable-libvidstab --disable-librubberband
   --disable-libzvbi --disable-libfdk-aac` và **không** có `--enable-gpl`, **không** có `--enable-nonfree`. Danh sách đầy đủ do `pnpm --filter @aps/desktop verify:ffmpeg <binary>` kiểm.
 - **Codec video cho phép trong app** (`packages/render-core/src/ffmpeg-policy.ts`): H.264 qua `libopenh264`, `h264_videotoolbox`, `h264_nvenc`, `h264_amf`, `h264_qsv`.
-  Video xuất ra là H.264 `yuv420p` trong MP4. Codec âm thanh: chưa dùng (PoC không có nhạc). Mọi encoder khác (đặc biệt `libx264`, `libx265`) bị từ chối.
+  Video xuất ra là H.264 `yuv420p` trong MP4. Codec âm thanh: chỉ khi người dùng chọn tệp nhạc ở chế độ ảnh sang video, mã hoá bằng encoder `aac` tích hợp sẵn của FFmpeg (không dùng `libfdk-aac`); video 3D của PoC không có âm thanh. Nghĩa vụ bằng sáng chế AAC chưa được rà soát. Mọi encoder khác (đặc biệt `libx264`, `libx265`) bị từ chối.
 - **Kiểm tự động**: app chạy `ffmpeg -version/-buildconf/-L/-encoders` khi cài runtime và trước mỗi lần ghép video; binary bật `--enable-gpl`/`--enable-nonfree`/thư viện GPL bị từ chối
   (`FFMPEG_LICENSE_VIOLATION`). CI chạy lại kiểm tra này trên binary đã ghim.
 - **Lưu ý cần luật sư/người phát hành rà soát** (chưa được xác nhận):

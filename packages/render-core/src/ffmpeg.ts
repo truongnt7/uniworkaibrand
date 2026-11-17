@@ -124,8 +124,8 @@ export function targetBitrate(width: number, height: number, fps: number): numbe
   return Math.round(Math.min(40_000_000, Math.max(1_000_000, width * height * fps * 0.15)));
 }
 
-function encoderArgs(codec: string, o: Pick<FfmpegArgsOptions, 'fps' | 'width' | 'height'>): string[] {
-  const bitrate = String(targetBitrate(o.width, o.height, o.fps));
+export function encoderArgs(codec: string, o: Pick<FfmpegArgsOptions, 'fps' | 'width' | 'height'> & { bitrate?: number }): string[] {
+  const bitrate = String(o.bitrate ?? targetBitrate(o.width, o.height, o.fps));
   const gop = String(Math.max(1, o.fps * 2));
   switch (codec) {
     case 'libopenh264':
