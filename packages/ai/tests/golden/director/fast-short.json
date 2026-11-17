@@ -1,0 +1,48 @@
+{
+  "prompt": "Xoay nhanh 2 vòng trong 6 giây, camera lùi xa, logo góc phải",
+  "context": null,
+  "timeline": {
+    "version": 1,
+    "aspect": "16:9",
+    "duration_s": 6,
+    "fps": 30,
+    "tracks": {
+      "product": [
+        {
+          "t": 0,
+          "t_end": 6,
+          "motion": "spin360",
+          "turns": 2,
+          "speed": "fast",
+          "ease": "smooth"
+        }
+      ],
+      "camera": [
+        {
+          "t": 0,
+          "t_end": 6,
+          "move": "dolly_out",
+          "from": "eye_level",
+          "degrees": 90,
+          "amount": 0.3,
+          "ease": "smooth"
+        }
+      ],
+      "logo": [
+        {
+          "t": 4,
+          "t_end": 6,
+          "anim": "fade_in",
+          "position": "bottom_right"
+        }
+      ]
+    },
+    "scene": {
+      "template_id": "studio-soft",
+      "hide": [],
+      "palette": "brand"
+    },
+    "lock_label": true
+  },
+  "warnings": []
+}

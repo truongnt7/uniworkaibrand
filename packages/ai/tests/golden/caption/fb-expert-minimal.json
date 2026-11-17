@@ -1,0 +1,27 @@
+{
+  "input": {
+    "channel": "facebook",
+    "brand": {
+      "name": "An Pharma",
+      "tone": "expert",
+      "address": "anh_chi",
+      "emoji": "none"
+    },
+    "product": {
+      "name": "Kem chống nắng"
+    }
+  },
+  "result": {
+    "channel": "facebook",
+    "caption": "An Pharma chia sẻ về Kem chống nắng.\n\nNhắn tin cho An Pharma để được tư vấn chi tiết nhé.",
+    "hashtags": [
+      "#KemChốngNắng",
+      "#AnPharma",
+      "#SảnPhẩmChấtLượng",
+      "#MuaSắmOnline"
+    ],
+    "text": "An Pharma chia sẻ về Kem chống nắng.\n\nNhắn tin cho An Pharma để được tư vấn chi tiết nhé.\n\n#KemChốngNắng #AnPharma #SảnPhẩmChấtLượng #MuaSắmOnline",
+    "source": "template",
+    "warnings": []
+  }
+}

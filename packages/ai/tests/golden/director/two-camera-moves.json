@@ -1,0 +1,61 @@
+{
+  "prompt": "Camera tiến gần sau đó lùi xa rồi quay quanh 60 độ, 12 giây",
+  "context": null,
+  "timeline": {
+    "version": 1,
+    "aspect": "16:9",
+    "duration_s": 12,
+    "fps": 30,
+    "tracks": {
+      "product": [
+        {
+          "t": 0,
+          "t_end": 12,
+          "motion": "spin360",
+          "turns": 1,
+          "speed": "normal",
+          "ease": "smooth"
+        }
+      ],
+      "camera": [
+        {
+          "t": 0,
+          "t_end": 4,
+          "move": "dolly_in",
+          "from": "eye_level",
+          "degrees": 90,
+          "amount": 0.3,
+          "ease": "smooth"
+        },
+        {
+          "t": 4,
+          "t_end": 8,
+          "move": "dolly_out",
+          "from": "eye_level",
+          "degrees": 90,
+          "amount": 0.3,
+          "ease": "smooth"
+        },
+        {
+          "t": 8,
+          "t_end": 12,
+          "move": "orbit",
+          "from": "eye_level",
+          "degrees": 60,
+          "amount": 0.3,
+          "ease": "smooth"
+        }
+      ],
+      "logo": []
+    },
+    "scene": {
+      "template_id": "studio-soft",
+      "hide": [],
+      "palette": "brand"
+    },
+    "lock_label": true
+  },
+  "warnings": [
+    "defaulted_product_motion: prompt không nêu chuyển động sản phẩm, mặc định xoay 360°"
+  ]
+}

@@ -157,12 +157,14 @@ Rút gọn bản Blender: bỏ add-on/tài liệu/studiolights không dùng, tá
 | Tác vụ | Mặc định | Lý do | Ứng viên (kiểm tra giấy phép khi chọn) |
 |---|---|---|---|
 | Tách nền / matting | **Local** (ONNX, CPU/DirectML/CoreML) | Rẻ, nhanh (vài giây), riêng tư | BiRefNet (MIT), U²-Net (Apache-2.0). **Tránh RMBG của BRIA** (non-commercial) — cần xác minh lại |
-| Ảnh → model 3D | **Cloud** (SMB không có GPU 16 GB+) | TRELLIS cần ≥16 GB VRAM, Hunyuan3D 2.1 cần 10–29 GB; TRELLIS có submodule non-commercial; Hunyuan loại trừ EU/UK/Hàn Quốc | Tripo, Meshy, Hunyuan3D (Tencent), Rodin; local = tùy chọn "Pro" sau |
+| Ảnh → model 3D | **Cloud** (SMB không có GPU 16 GB+) | TRELLIS cần ≥16 GB VRAM, Hunyuan3D 2.1 cần 10–29 GB; TRELLIS có submodule non-commercial; Hunyuan loại trừ EU/UK/Hàn Quốc | Tripo, Meshy, Hunyuan3D (Tencent), Rodin; local = tùy chọn "Pro" sau. So sánh giá/điều khoản (chưa đo chất lượng): [image-to-3d-comparison.md](image-to-3d-comparison.md) |
 | Model tham số (chai/hộp/lon) | **Local, thuật toán** | Chính xác nhãn, 0 chi phí | Tự xây trong Blender worker/`render-core` |
 | Sinh nền/bối cảnh, đạo cụ | **Cloud** (image gen/edit) | Chất lượng + không cần GPU | Flux (Kontext), Gemini image, GPT-image, SDXL qua nhà host |
 | Đạo diễn AI | **Cloud LLM** (structured output) | Cần hiểu tiếng Việt tốt | Claude/GPT/Gemini |
 | Viết caption/hashtag | **Cloud LLM** | Rẻ | như trên |
 | Nhạc nền | Thư viện có bản quyền (không sinh AI ở MVP) | Rủi ro bản quyền | Kho nhạc license rõ ràng |
+
+Triển khai lớp AI trong repo (Đạo diễn AI rule-based + adapter LLM, caption, tách nền local, chính sách giữ nhãn): [ai-layer.md](ai-layer.md).
 
 **AI Gateway** (backend của ta) đứng giữa: giấu API key, đo credit, đổi nhà cung cấp không cần cập nhật app, ghi log/giới hạn, bộ lọc nội dung. Giao diện `Provider` chung cho từng loại tác vụ.
 
@@ -422,7 +424,7 @@ Quy ước: **Vai trò** (FE = desktop/UI, BE = Electron main/orchestrator/Node,
 |---|---|---|---|---|---|
 | **P0-09** | **Decal nhãn + QC nhãn**: chiếu `label.png` lên chai trụ/hộp (trụ/phẳng, chỉnh vị trí/rộng/cao); hàm QC (SSIM + OCR) trên khung mẫu | TA/ML | L | P0-04 | Trên **10 sản phẩm thực**, ≥ 8/10 đạt ngưỡng QC khi xoay 360°; ca nhãn nghiêng quá ngưỡng đọc được bị cảnh báo; báo cáo ảnh trước/sau |
 | **P0-10** | **Model tham số v0**: lathe từ silhouette (chai/lọ/lon) + box 6 mặt → glb đúng kích thước mm | TA | M | P0-04 | 5 chai/lọ + 3 hộp tạo được glb có tỉ lệ sai ≤ 3% so với kích thước nhập; chạy hoàn toàn local |
-| **P0-11** | **So sánh image→3D cloud** (Tripo/Meshy/Hunyuan3D/Rodin) trên 10 SP thật, nhiều góc | ML | M | — | Bảng so sánh chất lượng (chấm điểm theo tiêu chí cố định), thời gian, chi phí/lần, tỉ lệ cần thử lại, điều khoản giấy phép/dữ liệu; **đề xuất chọn 1–2 nhà** cho AI Gateway |
+| **P0-11** | **So sánh image→3D cloud** (Tripo/Meshy/Hunyuan3D/Rodin) trên 10 SP thật, nhiều góc | ML | M | — | Bảng so sánh chất lượng (chấm điểm theo tiêu chí cố định), thời gian, chi phí/lần, tỉ lệ cần thử lại, điều khoản giấy phép/dữ liệu; **đề xuất chọn 1–2 nhà** cho AI Gateway. Bản nháp tra cứu giá/điều khoản, chưa đo: [image-to-3d-comparison.md](image-to-3d-comparison.md) |
 | **P0-12** | **Pipeline ffmpeg**: ghép khung → H.264/AAC (`yuv420p`, `faststart`), overlay logo SVG/PNG cuối video, tùy chọn nhạc; chọn bản ffmpeg (LGPL vs GPL) | BE | M | P0-04 | Video 15 s 1080p30 phát được trên Facebook/Instagram/TikTok **bằng cách đăng thủ công** (kiểm thực tế) và đạt giới hạn mục 5; logo sắc nét (không méo); ghi nhận quyết định giấy phép ffmpeg |
 
 ### 9.4 Benchmark, preview, job UI

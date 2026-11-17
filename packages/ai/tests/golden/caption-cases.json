@@ -1,0 +1,27 @@
+[
+  {
+    "id": "fb-friendly-serum",
+    "channel": "facebook",
+    "brand": { "name": "Lumi Beauty", "tone": "friendly", "address": "ban", "emoji": "light", "baseHashtags": ["LumiBeauty"], "tagline": "Đẹp tự nhiên mỗi ngày." },
+    "product": { "name": "Serum Vitamin C", "category": "Mỹ phẩm", "highlights": ["Chai thủy tinh 30ml", "Kết cấu nhẹ, thấm nhanh"], "price": "299.000đ" },
+    "contentNote": "Video xoay 360 độ"
+  },
+  {
+    "id": "ig-luxury-candle",
+    "channel": "instagram",
+    "brand": { "name": "Maison Nến", "tone": "luxury", "address": "quy_khach", "emoji": "none", "baseHashtags": ["MaisonNen", "NenThom"] },
+    "product": { "name": "Nến thơm Gỗ Đàn Hương", "category": "Quà tặng", "highlights": ["Sáp đậu nành", "Hộp quà sẵn sàng tặng"], "promo": "Tặng thiệp viết tay" }
+  },
+  {
+    "id": "ig-youthful-tea",
+    "channel": "instagram",
+    "brand": { "name": "Trà Xanh Zui", "tone": "youthful", "address": "ban", "emoji": "rich", "cta": "Đặt hàng ngay trên fanpage nhé!" },
+    "product": { "name": "Trà đào cam sả", "category": "Đồ uống", "highlights": ["Vị chua ngọt cân bằng", "Đóng chai tiện mang đi"] }
+  },
+  {
+    "id": "fb-expert-minimal",
+    "channel": "facebook",
+    "brand": { "name": "An Pharma", "tone": "expert", "address": "anh_chi", "emoji": "none" },
+    "product": { "name": "Kem chống nắng" }
+  }
+]

@@ -1,0 +1,35 @@
+{
+  "prompt": "Xoay chai",
+  "context": {
+    "defaultAspect": "9:16",
+    "defaultDurationS": 7,
+    "fps": 24
+  },
+  "timeline": {
+    "version": 1,
+    "aspect": "9:16",
+    "duration_s": 7,
+    "fps": 24,
+    "tracks": {
+      "product": [
+        {
+          "t": 0,
+          "t_end": 7,
+          "motion": "spin360",
+          "turns": 1,
+          "speed": "normal",
+          "ease": "smooth"
+        }
+      ],
+      "camera": [],
+      "logo": []
+    },
+    "scene": {
+      "template_id": "studio-soft",
+      "hide": [],
+      "palette": "brand"
+    },
+    "lock_label": true
+  },
+  "warnings": []
+}

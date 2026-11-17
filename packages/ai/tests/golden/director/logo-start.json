@@ -1,0 +1,48 @@
+{
+  "prompt": "Mở đầu bằng logo, sau đó xoay sản phẩm, camera tiến gần",
+  "context": null,
+  "timeline": {
+    "version": 1,
+    "aspect": "16:9",
+    "duration_s": 10,
+    "fps": 30,
+    "tracks": {
+      "product": [
+        {
+          "t": 0,
+          "t_end": 10,
+          "motion": "spin360",
+          "turns": 1,
+          "speed": "normal",
+          "ease": "smooth"
+        }
+      ],
+      "camera": [
+        {
+          "t": 0,
+          "t_end": 10,
+          "move": "dolly_in",
+          "from": "eye_level",
+          "degrees": 90,
+          "amount": 0.3,
+          "ease": "smooth"
+        }
+      ],
+      "logo": [
+        {
+          "t": 0,
+          "t_end": 2.5,
+          "anim": "fade_in",
+          "position": "center"
+        }
+      ]
+    },
+    "scene": {
+      "template_id": "studio-soft",
+      "hide": [],
+      "palette": "brand"
+    },
+    "lock_label": true
+  },
+  "warnings": []
+}

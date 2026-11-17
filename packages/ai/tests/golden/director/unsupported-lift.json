@@ -1,0 +1,34 @@
+{
+  "prompt": "Nâng sản phẩm lên rồi xoay, thêm nhạc nền",
+  "context": null,
+  "timeline": {
+    "version": 1,
+    "aspect": "16:9",
+    "duration_s": 10,
+    "fps": 30,
+    "tracks": {
+      "product": [
+        {
+          "t": 0,
+          "t_end": 10,
+          "motion": "spin360",
+          "turns": 1,
+          "speed": "normal",
+          "ease": "smooth"
+        }
+      ],
+      "camera": [],
+      "logo": []
+    },
+    "scene": {
+      "template_id": "studio-soft",
+      "hide": [],
+      "palette": "brand"
+    },
+    "lock_label": true
+  },
+  "warnings": [
+    "unsupported_motion: \"nâng sản phẩm\" thuộc V1, MVP chưa hỗ trợ",
+    "unsupported_feature: nhạc nền thuộc V1, bỏ qua"
+  ]
+}
