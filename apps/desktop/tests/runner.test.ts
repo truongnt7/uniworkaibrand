@@ -14,6 +14,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const fakeBlenderJs = join(here, 'fixtures', 'fake-blender.mjs');
 /** Binary LGPL đã ghim trong manifest (tải bằng tools/ffmpeg/fetch-lgpl.mjs); không có thì bỏ qua các test mã hóa thật. */
 const LGPL_FFMPEG = process.env.APS_TEST_FFMPEG_LGPL ?? '';
+const FFPROBE = LGPL_FFMPEG && existsSync(join(dirname(LGPL_FFMPEG), 'ffprobe')) ? join(dirname(LGPL_FFMPEG), 'ffprobe') : 'ffprobe';
 const hasFfmpeg = LGPL_FFMPEG !== '' && spawnSync(LGPL_FFMPEG, ['-version']).status === 0;
 const systemFfmpegIsGpl = /--enable-gpl/.test(spawnSync('ffmpeg', ['-version']).stdout?.toString() ?? '');
 const posix = process.platform !== 'win32';
@@ -58,7 +59,7 @@ describe.skipIf(!posix)('BlenderRunner (Blender giả + ffmpeg thật)', () => {
     const done = queue.get(job.id)!;
     expect(done).toMatchObject({ status: 'done', progress: 1, deviceInfo: 'eevee: FAKE' });
     expect(statSync(done.outputPath!).size).toBeGreaterThan(500);
-    const probe = spawnSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=codec_name,pix_fmt,nb_frames', '-of', 'csv=p=0', done.outputPath!]);
+    const probe = spawnSync(FFPROBE, ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=codec_name,pix_fmt,nb_frames', '-of', 'csv=p=0', done.outputPath!]);
     expect(probe.stdout.toString().trim()).toBe('h264,yuv420p,10');
   });
 
