@@ -20,7 +20,7 @@ export async function extractArchive(archive: string, type: ArchiveType, destDir
   await mkdir(destDir, { recursive: true });
   switch (type) {
     case 'tar.xz':
-      return sh('tar', ['-xJf', archive, '-C', destDir], signal);
+      return sh('tar', ['-xJf', archive, '--no-same-owner', '-C', destDir], signal);
     case 'zip':
       // Windows 10+ có bsdtar (`tar`) đọc được zip; macOS/Linux dùng unzip.
       return process.platform === 'win32' ? sh('tar', ['-xf', archive, '-C', destDir], signal) : sh('unzip', ['-q', '-o', archive, '-d', destDir], signal);
@@ -45,5 +45,5 @@ export async function extractArchive(archive: string, type: ArchiveType, destDir
 /** Gói runtime offline (`.apspack`) là tar KHÔNG nén: các archive bên trong đã nén sẵn. */
 export async function extractTar(archive: string, destDir: string, signal?: AbortSignal): Promise<void> {
   await mkdir(destDir, { recursive: true });
-  return sh('tar', ['-xf', archive, '-C', destDir], signal);
+  return sh('tar', ['-xf', archive, '--no-same-owner', '-C', destDir], signal);
 }
