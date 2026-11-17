@@ -14,7 +14,7 @@ Thông số nền tảng (mục 1.1) được tra cứu ngày 17/11/2026 từ t�
 | Cách làm ảnh sang video | **Một pipeline thứ hai chỉ dùng ffmpeg LGPL** (không Blender), nhận một `SlideshowJob` (danh sách cảnh), đặt cạnh pipeline Blender chứ không nằm trong `Timeline` v1 hay job v2. Dùng chung hàng đợi job, ffmpeg đã ghim, caption. Mục 2. |
 | Luồng người dùng | Một màn hình: chọn ngành, chọn mẫu, nhập thông tin, tải ảnh, bấm Tạo, xem trước, lưu video kèm caption 3 kênh. Mục 3. |
 | Thư viện mẫu | 18 mẫu JSON tiếng Việt cho 5 ngành (3 đến 4 mẫu mỗi ngành), có schema zod, có test. Mọi mẫu đánh dấu `evidence: "assumption"`. Mục 4. |
-| Hiện thực | Đã làm và có test chạy ffmpeg LGPL thật: schema job, trình dựng ffmpeg, biên dịch mẫu thành job, caption. **Chưa** nối vào hàng đợi/IPC/UI của app desktop. Mục 5. |
+| Hiện thực | Đã làm và có test chạy ffmpeg LGPL thật: schema job, trình dựng ffmpeg, biên dịch mẫu thành job, caption. **Đã nối** vào hàng đợi SQLite, IPC có kiểu và màn hình "Tạo video" của app desktop (nhánh `mvp/app-create-flow`, mục 2.6), có e2e Electron thật chụp từng bước. Mục 5. |
 
 ---
 
@@ -125,15 +125,25 @@ Job gồm: `output {width, height, fps, maxBytes}`, `fontPath`, `scenes[1..16]` 
 - **Dung lượng**: bitrate = min(0,06 bit/điểm ảnh/khung, trần theo `maxBytes`, 12 Mb/s). Với 90 giây vẫn dưới 45 MB (có test).
 - **Một lần mã hoá**: ghép xfade/concat trong một filtergraph, không tệp trung gian; Ken Burns tính trên ảnh phóng gấp đôi để bớt rung.
 
-### 2.6 Chưa làm: tích hợp vào app và ý tưởng lai 3D
+### 2.6 Tích hợp vào app (nhánh `mvp/app-create-flow`) và ý tưởng lai 3D
 
-Cần duyệt trước khi làm (đụng hợp đồng chung, không làm trong nhánh này):
+**Đã làm** (chỉ thêm, không đổi nghĩa schema cũ; không đụng `apps/api`):
 
-1. `packages/shared/src/job.ts`: `JobRecord` và `RenderRequest` thành hợp (union) theo `pipeline: 'blender' | 'slideshow'`, `kind` thêm `slideshow`; `ipc.ts` thêm kênh `slideshow:templates`, `slideshow:validate`, `slideshow:create`, `slideshow:caption`.
-2. `apps/desktop/src/orchestrator`: `SlideshowRunner` gọi `renderSlideshow` (sau `assertLgplFfmpeg`), `JobQueue` chọn runner theo `pipeline`.
-3. Renderer: màn hình ở mục 3; mã lỗi `SLIDESHOW_*` thêm vào `packages/i18n` (`errors.<code>`).
-4. Font tiếng Việt đi kèm app (chưa chốt, xem mục 6).
-5. **Cảnh `clip` (v1.1, chỉ nếu Q14 cho thấy cần):** nhận mp4 từ job Blender v2 (xoay sản phẩm 3D) làm một cảnh của slideshow, để hàng online có "ảnh + 3D xoay + thông tin liên hệ" trong cùng một video.
+1. **Hợp đồng chung (`packages/shared`)**: `JobRecord.pipeline` (`blender` mặc định | `slideshow`), `JobRecord.request` là hợp của `RenderRequest` và `SlideshowRequest`, `engine` thêm `ffmpeg`; `SlideshowCreateReq` (có `target: local|cloud`, `quality: preview|final`). `CreateFromPromptReq` thêm `target`. Kênh IPC mới (đều validate bằng zod ở main): `slideshow:validate`, `slideshow:create`, `slideshow:caption`, `profile:get`, `profile:set`, `video:save`, `video:reveal`, `clipboard:writeText`, `photo:thumbnail`; `dialog:pickFile` thêm loại `photo|logo|audio`. Renderer không có kênh nào nhận đường dẫn tuỳ ý để đọc: ảnh chỉ đọc qua `photo:thumbnail`, video chỉ phát qua `asset://job/<id>/output`, "mở thư mục" chỉ nhận kết quả của job hoặc tệp vừa lưu.
+2. **Hàng đợi (`apps/desktop/src/orchestrator`)**: DB migration v3 (thêm cột `jobs.pipeline`, bảng `settings`; có sao lưu `.bak-v2` như các migration trước). `SlideshowRunner` gọi `renderSlideshow` sau `assertLgplFfmpeg`, ghi `output.part.mp4` rồi đổi tên; tiến độ theo khung hình, `preparing → encoding`; huỷ/lỗi dọn tệp tạm; `PipelineRunner` chọn runner theo `pipeline`. Job slideshow và Blender chạy chung một hàng đợi, ưu tiên `preview` trước `final`. `target=cloud` được nhận và lưu nhưng **không bao giờ chạy** trên máy này (giao diện chỉ hiện "Sắp có").
+3. **Luồng Đạo diễn 3D** (`jobs:createFromPrompt`) nay có `target`; giao diện đặt ở mục gập "Video sản phẩm 3D (nâng cao)" và bị chặn có hướng dẫn nếu chưa cài thành phần dựng 3D.
+4. **Ghi nhớ thông tin cơ sở**: tên, SĐT, địa chỉ, ngành, mẫu lưu trong bảng `settings`; logo được chép vào `<dữ liệu app>/profile/` (chỉ png/jpg/webp, tối đa 20 MB). Có nút "Xóa thông tin đã nhớ".
+5. **Màn hình `#/create` ("Tạo video")** là màn hình mặc định khi mở app (`features/create`), tiếng Việt, theo mục 3. Có đủ trạng thái rỗng, đang chạy (tiến độ, nút Hủy), lỗi (câu dễ hiểu + "Chi tiết kỹ thuật" gập), đã hủy (dữ liệu còn nguyên + Thử lại), bản xem trước đã cũ, hàng đợi (Xem/Hủy/Thử lại/Xóa), banner cài thành phần khi thiếu ffmpeg. Nút Tạo video dựng bản **xem trước** (540×960, nhanh); nút Lưu dựng bản **đầy đủ** (1080×1920) rồi mở hộp thoại lưu. Chữ đăng kèm 3 kênh sửa được và sao chép bằng một nút.
+6. **Phông**: Be Vietnam Pro (SIL OFL 1.1) đóng gói trong `apps/desktop/resources/fonts` (Regular/SemiBold cho giao diện qua `@font-face`, Bold cho chữ trong video qua `drawtext`); đã ghi trong `THIRD_PARTY_NOTICES.md`; `check-release --post` yêu cầu có phông và `OFL.txt` trong bản đóng gói; test kiểm bảng cmap có đủ chữ Việt có dấu.
+7. Mã lỗi mới `TEMPLATE_*`, `SLIDESHOW_*`, `LOGO_FORMAT`, `OUTPUT_MISSING`, `FFMPEG_*`, `DISK_FULL` có bản dịch vi/en ở `packages/i18n`.
+
+**Kiểm chứng**: `apps/desktop/tests/slideshow-queue.test.ts` (13 test chạy ffmpeg LGPL thật qua hàng đợi SQLite: tạo, mở lại DB, cloud không chạy, thiếu ảnh rồi thử lại, huỷ, thứ tự ưu tiên, caption, hồ sơ, migration v3), `tests/font.test.ts`, `src/renderer/tests/create.test.tsx` (10 test giao diện), và `pnpm --filter @aps/desktop e2e:create` (Electron thật dưới Xvfb, không giả lập dịch vụ nào; chụp 14 ảnh từng bước; kiểm ffprobe bản lưu là `h264 yuv420p 1080×1920`, kiểm clipboard thật, kiểm hồ sơ còn sau khi mở lại app).
+
+**Chưa làm / ý tưởng tiếp:**
+
+- **Cảnh `clip` (v1.1, chỉ nếu Q14 cho thấy cần):** nhận mp4 từ job Blender v2 (xoay sản phẩm 3D) làm một cảnh của slideshow, để hàng online có "ảnh + 3D xoay + thông tin liên hệ" trong cùng một video.
+- Lưu nháp tự động (hiện chỉ nhớ thông tin cơ sở, không nhớ ảnh/giá của từng bài).
+- Cloud thật (mục `target=cloud` mới là chỗ giữ trong hàng đợi).
 
 ---
 
@@ -295,7 +305,7 @@ Bảng trên trích từ dữ liệu thật (script đọc thư viện, không g
 
 ## 5. Hiện thực tối thiểu và kiểm chứng
 
-Đã làm: biên dịch mẫu thành `SlideshowJob`, dựng mp4 bằng ffmpeg LGPL đã ghim, caption 3 kênh. Chưa nối vào hàng đợi/IPC/UI (mục 2.6).
+Đã làm: biên dịch mẫu thành `SlideshowJob`, dựng mp4 bằng ffmpeg LGPL đã ghim, caption 3 kênh; đã nối vào hàng đợi/IPC/UI và có e2e Electron thật (mục 2.6).
 
 | Kiểm | Kết quả |
 |---|---|
@@ -325,8 +335,10 @@ CI: job `ffmpeg-license` chạy thêm hai lệnh test trên với binary LGPL gh
 
 ### 6.1 Chưa làm
 
-- Nối vào app: hàng đợi, IPC, màn hình mục 3, i18n, lưu nháp (mục 2.6).
-- **Font tiếng Việt đi kèm app**: tests dùng DejaVu của hệ thống. Cần chọn font có giấy phép cho phép đóng gói (Inter đã đi kèm Blender; cần xác nhận đường dẫn và định dạng dùng được với `drawtext`, hoặc đóng gói một font OFL riêng) và thêm vào `THIRD_PARTY_NOTICES.md`.
+- Lưu nháp tự động từng bài (mục 2.6); kéo thả ảnh đã cài đặt nhưng chưa có e2e riêng (e2e dùng hộp thoại chọn tệp giả lập qua biến môi trường).
+- **ffmpeg chưa có trong bản cài nhỏ**: hiện ffmpeg LGPL chỉ đi cùng thành phần dựng (Blender + ffmpeg, ~380 MB tải lần đầu). Người chỉ làm ảnh sang video vẫn phải tải gói này; nên tách gói ffmpeg riêng vài chục MB (giao diện đã có banner "Cài ngay" khi thiếu).
+- Thông báo kiểm tra dữ liệu (SĐT, giá, HEIC...) hiện chỉ có tiếng Việt vì nằm trong `@aps/templates`; bản tiếng Anh của giao diện vẫn hiện câu tiếng Việt cho các lỗi này.
+- Chưa kiểm phông Be Vietnam Pro trên Windows/macOS thật và chưa đo độ tràn chữ với mọi mẫu bằng phông đóng gói (mới đo trên mẫu mặc định).
 - Chuyển HEIC sang JPG (hiện chỉ chặn kèm hướng dẫn); kiểm ảnh quá nhỏ/mờ; xử lý PNG có nền trong suốt (hiện thành nền đen).
 - Thư viện nhạc có bản quyền (hiện chỉ nhận tệp người dùng chọn).
 - Thử trên Windows/macOS: mới chạy Linux x64. Chưa có binary LGPL ghim cho macOS (phần ghi trong `THIRD_PARTY_NOTICES.md`); logic escape đường dẫn kiểu Windows (`C:\…`) mới có test đơn vị, chưa chạy trên Windows thật.
@@ -339,7 +351,7 @@ CI: job `ffmpeg-license` chạy thêm hai lệnh test trên với binary LGPL gh
 | Rủi ro | Mức | Hướng xử lý |
 |---|---|---|
 | Toàn bộ nhu cầu ngành ở mục 1 là giả định; mẫu có thể không khớp cách khách làm thật | Cao | Thử với 2 đến 3 khách mỗi ngành trước khi mở rộng; mẫu giữ `evidence: assumption` đến lúc đó |
-| Chữ xuống dòng theo ước lượng độ rộng ký tự, không đo font thật; font khác có thể tràn | Trung bình | Có co cỡ và cắt "…" làm lưới an toàn; nên đo bằng font đóng gói thật trước khi phát hành |
+| Chữ xuống dòng theo ước lượng độ rộng ký tự, không đo font thật; font khác có thể tràn | Trung bình | Có co cỡ và cắt "…" làm lưới an toàn; app nay dùng Be Vietnam Pro đóng gói, nhưng nên đo từng mẫu với phông này trước khi phát hành |
 | Chất lượng với ảnh thật (thiếu sáng, mờ, nền lộn xộn) chưa đánh giá; Ken Burns trên ảnh thấp phân giải bị mờ | Trung bình | Lấy 10 bộ ảnh thật từ khách (Q2) để chấm |
 | Tệp dưới 50 MB cho Zalo OA đã đảm bảo bằng bitrate, nhưng chưa thử đăng thật | Thấp | Thử đăng một video lên OA thật |
 | Quy định quảng cáo (ảnh trẻ em, cam kết, ưu đãi, thông tin công trình của chủ nhà) | Trung bình | Đây không phải tư vấn pháp lý; cần người có chuyên môn rà soát chữ mẫu và lời nhắc trong giao diện |

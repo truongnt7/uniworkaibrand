@@ -109,9 +109,24 @@
     "SCRIPT_ERROR": "Script Blender gặp lỗi.",
     "WORKER_EXIT": "Blender kết thúc bất thường.",
     "FFMPEG_FAILED": "Ghép video bằng ffmpeg thất bại.",
-    "FFMPEG_MISSING": "Không tìm thấy ffmpeg.",
+    "FFMPEG_MISSING": "Thành phần dựng video chưa sẵn sàng. Hãy cài thành phần dựng video (một lần) rồi thử lại.",
     "TARGET_UNSUPPORTED": "Chỉ hỗ trợ chạy trên máy này ở phiên bản hiện tại.",
-    "INTERRUPTED": "Ứng dụng bị đóng khi đang render."
+    "INTERRUPTED": "Ứng dụng bị đóng khi đang render.",
+    "TEMPLATE_INPUT_INVALID": "Thông tin chưa đủ hoặc chưa đúng. Hãy xem các dòng báo lỗi màu đỏ và sửa lại.",
+    "TEMPLATE_NOT_FOUND": "Không tìm thấy mẫu video này. Hãy chọn lại mẫu.",
+    "LOGO_FORMAT": "Logo phải là ảnh PNG, JPG hoặc WEBP (tối đa 20 MB). Hãy chọn tệp khác.",
+    "OUTPUT_MISSING": "Chưa có video để lưu. Hãy bấm Tạo video trước.",
+    "SLIDESHOW_PHOTO_MISSING": "Không tìm thấy một trong các ảnh. Có thể ảnh đã bị xoá hoặc di chuyển, hãy chọn lại ảnh.",
+    "SLIDESHOW_LOGO_MISSING": "Không tìm thấy tệp logo. Hãy chọn lại logo hoặc bỏ logo.",
+    "SLIDESHOW_AUDIO_MISSING": "Không tìm thấy tệp nhạc. Hãy chọn lại nhạc hoặc chọn \"không nhạc\".",
+    "SLIDESHOW_FONT_MISSING": "Không tìm thấy phông chữ của ứng dụng. Hãy cài lại ứng dụng.",
+    "SLIDESHOW_FFMPEG_FAILED": "Dựng video không thành công. Hãy thử lại; nếu vẫn lỗi, hãy đổi ảnh khác (một số ảnh bị hỏng hoặc định dạng lạ).",
+    "SLIDESHOW_TOO_COMPLEX": "Video có quá nhiều cảnh hoặc chữ để dựng một lần. Hãy bớt số cảnh hoặc rút gọn chữ.",
+    "SLIDESHOW_BAD_PATH": "Đường dẫn tệp có ký tự không hợp lệ. Hãy đổi tên tệp hoặc thư mục rồi chọn lại.",
+    "SLIDESHOW_CANCELED": "Đã huỷ dựng video.",
+    "FFMPEG_LICENSE_VIOLATION": "Thành phần dựng video chưa sẵn sàng. Hãy mở Cài đặt để cài hoặc cập nhật.",
+    "FFMPEG_NO_ALLOWED_ENCODER": "Thành phần dựng video chưa sẵn sàng. Hãy mở Cài đặt để cài hoặc cập nhật.",
+    "DISK_FULL": "Ổ đĩa không còn chỗ trống. Hãy xoá bớt tệp rồi thử lại."
   },
   "warnings": {
     "CPU_FALLBACK": "Đang render bằng CPU (không dùng được GPU)."

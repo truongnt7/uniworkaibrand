@@ -4,6 +4,9 @@ import { aspectToSize, createProviderFromEnv, direct, type LlmProvider } from '@
 import { checkTimelineRequest } from '@aps/render-core';
 import { RenderRequest, SCENE_TEMPLATES, type EventChannel, type EventPayload, type InvokeHandlers, type JobRecord } from '@aps/shared';
 import { BlenderRunner } from './blenderRunner.js';
+import { PipelineRunner, SlideshowRunner } from './slideshowRunner.js';
+import { ProfileStore, SettingsStore } from './settings.js';
+import { prepareSlideshow, slideshowCaptions, validateSlideshow } from './slideshowService.js';
 import { openDb, type Db } from './db.js';
 import { JobStore } from './jobStore.js';
 import { JobQueue, type JobRunner } from './queue.js';
@@ -27,7 +30,11 @@ export interface OrchestratorConfig {
   allowUnsignedManifest?: boolean;
   env?: NodeJS.ProcessEnv;
   runtimeOverrides?: Partial<RuntimeManagerOptions>;
+  /** Thay runner Blender (test). Job slideshow vẫn chạy bằng SlideshowRunner trừ khi đặt `slideshowRunner`. */
   runner?: JobRunner;
+  slideshowRunner?: JobRunner;
+  /** Phông tiếng Việt (TTF) đi kèm app, dùng cho chữ trên video ảnh sang video. */
+  fontPath?: string;
   /** Chỉ test: thay provider LLM của Đạo diễn AI (mặc định đọc APS_AI_* từ `env`; không có khóa -> rule-based offline). */
   directorProvider?: () => LlmProvider | null;
   onLog?: (jobId: string, line: string) => void;
@@ -72,7 +79,7 @@ export function createOrchestrator(config: OrchestratorConfig, emit: EmitFn): Or
     ...config.runtimeOverrides,
   });
 
-  const runner =
+  const blenderRunner =
     config.runner ??
     new BlenderRunner({
       jobsDir: join(config.dataDir, 'jobs'),
@@ -81,6 +88,17 @@ export function createOrchestrator(config: OrchestratorConfig, emit: EmitFn): Or
       getFfmpegPath: () => runtime.getFfmpegPath(),
       onLog: config.onLog,
     });
+  const fontPath = config.fontPath ?? '';
+  const slideshowRunner =
+    config.slideshowRunner ??
+    new SlideshowRunner({
+      jobsDir: join(config.dataDir, 'jobs'),
+      fontPath,
+      getFfmpegPath: () => runtime.getFfmpegPath(),
+    });
+  const runner = new PipelineRunner(blenderRunner, slideshowRunner);
+  const settings = new SettingsStore(db);
+  const profile = new ProfileStore(settings, join(config.dataDir, 'profile'));
 
   const queue = new JobQueue({
     store,
@@ -94,6 +112,14 @@ export function createOrchestrator(config: OrchestratorConfig, emit: EmitFn): Or
       if (req.timeline) checkTimelineRequest(req);
       return queue.enqueue(req);
     },
+    'slideshow:validate': (req) => validateSlideshow(req),
+    'slideshow:create': async (req) => {
+      const prepared = await prepareSlideshow(req, { fontPath });
+      return { job: queue.enqueue(prepared.request, prepared.id), warnings: prepared.warnings };
+    },
+    'slideshow:caption': (req) => slideshowCaptions(req),
+    'profile:get': () => profile.get(),
+    'profile:set': (patch) => profile.set(patch),
     'jobs:createFromPrompt': async (req) => {
       const provider = config.directorProvider ? config.directorProvider() : createProviderFromEnv('director', config.env ?? process.env);
       const directed = await direct(req.prompt, {
@@ -109,6 +135,7 @@ export function createOrchestrator(config: OrchestratorConfig, emit: EmitFn): Or
       const render = req.render ?? {};
       const request = RenderRequest.parse({
         name: req.name ?? 'Video AI',
+        target: req.target,
         product: req.product,
         output: {
           kind: 'video',

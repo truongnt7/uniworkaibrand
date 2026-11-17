@@ -115,6 +115,7 @@ async function main() {
       : {};
     const res = await orch.handlers['jobs:createFromPrompt']!({
       prompt,
+      target: 'local',
       name: 'poc-prompt',
       product: {
         glbPath: abs(values.glb as string),

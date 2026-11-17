@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { Ease, HexColor, TextOverlay } from './overlay.js';
+import { SlideshowAspect, SlideshowJob } from './slideshow.js';
 
 export const JOB_STATUSES = [
   'queued',
@@ -22,6 +23,11 @@ export const TERMINAL_JOB_STATUSES = ['done', 'failed', 'canceled'] as const sat
 
 export const JobTarget = z.enum(['local', 'cloud']);
 export type JobTarget = z.infer<typeof JobTarget>;
+
+export const JOB_PIPELINES = ['blender', 'slideshow'] as const;
+/** `blender`: dựng 3D bằng blender-worker + ffmpeg. `slideshow`: ảnh sang video chỉ bằng ffmpeg (docs/industry-templates.md). */
+export const JobPipeline = z.enum(JOB_PIPELINES);
+export type JobPipeline = z.infer<typeof JobPipeline>;
 
 export const JobPriority = z.enum(['preview', 'final']);
 export type JobPriority = z.infer<typeof JobPriority>;
@@ -125,6 +131,56 @@ export const RenderRequest = z.object({
 export type RenderRequest = z.infer<typeof RenderRequest>;
 export type RenderRequestInput = z.input<typeof RenderRequest>;
 
+const SlugId = z.string().regex(/^[a-z0-9][a-z0-9-]{0,39}$/);
+const FilePath = z.string().min(1).max(1024);
+
+/** Dữ liệu người dùng nhập cho một mẫu; khoá trường/ảnh được `@aps/templates` kiểm lại theo từng mẫu. */
+export const SlideshowInput = z.strictObject({
+  values: z.record(z.string().regex(/^[A-Za-z]{1,20}$/), z.string().max(500)).default({}),
+  /** slot ảnh -> đường dẫn tệp. */
+  photos: z.record(SlugId, FilePath).default({}),
+  /** slot ảnh -> chú thích riêng. */
+  captions: z.record(SlugId, z.string().max(200)).default({}),
+});
+export type SlideshowInput = z.infer<typeof SlideshowInput>;
+
+/** Yêu cầu tạo video ảnh sang video (renderer -> main -> orchestrator). Job được biên dịch ở orchestrator, renderer không gửi job. */
+export const SlideshowCreateReq = z.strictObject({
+  name: z.string().trim().min(1).max(120).optional(),
+  target: JobTarget.default('local'),
+  /** `preview`: nửa độ phân giải, chạy trước; `final`: 1080 để đăng. */
+  quality: z.enum(['preview', 'final']).default('final'),
+  templateId: SlugId,
+  aspect: SlideshowAspect.optional(),
+  input: SlideshowInput,
+  logoPath: FilePath.optional(),
+  musicPath: FilePath.optional(),
+  brandColor: HexColor.optional(),
+});
+export type SlideshowCreateReq = z.infer<typeof SlideshowCreateReq>;
+export type SlideshowCreateReqInput = z.input<typeof SlideshowCreateReq>;
+
+/** Dạng lưu trong SQLite của job slideshow: dữ liệu nhập + job đã biên dịch (thử lại chạy lại đúng job này, chỉ thay đường dẫn phông). */
+export const SlideshowRequest = z.strictObject({
+  pipeline: z.literal('slideshow'),
+  name: z.string().trim().min(1).max(120),
+  target: JobTarget.default('local'),
+  priority: JobPriority.default('final'),
+  templateId: SlugId,
+  aspect: SlideshowAspect,
+  quality: z.enum(['preview', 'final']),
+  input: SlideshowInput,
+  logoPath: FilePath.optional(),
+  musicPath: FilePath.optional(),
+  brandColor: HexColor.optional(),
+  job: SlideshowJob,
+});
+export type SlideshowRequest = z.infer<typeof SlideshowRequest>;
+
+export function isSlideshowRequest(r: RenderRequest | SlideshowRequest): r is SlideshowRequest {
+  return 'pipeline' in r && r.pipeline === 'slideshow';
+}
+
 export function totalFramesFor(output: Pick<OutputSpec, 'kind' | 'fps' | 'durationS'>): number {
   return output.kind === 'image' ? 1 : Math.max(1, Math.round(output.fps * output.durationS));
 }
@@ -136,8 +192,10 @@ export const JobRecord = z.object({
   priority: JobPriority,
   status: JobStatus,
   kind: z.enum(['image', 'video']),
-  engine: RenderEngine,
-  request: RenderRequest,
+  /** `ffmpeg` cho job slideshow (không dùng engine Blender). */
+  engine: z.union([RenderEngine, z.literal('ffmpeg')]),
+  pipeline: JobPipeline.default('blender'),
+  request: z.union([SlideshowRequest, RenderRequest]),
   frame: z.number().int().min(0),
   totalFrames: z.number().int().min(1),
   progress: z.number().min(0).max(1),

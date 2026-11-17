@@ -17,3 +17,5 @@ Mục tiêu: nền tảng AI + Blender (bản cài Electron) giúp doanh nghiệ
 Tài liệu chính: [ke-hoach-ai-blender-electron.md](ke-hoach-ai-blender-electron.md)
 
 Mẫu theo ngành và chế độ ảnh sang video: [industry-templates.md](industry-templates.md)
+
+Trạng thái luồng "ảnh sang video" trong app (màn hình Tạo video, hàng đợi, ghi nhớ thông tin, phông, e2e): [industry-templates.md](industry-templates.md) mục 2.6.

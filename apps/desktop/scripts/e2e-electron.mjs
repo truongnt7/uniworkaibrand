@@ -1,3 +1,4 @@
+/* global location */
 // E2E: mở Electron thật (dưới Xvfb), tạo job ảnh EEVEE qua UI, chờ xong, chụp màn hình.
 // Dùng: xvfb-run -a pnpm --filter @aps/desktop e2e   (cần `pnpm build` trước và Blender runtime đã cài ở APS_E2E_RUNTIME_DIR)
 import { mkdirSync, symlinkSync, existsSync, rmSync } from 'node:fs';
@@ -23,6 +24,10 @@ const app = await electron.launch({
 });
 const page = await app.firstWindow();
 page.on('pageerror', (e) => console.error('[renderer error]', e.message));
+await page.waitForSelector('[data-testid="sidebar"]');
+await page.evaluate(() => {
+  location.hash = '#/poc';
+});
 await page.waitForSelector('[data-testid="job-form"]');
 await page.screenshot({ path: join(shotDir, '1-form.png') });
 await page.click('[data-testid="pick-glb"]');

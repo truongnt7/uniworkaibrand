@@ -70,12 +70,23 @@ describe('check-release --post', () => {
     writeFileSync(join(root, 'keys', 'production', 'prod-2026.pub.pem'), s.k.trusted.publicKeyPem);
     writeFileSync(join(root, 'runtime-manifest.signed.json'), readFileSync(s.manifest));
     writeFileSync(join(root, 'THIRD_PARTY_NOTICES.md'), '# notices');
+    mkdirSync(join(root, 'fonts'), { recursive: true });
+    writeFileSync(join(root, 'fonts', 'BeVietnamPro-Bold.ttf'), 'font');
+    writeFileSync(join(root, 'fonts', 'OFL.txt'), 'OFL');
     for (const [n, c] of Object.entries(extra)) writeFileSync(join(root, n), c);
     return root;
   }
 
   it('đạt với tài nguyên sạch', () => {
     expect(run('--post', resources()).status).toBe(0);
+  });
+
+  it('từ chối bản thiếu phông tiếng Việt hoặc giấy phép OFL', () => {
+    const root = resources();
+    rmSync(join(root, 'fonts', 'OFL.txt'));
+    const r = run('--post', root);
+    expect(r.status).toBe(1);
+    expect(r.stderr).toMatch(/fonts\/OFL.txt/);
   });
 
   it('thất bại nếu có khóa riêng, mã nạp khóa dev, hoặc manifest ký bằng khóa dev', () => {

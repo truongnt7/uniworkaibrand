@@ -62,6 +62,9 @@ pnpm dev
 # 4) E2E bằng Electron thật dưới Xvfb: tạo job ảnh qua UI, chờ xong, chụp màn hình (/tmp/aps-e2e-shots)
 pnpm --filter @aps/desktop build
 xvfb-run -a -s "-screen 0 1440x900x24" pnpm --filter @aps/desktop e2e
+
+# 5) E2E luồng ảnh -> video (màn hình "Tạo video"): cần ffmpeg LGPL (node tools/ffmpeg/fetch-lgpl.mjs hoặc APS_FFMPEG); ảnh chụp từng bước ở /tmp/aps-e2e-create/shots
+xvfb-run -a -s "-screen 0 1600x1800x24" pnpm --filter @aps/desktop e2e:create
 ```
 
 ### Phát hành: khóa ký, gói offline, đóng gói app

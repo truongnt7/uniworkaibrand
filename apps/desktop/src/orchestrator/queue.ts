@@ -1,4 +1,4 @@
-import { AppError, RenderRequest, type JobRecord, type RenderRequestInput } from '@aps/shared';
+import { AppError, RenderRequest, SlideshowRequest, type JobRecord, type RenderRequestInput } from '@aps/shared';
 import { estimateRemainingSeconds, overallProgress } from '@aps/render-core';
 import type { JobStore } from './jobStore.js';
 import { transition } from './stateMachine.js';
@@ -10,6 +10,8 @@ export interface RunControl {
   /** Báo khung render xong; `skipped` = khung đã có sẵn trên đĩa (resume), không tính vào ước lượng tốc độ. */
   progress(p: { frame: number; skipped?: boolean }): void;
   encodeProgress(encodedFrames: number): void;
+  /** Pipeline slideshow (một lần ffmpeg, không có khung Blender): báo số khung đã mã hoá, tiến độ 0–99%. */
+  frameProgress(frame: number): void;
   setDevice(info: string): void;
   setWorkDir(dir: string): void;
 }
@@ -77,9 +79,9 @@ export class JobQueue {
     return this.store.get(id);
   }
 
-  enqueue(input: RenderRequestInput | RenderRequest): JobRecord {
-    const request = RenderRequest.parse(input);
-    const job = this.store.insert(request);
+  enqueue(input: RenderRequestInput | RenderRequest | SlideshowRequest, id?: string): JobRecord {
+    const request = typeof input === 'object' && 'pipeline' in input && input.pipeline === 'slideshow' ? SlideshowRequest.parse(input) : RenderRequest.parse(input);
+    const job = this.store.insert(request, id);
     this.emit(job, true);
     this.pump();
     return job;
@@ -240,6 +242,7 @@ export class JobQueue {
     const id = job.id;
     let renderStartedAt = 0;
     let renderedFrames = 0;
+    let encodeStartedAt = 0;
     const apply = (patch: Parameters<JobStore['update']>[1], force = false) => {
       const next = this.store.update(id, patch);
       this.emit(next, force);
@@ -254,6 +257,9 @@ export class JobQueue {
         if (phase === 'rendering' && cur.status === 'preparing') {
           renderStartedAt = this.now();
           apply({ status: transition(cur.status, 'render_started') }, true);
+        } else if (phase === 'encoding' && cur.status === 'preparing') {
+          encodeStartedAt = this.now();
+          apply({ status: transition(cur.status, 'encode_started'), progress: 0, frame: 0 }, true);
         } else if (phase === 'encoding' && cur.status === 'rendering') {
           apply({ status: transition(cur.status, 'encode_started'), progress: overallProgress('encoding', cur.totalFrames, cur.totalFrames, 0) }, true);
         }
@@ -271,6 +277,16 @@ export class JobQueue {
       encodeProgress: (encoded) => {
         const cur = current();
         apply({ progress: overallProgress('encoding', cur.totalFrames, cur.totalFrames, encoded), estimateS: null });
+      },
+      frameProgress: (frame) => {
+        const cur = current();
+        const done = Math.min(Math.max(0, frame), cur.totalFrames);
+        const elapsed = (this.now() - encodeStartedAt) / 1000;
+        apply({
+          frame: done,
+          progress: Math.min(0.99, done / cur.totalFrames),
+          estimateS: estimateRemainingSeconds(elapsed, done, cur.totalFrames),
+        });
       },
       setDevice: (info) => apply({ deviceInfo: info }, true),
       setWorkDir: (dir) => apply({ workDir: dir }),

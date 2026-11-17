@@ -25,7 +25,8 @@ const ACTIVE: Partial<Record<JobEvent, JobStatus>> = {
 
 const TABLE: Record<JobStatus, Partial<Record<JobEvent, JobStatus>>> = {
   queued: { start: 'preparing', cancel: 'canceled', pause: 'paused', escalate: 'needs_attention' },
-  preparing: { ...ACTIVE, render_started: 'rendering' },
+  /** Job slideshow bỏ qua `rendering` (không có khung PNG): preparing -> encoding. */
+  preparing: { ...ACTIVE, render_started: 'rendering', encode_started: 'encoding' },
   rendering: { ...ACTIVE, encode_started: 'encoding', finish: 'done' },
   encoding: { ...ACTIVE, finish: 'done' },
   done: {},

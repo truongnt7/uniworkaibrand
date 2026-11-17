@@ -71,6 +71,13 @@ export const MIGRATIONS: readonly string[] = [
    DROP TABLE jobs;
    ALTER TABLE jobs_v2 RENAME TO jobs;
    CREATE INDEX idx_jobs_status ON jobs(status, recovered, priority, created_at);`,
+  // v3 (chỉ thêm): pipeline của job (blender | slideshow) và bảng cài đặt khoá-giá trị (thông tin doanh nghiệp được nhớ).
+  `ALTER TABLE jobs ADD COLUMN pipeline TEXT NOT NULL DEFAULT 'blender';
+   CREATE TABLE settings (
+     key TEXT PRIMARY KEY,
+     value TEXT NOT NULL,
+     updated_at INTEGER NOT NULL
+   );`,
 ];
 
 export function migrate(db: Db, dbPath: string | null): void {
