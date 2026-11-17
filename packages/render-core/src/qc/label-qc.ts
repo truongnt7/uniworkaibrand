@@ -11,9 +11,9 @@ export const QC_DEFAULTS = {
   /** Nhãn nhìn thấy dưới tỉ lệ này → coi là "khuất" (mặt sau chai), bỏ qua. */
   visibleMin: 0.45,
   ocrMin: 0.6,
-  /** Chỉ chạy OCR khi nhãn hầu như nhìn thấy trọn vẹn; nhãn bị cắt bởi độ cong sẽ làm OCR sai oan. */
-  ocrVisibleMin: 0.85,
   compareWidth: 192,
+  /** Khung đọc OCR tốt nhất trong vòng xoay phải khớp ít nhất ~1 từ trong 4 (ngưỡng thấp có chủ ý: OCR nhãn cong ở 960x540 rất yếu; đây là kiểm "nhãn đúng/chữ còn đọc được", không phải kiểm chính tả). */
+  sweepOcrBestMin: 0.25,
   /** Tỉ lệ khung hợp lệ (không khuất/nghiêng) phải đạt để sản phẩm "đạt QC" khi xoay 360°. */
   sweepPassRatio: 0.9,
 } as const;
@@ -36,7 +36,7 @@ export interface QcInput {
   frame: Raster | Uint8Array;
   label: Raster | Uint8Array;
   grid: ProjectionGrid;
-  /** Văn bản kỳ vọng trên nhãn và kết quả OCR đã chạy trên ảnh nắn phẳng (tùy chọn). */
+  /** `expected` = chữ OCR được từ nhãn gốc đã che CÙNG vùng khuất với khung (hoặc chữ khai báo); `recognized` = OCR trên khung đã nắn phẳng. */
   ocrText?: { expected: string; recognized: string };
   config?: Partial<QcConfig>;
 }
@@ -74,14 +74,9 @@ export function assessLabelFrame(input: QcInput): FrameQc {
     ok = false;
     reasons.push(`SSIM ${r.score.toFixed(2)} < ${cfg.ssimMin}`);
   }
-  let ocr: number | undefined;
-  if (input.ocrText && visible >= cfg.ocrVisibleMin) {
-    ocr = ocrMatchRatio(input.ocrText.expected, input.ocrText.recognized);
-    if (ocr < cfg.ocrMin) {
-      ok = false;
-      reasons.push(`OCR khớp ${(ocr * 100).toFixed(0)}% < ${(cfg.ocrMin * 100).toFixed(0)}%`);
-    }
-  }
+  // OCR trên nhãn cong ở độ phân giải khung dựng rất nhiễu từng khung, nên chỉ ghi nhận ở đây;
+  // điều kiện đạt của OCR áp ở mức cả vòng xoay (khung đọc tốt nhất), xem summarizeSweep.
+  const ocr = input.ocrText ? ocrMatchRatio(input.ocrText.expected, input.ocrText.recognized) : undefined;
   return { ...base, ssim: r.score, ssimCoverage: r.valid, ocr, verdict: ok ? 'pass' : 'fail', reasons };
 }
 
@@ -92,11 +87,13 @@ export interface SweepQc {
   tilted: number;
   hidden: number;
   passRatio: number;
+  /** Tỉ lệ khớp OCR cao nhất giữa các khung xét được; null nếu không có dữ liệu OCR. */
+  ocrBest: number | null;
   productPass: boolean;
   warnings: string[];
 }
 
-/** Tổng hợp một vòng xoay 360°: sản phẩm đạt nếu ≥ sweepPassRatio số khung "xét được" (không khuất/nghiêng) đạt QC và có đủ khung xét được. */
+/** Tổng hợp một vòng xoay 360°: đạt nếu ≥ sweepPassRatio số khung "xét được" (không khuất/nghiêng) đạt SSIM, đủ khung xét được, và OCR tốt nhất đạt ngưỡng. */
 export function summarizeSweep(frames: FrameQc[], config: Partial<QcConfig> = {}): SweepQc {
   const cfg: QcConfig = { ...QC_DEFAULTS, ...config };
   const considered = frames.filter((f) => f.verdict === 'pass' || f.verdict === 'fail');
@@ -106,6 +103,9 @@ export function summarizeSweep(frames: FrameQc[], config: Partial<QcConfig> = {}
   const warnings: string[] = [];
   if (tilted) warnings.push(`${tilted}/${frames.length} khung nhãn nghiêng quá ngưỡng đọc được`);
   const passRatio = considered.length ? passed / considered.length : 0;
+  const ocrs = considered.map((f) => f.ocr).filter((v): v is number => v !== undefined);
+  const ocrBest = ocrs.length ? Math.max(...ocrs) : null;
+  if (ocrBest !== null && ocrBest < cfg.sweepOcrBestMin) warnings.push(`chữ trên nhãn không đọc được (OCR tốt nhất ${(ocrBest * 100).toFixed(0)}% < ${(cfg.sweepOcrBestMin * 100).toFixed(0)}%)`);
   if (considered.length < Math.max(1, Math.floor(frames.length * 0.15))) warnings.push('quá ít khung nhìn thấy nhãn rõ để đánh giá');
   return {
     frames: frames.length,
@@ -114,7 +114,9 @@ export function summarizeSweep(frames: FrameQc[], config: Partial<QcConfig> = {}
     tilted,
     hidden,
     passRatio,
-    productPass: considered.length >= Math.max(1, Math.floor(frames.length * 0.15)) && passRatio >= cfg.sweepPassRatio,
+    ocrBest,
+    productPass:
+      considered.length >= Math.max(1, Math.floor(frames.length * 0.15)) && passRatio >= cfg.sweepPassRatio && (ocrBest === null || ocrBest >= cfg.sweepOcrBestMin),
     warnings,
   };
 }

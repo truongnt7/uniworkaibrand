@@ -2,7 +2,7 @@
  * QC nhãn (P0-09): render vòng xoay 360° ở độ phân giải thấp, lấy lưới chiếu nhãn từ worker, nắn phẳng vùng nhãn rồi
  * so với label.png bằng SSIM (+ OCR tesseract nếu có), cảnh báo khi nhãn nghiêng quá ngưỡng đọc được.
  *
- *   pnpm --filter @aps/desktop qc:label --blender <blender> --glb a.glb --label a.png --expect-text "SERUM VITAMIN C" --out out/qc-a
+ *   pnpm --filter @aps/desktop qc:label --blender <blender> --glb a.glb --label a.png --out out/qc-a
  *
  * Xuất: report.json, ảnh trước/sau cho từng khung (nhãn gốc | nhãn nắn phẳng từ khung render) và 1 contact sheet.
  */
@@ -12,7 +12,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import {
-  assessLabelFrame, blenderArgs, QC_DEFAULTS, decodePng, encodePng, grayToRaster, normalizeGray, rectifiedFor, runTesseract,
+  assessLabelFrame, blenderArgs, centerTiltDeg, hasReadableText, ocrCompareForFrame, QC_DEFAULTS, visibleFraction, decodePng, encodePng, grayToRaster, rectifiedFor, runTesseract,
   summarizeSweep, type FrameQc, type ProjectionGrid, type Raster,
 } from '@aps/render-core';
 
@@ -26,12 +26,11 @@ const { values } = parseArgs({
     blender: { type: 'string' },
     glb: { type: 'string' },
     label: { type: 'string' },
-    'expect-text': { type: 'string' },
     lang: { type: 'string', default: 'eng' },
     angles: { type: 'string', default: '24' },
     width: { type: 'string', default: '1280' },
     height: { type: 'string', default: '720' },
-    samples: { type: 'string', default: '16' },
+    samples: { type: 'string', default: '8' },
     'label-mode': { type: 'string', default: 'cylinder' },
     'label-width': { type: 'string' },
     'label-height': { type: 'string' },
@@ -78,7 +77,7 @@ async function runBlender(): Promise<void> {
       for (let i = buf.indexOf('\n'); i >= 0; i = buf.indexOf('\n')) {
         const line = buf.slice(0, i);
         buf = buf.slice(i + 1);
-        if (line.startsWith('{') && /"event":"(error|warning)"/.test(line)) console.error(line);
+        if (line.startsWith('{') && /"type":"(error|warning)"/.test(line)) console.error(line);
       }
     });
     c.on('error', rej);
@@ -90,10 +89,19 @@ if (!values.reuse || readdirSync(framesDir).filter((f) => f.endsWith('.png')).le
 
 const labelPng = new Uint8Array(readFileSync(abs(values.label!)));
 const label: Raster = decodePng(labelPng);
-const ocrAvail = (await runTesseract(join(repoRoot, 'assets/samples/label.png'), { lang: values.lang })).available;
-const expected = values['expect-text'];
+const ocrAvail = (await runTesseract(join(repoRoot, 'assets/samples/label.png'), { lang: values.lang as string })).available;
 const results: Array<FrameQc & { frame: number; angleDeg: number; recognized?: string }> = [];
 const tiles: Raster[] = [];
+const loadGrid = (i: number) => JSON.parse(readFileSync(join(framesDir, `frame_${String(i).padStart(6, '0')}.png.grid.json`), 'utf8')) as ProjectionGrid;
+// OCR nhãn cong rất nhiễu và chậm: chỉ chạy trên tối đa 4 khung nhãn quay thẳng về camera nhất (đủ để biết chữ có đọc được không).
+const ocrFrames = new Set(
+  Array.from({ length: total }, (_, k) => k + 1)
+    .map((i) => ({ i, tilt: centerTiltDeg(loadGrid(i)), vis: visibleFraction(loadGrid(i)) }))
+    .filter((x) => x.tilt <= QC_DEFAULTS.readableTiltMaxDeg && x.vis >= QC_DEFAULTS.visibleMin)
+    .sort((a, b) => a.tilt - b.tilt)
+    .slice(0, 4)
+    .map((x) => x.i),
+);
 for (let i = 1; i <= total; i++) {
   const name = `frame_${String(i).padStart(6, '0')}.png`;
   const frame = decodePng(new Uint8Array(readFileSync(join(framesDir, name))));
@@ -101,14 +109,13 @@ for (let i = 1; i <= total; i++) {
   const first = assessLabelFrame({ frame, label, grid });
   let recognized: string | undefined;
   let verdict = first;
-  if (expected && ocrAvail && (first.verdict === 'pass' || first.verdict === 'fail') && first.visible >= QC_DEFAULTS.ocrVisibleMin) {
-    const { got } = rectifiedFor({ frame, label, grid }, 640);
-    const rectPng = join(out, `rect_${i}.png`);
-    writeFileSync(rectPng, encodePng(grayToRaster(normalizeGray(got))));
-    const r = await runTesseract(rectPng, { lang: values.lang, psm: 6 });
-    rmSync(rectPng, { force: true });
-    recognized = r.text;
-    verdict = assessLabelFrame({ frame, label, grid, ocrText: { expected, recognized: r.text } });
+  if (ocrAvail && ocrFrames.has(i)) {
+    const oc = await ocrCompareForFrame({ frame, label, grid }, values.lang as string);
+    recognized = oc.recognized;
+    // Nhãn không có chữ OCR được (logo thuần) thì không áp điều kiện OCR.
+    if (oc.available && hasReadableText(oc.expected)) {
+      verdict = assessLabelFrame({ frame, label, grid, ocrText: { expected: oc.expected, recognized: oc.recognized } });
+    }
   }
   results.push({ ...verdict, frame: i, angleDeg: (360 * (i - 1)) / total, recognized });
   const { ref, got, w, h } = rectifiedFor({ frame, label, grid }, 240);
@@ -130,7 +137,7 @@ tiles.forEach((t, k) => {
 });
 writeFileSync(join(out, 'contact-sheet.png'), encodePng(sheet));
 const sweep = summarizeSweep(results);
-const report = { glb: values.glb, label: values.label, expectedText: expected ?? null, ocr: expected ? (ocrAvail ? 'tesseract' : 'unavailable') : 'off', sweep, frames: results };
+const report = { glb: values.glb, label: values.label, ocr: ocrAvail ? 'tesseract' : 'unavailable', sweep, frames: results };
 writeFileSync(join(out, 'report.json'), JSON.stringify(report, null, 1));
 console.log(JSON.stringify({ out, ocr: report.ocr, ...sweep }, null, 1));
 if (!existsSync(join(out, 'contact-sheet.png'))) process.exit(2);

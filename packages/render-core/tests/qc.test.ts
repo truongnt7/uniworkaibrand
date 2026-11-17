@@ -100,11 +100,11 @@ describe('assessLabelFrame', () => {
     const back = { ...grid, facing: grid.facing.map(() => -0.5) };
     expect(assessLabelFrame({ frame, label, grid: back }).verdict).toBe('hidden');
   });
-  it('OCR không khớp làm fail dù SSIM đạt', () => {
+  it('OCR từng khung chỉ được ghi nhận, không tự làm fail khung', () => {
     const { frame, grid } = frameWith(label, { x: 60, y: 50, scale: 0.9 });
     const r = assessLabelFrame({ frame, label, grid, ocrText: { expected: 'Serum Vitamin', recognized: 'zzz qqq' } });
-    expect(r.verdict).toBe('fail');
-    expect(r.reasons.join()).toMatch(/OCR/);
+    expect(r.verdict).toBe('pass');
+    expect(r.ocr).toBe(0);
   });
 });
 
@@ -124,18 +124,15 @@ describe('summarizeSweep', () => {
     expect(s.productPass).toBe(true);
     expect(s.warnings.join()).toMatch(/nghiêng/);
   });
+  it('OCR tốt nhất của cả vòng xoay phải đạt ngưỡng; một khung nhiễu không làm rớt', () => {
+    const withOcr = (ocr: number) => ({ ...f('pass'), ocr });
+    expect(summarizeSweep([withOcr(0.1), withOcr(0.7), withOcr(0.1), withOcr(0.1)]).productPass).toBe(true);
+    const bad = summarizeSweep([withOcr(0), withOcr(0.1), withOcr(0.2), withOcr(0.1)]);
+    expect(bad.productPass).toBe(false);
+    expect(bad.warnings.join()).toMatch(/OCR/);
+  });
   it('không đạt khi nhiều khung fail hoặc hầu như không thấy nhãn', () => {
     expect(summarizeSweep([f('pass'), f('fail')]).productPass).toBe(false);
     expect(summarizeSweep(Array(10).fill(0).map(() => f('hidden'))).productPass).toBe(false);
-  });
-});
-
-describe('OCR chỉ áp dụng khi nhãn thấy gần trọn', () => {
-  it('nhãn bị cắt (visible thấp) không bị fail vì OCR', () => {
-    const label = makeLabel();
-    const { frame, grid } = frameWith(label, { x: 60, y: 50, scale: 0.9 });
-    const partial = { ...grid, facing: grid.facing.map((_, i) => (i % grid.cols < 2 ? 1 : 0)) };
-    const r = assessLabelFrame({ frame, label, grid: partial, ocrText: { expected: 'Serum Vitamin', recognized: '' }, config: { visibleMin: 0.3 } });
-    expect(r.ocr).toBeUndefined();
   });
 });

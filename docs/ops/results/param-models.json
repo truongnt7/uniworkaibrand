@@ -1,0 +1,178 @@
+[
+ {
+  "name": "serum30",
+  "type": "lathe",
+  "expectedMm": {
+   "widthMm": 30,
+   "depthMm": 30,
+   "heightMm": 96
+  },
+  "measuredMm": {
+   "widthMm": 30.00001423060894,
+   "depthMm": 30.00003006309271,
+   "heightMm": 96.00000083446503
+  },
+  "errorPct": {
+   "widthMm": 4.743536313374837e-05,
+   "depthMm": 0.00010021030902862549,
+   "heightMm": 8.692344029744466e-07
+  },
+  "maxErrorPct": 0.00010021030902862549,
+  "glb": "/tmp/param-out/serum30.glb",
+  "bytes": 21644
+ },
+ {
+  "name": "toner120",
+  "type": "lathe",
+  "expectedMm": {
+   "widthMm": 48,
+   "depthMm": 48,
+   "heightMm": 150
+  },
+  "measuredMm": {
+   "widthMm": 48.00004884600639,
+   "depthMm": 48.00009727478027,
+   "heightMm": 150.00000596046448
+  },
+  "errorPct": {
+   "widthMm": 0.00010176251331965129,
+   "depthMm": 0.00020265579223632812,
+   "heightMm": 3.973642985026041e-06
+  },
+  "maxErrorPct": 0.00020265579223632812,
+  "glb": "/tmp/param-out/toner120.glb",
+  "bytes": 21648
+ },
+ {
+  "name": "cream50",
+  "type": "lathe",
+  "expectedMm": {
+   "widthMm": 64,
+   "depthMm": 64,
+   "heightMm": 55
+  },
+  "measuredMm": {
+   "widthMm": 64.00003284215927,
+   "depthMm": 64.00005891919136,
+   "heightMm": 54.999999701976776
+  },
+  "errorPct": {
+   "widthMm": 5.1315873861312866e-05,
+   "depthMm": 9.206123650074005e-05,
+   "heightMm": 5.418604070490057e-07
+  },
+  "maxErrorPct": 9.206123650074005e-05,
+  "glb": "/tmp/param-out/cream50.glb",
+  "bytes": 11272
+ },
+ {
+  "name": "can330",
+  "type": "lathe",
+  "expectedMm": {
+   "widthMm": 66,
+   "depthMm": 66,
+   "heightMm": 122
+  },
+  "measuredMm": {
+   "widthMm": 66.00001826882362,
+   "depthMm": 66.00004062056541,
+   "heightMm": 122.00000137090683
+  },
+  "errorPct": {
+   "widthMm": 2.768003579342004e-05,
+   "depthMm": 6.154631123398289e-05,
+   "heightMm": 1.1236941228147413e-06
+  },
+  "maxErrorPct": 6.154631123398289e-05,
+  "glb": "/tmp/param-out/can330.glb",
+  "bytes": 14728
+ },
+ {
+  "name": "bottle500",
+  "type": "lathe",
+  "expectedMm": {
+   "widthMm": 66,
+   "depthMm": 66,
+   "heightMm": 205
+  },
+  "measuredMm": {
+   "widthMm": 66.00001826882362,
+   "depthMm": 66.00004062056541,
+   "heightMm": 204.99999821186066
+  },
+  "errorPct": {
+   "widthMm": 2.768003579342004e-05,
+   "depthMm": 6.154631123398289e-05,
+   "heightMm": 8.722630942740091e-07
+  },
+  "maxErrorPct": 6.154631123398289e-05,
+  "glb": "/tmp/param-out/bottle500.glb",
+  "bytes": 21648
+ },
+ {
+  "name": "box_soap",
+  "type": "box",
+  "expectedMm": {
+   "widthMm": 85,
+   "depthMm": 55,
+   "heightMm": 28
+  },
+  "measuredMm": {
+   "widthMm": 85.00000089406967,
+   "depthMm": 54.999999701976776,
+   "heightMm": 28.00000086426735
+  },
+  "errorPct": {
+   "widthMm": 1.0518466725068935e-06,
+   "depthMm": 5.418604070490057e-07,
+   "heightMm": 3.086669104439872e-06
+  },
+  "maxErrorPct": 3.086669104439872e-06,
+  "glb": "/tmp/param-out/box_soap.glb",
+  "bytes": 1108
+ },
+ {
+  "name": "box_tea",
+  "type": "box",
+  "expectedMm": {
+   "widthMm": 70,
+   "depthMm": 45,
+   "heightMm": 110
+  },
+  "measuredMm": {
+   "widthMm": 70.00000029802322,
+   "depthMm": 45.00000178813934,
+   "heightMm": 109.99999940395355
+  },
+  "errorPct": {
+   "widthMm": 4.257474626813616e-07,
+   "depthMm": 3.973642985026041e-06,
+   "heightMm": 5.418604070490057e-07
+  },
+  "maxErrorPct": 3.973642985026041e-06,
+  "glb": "/tmp/param-out/box_tea.glb",
+  "bytes": 1104
+ },
+ {
+  "name": "box_cream",
+  "type": "box",
+  "expectedMm": {
+   "widthMm": 52,
+   "depthMm": 52,
+   "heightMm": 62
+  },
+  "measuredMm": {
+   "widthMm": 52.000001072883606,
+   "depthMm": 52.000001072883606,
+   "heightMm": 61.99999898672104
+  },
+  "errorPct": {
+   "widthMm": 2.0632377037635215e-06,
+   "depthMm": 2.0632377037635215e-06,
+   "heightMm": 1.6343209051316784e-06
+  },
+  "maxErrorPct": 2.0632377037635215e-06,
+  "glb": "/tmp/param-out/box_cream.glb",
+  "bytes": 1112
+ }
+]

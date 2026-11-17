@@ -3,3 +3,4 @@ export * from './ssim.js';
 export * from './rectify.js';
 export * from './ocr.js';
 export * from './label-qc.js';
+export * from './ocr-compare.js';

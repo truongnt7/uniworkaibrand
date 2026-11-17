@@ -1,0 +1,81 @@
+{
+ "machine": {
+  "platform": "linux",
+  "arch": "x64",
+  "cpu": "Intel(R) Xeon(R) Processor",
+  "cores": 4,
+  "memGb": 16,
+  "blender": "Blender 4.5.16 LTS"
+ },
+ "settings": {
+  "blender": "/tmp/bl/blender-4.5.16-linux-x64/blender",
+  "out": "docs/ops/results/bench-linux-x64-llvmpipe.json",
+  "width": "960",
+  "height": "540",
+  "frames": "6",
+  "samples": "16"
+ },
+ "tiers": {
+  "A": 1.5,
+  "B": 6
+ },
+ "engines": {
+  "eevee": {
+   "ok": true,
+   "error": null,
+   "startupMs": 391,
+   "wallMs": 40429,
+   "frameMs": [
+    9456,
+    6754,
+    6035,
+    5771,
+    5718,
+    5892
+   ],
+   "device": {
+    "type": "device",
+    "engine": "eevee",
+    "device": "llvmpipe (LLVM 20.1.2, 256 bits)",
+    "backend": "OPENGL",
+    "detail": "EEVEE trên bộ dựng phần mềm (CPU)",
+    "fallbackToCpu": true
+   },
+   "peakRssMb": 1820,
+   "secPerFrameMedian": 6.035,
+   "secPerFrameWarm": 5.892
+  },
+  "cycles": {
+   "ok": true,
+   "error": null,
+   "startupMs": 243,
+   "wallMs": 28158,
+   "frameMs": [
+    4269,
+    4478,
+    4891,
+    4805,
+    4679,
+    4619
+   ],
+   "device": {
+    "type": "device",
+    "engine": "cycles",
+    "device": "CPU",
+    "detail": "Cycles trên CPU",
+    "fallbackToCpu": true
+   },
+   "peakRssMb": 794,
+   "secPerFrameMedian": 4.679,
+   "secPerFrameWarm": 4.679
+  }
+ },
+ "tier": "C",
+ "estimate": {
+  "frames": 12,
+  "predictedMs": 76992,
+  "actualMs": 72513,
+  "errorPct": 6.2,
+  "targetPct": 30
+ }
+}

@@ -18,7 +18,7 @@ def _surface_point(spec, u, v):
         ang = spec["center_rad"] + delta
         s, c = math.sin(ang), math.cos(ang)
         return Vector((spec["radius"] * s, -spec["radius"] * c, z)), Vector((s, -c, 0.0))
-    return Vector(((u - 0.5) * spec["width"], 0.0, z)), Vector((0.0, -1.0, 0.0))
+    return Vector(((u - 0.5) * spec["width"], spec.get("front_y", 0.0), z)), Vector((0.0, -1.0, 0.0))
 
 
 def compute(scene, camera, obj, spec, cols=33, rows=17):
