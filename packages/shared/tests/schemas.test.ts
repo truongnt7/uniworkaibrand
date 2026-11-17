@@ -79,6 +79,53 @@ describe('WorkerJob', () => {
     expect(j.paths.pattern).toBe('frame_%06d.png');
     expect(j.limits.maxTriangles).toBeGreaterThan(0);
   });
+
+  const v2 = {
+    version: 2,
+    mode: 'render',
+    jobId: 'j2',
+    product: { glbPath: '/tmp/a.glb' },
+    scene: { template: 'studio-soft', backgroundColor: '#ffffff', shadow: 0.5 },
+    render: { engine: 'eevee', samples: 8, width: 320, height: 180, device: 'auto' },
+    frames: { total: 30, fps: 15 },
+    tracks: {
+      product: { rotZDeg: [{ t: 0, v: 0 }] },
+      camera: { azimuthDeg: [{ t: 0, v: 0 }], elevationDeg: [{ t: 0, v: 11 }], distanceScale: [{ t: 0, v: 1 }] },
+      light: { keyScale: [{ t: 0, v: 1 }], fillScale: [{ t: 0, v: 1 }], rimScale: [{ t: 0, v: 1 }], keyAzimuthDeg: [{ t: 0, v: 0 }] },
+    },
+    paths: { framesDir: '/tmp/f' },
+  };
+
+  it('v2: điền mặc định (lockLabel, ease, overlay, giới hạn)', () => {
+    const j = WorkerJob.parse(v2);
+    if (j.version !== 2) throw new Error('mong đợi v2');
+    expect(j.product.lockLabel).toBe(true);
+    expect(j.tracks.product.rotZDeg[0]!.ease).toBe('smooth');
+    expect(j.overlays).toEqual({ logo: [], text: [] });
+    expect(j.limits.maxGlbBytes).toBeGreaterThan(0);
+  });
+
+  it('version thiếu/lạ bị từ chối; v2 chặt: khoá lạ, keyframe không tăng, template/hide lạ', () => {
+    expect(WorkerJob.safeParse({ ...v2, version: undefined }).success).toBe(false);
+    expect(WorkerJob.safeParse({ ...v2, version: 3 }).success).toBe(false);
+    expect(WorkerJob.safeParse({ ...v2, script: 'import bpy' }).success).toBe(false);
+    const dup = { ...v2, tracks: { ...v2.tracks, product: { rotZDeg: [{ t: 1, v: 0 }, { t: 1, v: 5 }] } } };
+    expect(WorkerJob.safeParse(dup).success).toBe(false);
+    expect(WorkerJob.safeParse({ ...v2, scene: { ...v2.scene, template: 'tet' } }).success).toBe(false);
+    expect(WorkerJob.safeParse({ ...v2, scene: { ...v2.scene, hide: ['leaves'] } }).success).toBe(false);
+  });
+});
+
+describe('jobs:createFromPrompt', () => {
+  const req = invokeContract['jobs:createFromPrompt'].req;
+  it('prompt rỗng/quá dài, kích thước và tên mẫu cảnh sai bị từ chối', () => {
+    const base = { prompt: 'xoay chai', product: { glbPath: '/a.glb' } };
+    expect(req.safeParse(base).success).toBe(true);
+    expect(req.safeParse({ ...base, prompt: '   ' }).success).toBe(false);
+    expect(req.safeParse({ ...base, prompt: 'x'.repeat(2001) }).success).toBe(false);
+    expect(req.safeParse({ ...base, render: { shortSide: 10 } }).success).toBe(false);
+    expect(req.safeParse({ ...base, availableTemplates: ['Bad Name'] }).success).toBe(false);
+  });
 });
 
 describe('dispatchInvoke', () => {

@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { access, mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 import {
   AppError,
   type RuntimeArtifact,
@@ -8,24 +8,31 @@ import {
   type RuntimeProgress,
   type RuntimeStatus,
 } from '@aps/shared';
-import { currentPlatformKey, selectArtifact } from './manifest.js';
+import { currentPlatformKey, selectArtifact, selectFfmpegArtifact } from './manifest.js';
+import { PACK_EXTENSION, openPack } from './pack.js';
 import { downloadVerified, ensureDiskSpace, sha256File, type DownloadOptions } from './download.js';
 import { extractArchive } from './extract.js';
 import { runSmokeTest } from './smoke.js';
+import { checkFfmpegBinary } from './ffmpegCheck.js';
 
 export interface RuntimeManagerOptions {
   /** Thư mục gốc của runtime (userData/runtime). */
   dir: string;
   loadManifest: () => Promise<RuntimeManifest>;
+  /** Kiểm chữ ký + parse manifest nằm trong gói offline (dùng đúng tập khóa tin cậy của app). */
+  parseManifest?: (raw: unknown) => Promise<RuntimeManifest> | RuntimeManifest;
   workerScript: string;
   platformKey?: string;
   onProgress?: (p: RuntimeProgress) => void;
   /** Ghi đè dành cho dev/test: dùng sẵn một binary Blender có trên máy, bỏ qua tải. */
   binaryOverride?: string | null;
+  /** Ghi đè dev: binary ffmpeg có sẵn (vẫn bị kiểm chính sách LGPL khi render). */
+  ffmpegOverride?: string | null;
   /** Các hàm thay thế được trong test. */
   download?: (opts: DownloadOptions) => Promise<void>;
   extract?: typeof extractArchive;
   smoke?: typeof runSmokeTest;
+  ffmpegCheck?: (binary: string, signal?: AbortSignal) => Promise<void>;
   diskCheck?: typeof ensureDiskSpace;
   maxAttempts?: number;
   backoffMs?: (attempt: number) => number;
@@ -33,13 +40,27 @@ export interface RuntimeManagerOptions {
   fetchImpl?: typeof fetch;
 }
 
-interface ActiveFile {
+type Kind = 'blender' | 'ffmpeg';
+
+interface ActiveComponent {
   version: string;
-  platform: string;
   dir: string;
   binary: string;
   sha256: string;
+}
+
+interface ActiveFile extends ActiveComponent {
+  platform: string;
   installedAt: number;
+  ffmpeg?: ActiveComponent;
+}
+
+interface Pending {
+  kind: Kind;
+  version: string;
+  artifact: RuntimeArtifact;
+  archive: string;
+  deleteArchive: boolean;
 }
 
 async function pathExists(p: string): Promise<boolean> {
@@ -58,8 +79,9 @@ async function writeJsonAtomic(path: string, data: unknown): Promise<void> {
 }
 
 /**
- * Tải/kiểm/cài runtime Blender: manifest ký -> tải (tiến trình, Range, retry) -> sha256 -> giải nén vào thư mục tạm
- * -> smoke test -> kích hoạt nguyên tử. Bất kỳ bước nào lỗi: dọn thư mục tạm, giữ nguyên bản đang dùng.
+ * Tải/kiểm/cài runtime (Blender + FFmpeg LGPL): manifest ký -> tải (tiến trình, Range, retry) -> sha256 -> giải nén vào thư mục tạm
+ * -> kiểm tra (smoke test Blender / chính sách LGPL FFmpeg) -> kích hoạt nguyên tử cả hai. Bất kỳ bước nào lỗi: dọn thư mục tạm,
+ * giữ nguyên bản đang dùng.
  */
 export class RuntimeManager {
   private installing: Promise<RuntimeStatus> | null = null;
@@ -79,24 +101,38 @@ export class RuntimeManager {
     return this.readStatus(this.installing !== null);
   }
 
-  private async readStatus(busy: boolean): Promise<RuntimeStatus> {
-    if (this.opts.binaryOverride) {
-      return { installed: true, version: 'external', binaryPath: this.opts.binaryOverride, platform: this.platformKey, busy };
-    }
+  private async readActive(): Promise<ActiveFile | null> {
     try {
-      const active = JSON.parse(await readFile(this.activePath, 'utf8')) as ActiveFile;
-      const binary = join(active.dir, active.binary);
-      if (await pathExists(binary)) return { installed: true, version: active.version, binaryPath: binary, platform: this.platformKey, busy };
+      return JSON.parse(await readFile(this.activePath, 'utf8')) as ActiveFile;
     } catch {
-      // chưa cài
+      return null;
     }
-    return { installed: false, version: null, binaryPath: null, platform: this.platformKey, busy };
+  }
+
+  private async readStatus(busy: boolean): Promise<RuntimeStatus> {
+    const active = await this.readActive();
+    const ffmpegBin = active?.ffmpeg ? join(active.ffmpeg.dir, active.ffmpeg.binary) : null;
+    const ffmpegPath = this.opts.ffmpegOverride ?? (ffmpegBin && (await pathExists(ffmpegBin)) ? ffmpegBin : null);
+    if (this.opts.binaryOverride) {
+      return { installed: true, version: 'external', binaryPath: this.opts.binaryOverride, ffmpegPath, platform: this.platformKey, busy };
+    }
+    if (active) {
+      const binary = join(active.dir, active.binary);
+      if (await pathExists(binary)) return { installed: true, version: active.version, binaryPath: binary, ffmpegPath, platform: this.platformKey, busy };
+    }
+    return { installed: false, version: null, binaryPath: null, ffmpegPath, platform: this.platformKey, busy };
   }
 
   async getBinaryPath(): Promise<string> {
     const s = await this.status();
     if (!s.installed || !s.binaryPath) throw new AppError('RUNTIME_MISSING', 'chưa cài Blender runtime');
     return s.binaryPath;
+  }
+
+  async getFfmpegPath(): Promise<string> {
+    const s = await this.status();
+    if (!s.ffmpegPath) throw new AppError('FFMPEG_MISSING', 'chưa cài FFmpeg (LGPL) trong runtime');
+    return s.ffmpegPath;
   }
 
   cancelInstall(): void {
@@ -106,35 +142,42 @@ export class RuntimeManager {
   install(): Promise<RuntimeStatus> {
     return this.single(async (signal) => {
       const manifest = await this.opts.loadManifest();
-      const artifact = selectArtifact(manifest, this.platformKey);
-      const archive = join(this.opts.dir, 'downloads', `blender-${manifest.blender.version}-${this.platformKey}.${artifact.archive}`);
-      await mkdir(dirname(archive), { recursive: true });
-
-      const needed = artifact.size + (artifact.extractedSize ?? artifact.size * 3);
+      const comps = this.componentsOf(manifest);
+      const needed = comps.reduce((n, c) => n + c.artifact.size + (c.artifact.extractedSize ?? c.artifact.size * 3), 0);
+      await mkdir(join(this.opts.dir, 'downloads'), { recursive: true });
       await (this.opts.diskCheck ?? ensureDiskSpace)(this.opts.dir, needed);
 
-      await (this.opts.download ?? downloadVerified)({
-        urls: [artifact.url, ...artifact.mirrors],
-        dest: archive,
-        sha256: artifact.sha256,
-        size: artifact.size,
-        maxAttempts: this.opts.maxAttempts,
-        backoffMs: this.opts.backoffMs,
-        sleep: this.opts.sleep,
-        fetchImpl: this.opts.fetchImpl,
-        signal,
-        onProgress: (p) => this.emitDownload(p),
-        onVerifying: () => this.emit({ phase: 'verifying' }),
-        onRetry: (r) =>
-          this.emit({ phase: 'retrying', attempt: r.attempt, maxAttempts: r.maxAttempts, errorCode: r.error.code, message: r.error.message }),
-      });
-      return this.finishInstall(manifest, artifact, archive, signal, true);
+      const pending: Pending[] = [];
+      for (const c of comps) {
+        const archive = join(this.opts.dir, 'downloads', `${c.kind}-${c.version}-${this.platformKey}.${c.artifact.archive}`);
+        await (this.opts.download ?? downloadVerified)({
+          urls: [c.artifact.url, ...c.artifact.mirrors],
+          dest: archive,
+          sha256: c.artifact.sha256,
+          size: c.artifact.size,
+          maxAttempts: this.opts.maxAttempts,
+          backoffMs: this.opts.backoffMs,
+          sleep: this.opts.sleep,
+          fetchImpl: this.opts.fetchImpl,
+          signal,
+          onProgress: (p) => this.emitDownload(c.kind, p),
+          onVerifying: () => this.emit({ component: c.kind, phase: 'verifying' }),
+          onRetry: (r) =>
+            this.emit({ component: c.kind, phase: 'retrying', attempt: r.attempt, maxAttempts: r.maxAttempts, errorCode: r.error.code, message: r.error.message }),
+        });
+        pending.push({ ...c, archive, deleteArchive: true });
+      }
+      return this.finishInstall(pending, signal);
     });
   }
 
-  /** "Nhập runtime từ file…": bộ cài offline dùng cùng manifest và cùng bước kiểm sha256. */
+  /**
+   * "Nhập runtime từ file…". Hai dạng: gói offline `.apspack` (Blender + FFmpeg + manifest ký, xác minh chữ ký và sha256 từng
+   * thành phần), hoặc archive Blender đơn lẻ khớp sha256 trong manifest của app.
+   */
   importFromFile(path: string): Promise<RuntimeStatus> {
     return this.single(async (signal) => {
+      if (path.toLowerCase().endsWith(PACK_EXTENSION)) return this.importPack(path, signal);
       const manifest = await this.opts.loadManifest();
       const artifact = selectArtifact(manifest, this.platformKey);
       const info = await stat(path).catch(() => null);
@@ -143,60 +186,90 @@ export class RuntimeManager {
       this.emit({ phase: 'verifying' });
       const digest = await sha256File(path);
       if (digest !== artifact.sha256) throw new AppError('CHECKSUM_MISMATCH', 'file runtime không khớp sha256 trong manifest');
-      return this.finishInstall(manifest, artifact, path, signal, false);
+      return this.finishInstall([{ kind: 'blender', version: manifest.blender.version, artifact, archive: path, deleteArchive: false }], signal);
     });
   }
 
-  private async finishInstall(
-    manifest: RuntimeManifest,
-    artifact: RuntimeArtifact,
-    archive: string,
-    signal: AbortSignal,
-    deleteArchive: boolean,
-  ): Promise<RuntimeStatus> {
-    const version = manifest.blender.version;
-    const tmpDir = join(this.opts.dir, `tmp-${randomBytes(4).toString('hex')}`);
-    const finalDir = join(this.opts.dir, `blender-${version}-${this.platformKey}`);
-    let oldDir: string | null = null;
+  private async importPack(path: string, signal: AbortSignal): Promise<RuntimeStatus> {
+    const parse = this.opts.parseManifest;
+    if (!parse) throw new AppError('PACK_INVALID', 'app chưa cấu hình kiểm chữ ký cho gói offline');
+    const workDir = join(this.opts.dir, `pack-${randomBytes(4).toString('hex')}`);
     try {
-      this.emit({ phase: 'extracting' });
-      await extractWith(this.opts.extract ?? extractArchive, archive, artifact, tmpDir, signal);
-      const binary = join(tmpDir, artifact.binary);
-      if (!(await pathExists(binary))) throw new AppError('EXTRACT_FAILED', `không thấy binary sau giải nén: ${artifact.binary}`);
+      this.emit({ phase: 'verifying' });
+      const opened = await openPack(path, workDir, this.platformKey, parse, signal);
+      const pending: Pending[] = [
+        { kind: 'blender', version: opened.manifest.blender.version, artifact: opened.blender.artifact, archive: opened.blender.path, deleteArchive: false },
+      ];
+      if (opened.ffmpeg && opened.manifest.ffmpeg) {
+        pending.push({ kind: 'ffmpeg', version: opened.manifest.ffmpeg.version, artifact: opened.ffmpeg.artifact, archive: opened.ffmpeg.path, deleteArchive: false });
+      }
+      return await this.finishInstall(pending, signal);
+    } finally {
+      await rm(workDir, { recursive: true, force: true });
+    }
+  }
 
-      this.emit({ phase: 'smoke-test' });
-      await (this.opts.smoke ?? runSmokeTest)({
-        binary,
-        expectedVersion: version,
-        workerScript: this.opts.workerScript,
-        workDir: tmpDir,
-        signal,
-      });
+  private componentsOf(manifest: RuntimeManifest): Omit<Pending, 'archive' | 'deleteArchive'>[] {
+    const list: Omit<Pending, 'archive' | 'deleteArchive'>[] = [
+      { kind: 'blender', version: manifest.blender.version, artifact: selectArtifact(manifest, this.platformKey) },
+    ];
+    const ff = selectFfmpegArtifact(manifest, this.platformKey);
+    if (ff && manifest.ffmpeg) list.push({ kind: 'ffmpeg', version: manifest.ffmpeg.version, artifact: ff });
+    return list;
+  }
+
+  private async finishInstall(pending: Pending[], signal: AbortSignal): Promise<RuntimeStatus> {
+    const tmpDir = join(this.opts.dir, `tmp-${randomBytes(4).toString('hex')}`);
+    const swapped: { finalDir: string; oldDir: string | null }[] = [];
+    try {
+      const extracted: { p: Pending; dir: string; binary: string }[] = [];
+      for (const p of pending) {
+        const dir = join(tmpDir, p.kind);
+        this.emit({ component: p.kind, phase: 'extracting' });
+        await extractWith(this.opts.extract ?? extractArchive, p.archive, p.artifact, dir, signal);
+        const binary = join(dir, p.artifact.binary);
+        if (!(await pathExists(binary))) throw new AppError('EXTRACT_FAILED', `không thấy binary sau giải nén: ${p.artifact.binary}`);
+        this.emit({ component: p.kind, phase: 'smoke-test' });
+        if (p.kind === 'blender') {
+          await (this.opts.smoke ?? runSmokeTest)({ binary, expectedVersion: p.version, workerScript: this.opts.workerScript, workDir: tmpDir, signal });
+        } else {
+          await (this.opts.ffmpegCheck ?? checkFfmpegBinary)(binary, signal);
+        }
+        extracted.push({ p, dir, binary });
+      }
 
       this.emit({ phase: 'activating' });
+      const previous = await this.readActive();
+      const next: ActiveFile = previous
+        ? { ...previous, installedAt: Date.now() }
+        : ({ version: '', dir: '', binary: '', sha256: '', platform: this.platformKey, installedAt: Date.now() } as ActiveFile);
+      next.platform = this.platformKey;
       try {
-        if (await pathExists(finalDir)) {
-          oldDir = `${finalDir}.old-${randomBytes(3).toString('hex')}`;
-          await rename(finalDir, oldDir);
+        for (const { p, dir } of extracted) {
+          const finalDir = join(this.opts.dir, `${p.kind}-${p.version}-${this.platformKey}`);
+          let oldDir: string | null = null;
+          if (await pathExists(finalDir)) {
+            oldDir = `${finalDir}.old-${randomBytes(3).toString('hex')}`;
+            await rename(finalDir, oldDir);
+          }
+          await rename(dir, finalDir);
+          swapped.push({ finalDir, oldDir });
+          const entry: ActiveComponent = { version: p.version, dir: finalDir, binary: p.artifact.binary, sha256: p.artifact.sha256 };
+          if (p.kind === 'blender') Object.assign(next, entry);
+          else next.ffmpeg = entry;
         }
-        await rename(tmpDir, finalDir);
-        const active: ActiveFile = {
-          version,
-          platform: this.platformKey,
-          dir: finalDir,
-          binary: artifact.binary,
-          sha256: artifact.sha256,
-          installedAt: Date.now(),
-        };
-        await writeJsonAtomic(this.activePath, active);
+        await writeJsonAtomic(this.activePath, next);
       } catch (err) {
-        if (oldDir && !(await pathExists(finalDir))) await rename(oldDir, finalDir).catch(() => {});
-        oldDir = null;
+        for (const { finalDir, oldDir } of swapped.reverse()) {
+          await rm(finalDir, { recursive: true, force: true }).catch(() => {});
+          if (oldDir) await rename(oldDir, finalDir).catch(() => {});
+        }
+        swapped.length = 0;
         if (err instanceof AppError) throw err;
         throw new AppError('ACTIVATE_FAILED', err instanceof Error ? err.message : String(err));
       }
-      if (oldDir) await rm(oldDir, { recursive: true, force: true });
-      if (deleteArchive) await rm(archive, { force: true });
+      for (const { oldDir } of swapped) if (oldDir) await rm(oldDir, { recursive: true, force: true });
+      for (const p of pending) if (p.deleteArchive) await rm(p.archive, { force: true });
       this.emit({ phase: 'done' });
       return await this.readStatus(false);
     } finally {
@@ -223,15 +296,16 @@ export class RuntimeManager {
 
   private lastDownloadEmit = 0;
 
-  private emitDownload(p: { receivedBytes: number; totalBytes: number; bytesPerSecond: number }): void {
+  private emitDownload(component: Kind, p: { receivedBytes: number; totalBytes: number; bytesPerSecond: number }): void {
     const now = Date.now();
     if (p.receivedBytes < p.totalBytes && now - this.lastDownloadEmit < 150) return;
     this.lastDownloadEmit = now;
-    this.emit({ phase: 'downloading', ...p });
+    this.emit({ component, phase: 'downloading', ...p });
   }
 
   private emit(p: Partial<RuntimeProgress> & Pick<RuntimeProgress, 'phase'>): void {
     this.opts.onProgress?.({
+      component: 'blender',
       receivedBytes: 0,
       totalBytes: 0,
       bytesPerSecond: 0,

@@ -158,7 +158,7 @@ describe('JobQueue', () => {
     });
     const job = queue.enqueue(req());
     await queue.idle();
-    expect(queue.get(job.id)).toMatchObject({ status: 'failed', errorCode: 'UNKNOWN', errorMessage: 'boom' });
+    expect(queue.get(job.id)).toMatchObject({ status: 'needs_attention', errorCode: 'UNKNOWN', errorMessage: 'boom', failures: 3 });
   });
 
   it('hủy job đang chờ', async () => {
@@ -258,7 +258,7 @@ describe('JobQueue', () => {
     second.db.close();
   });
 
-  it('thoát êm (shutdown): dừng runner nhưng giữ trạng thái dở dang để lần sau tiếp tục; gọi reclaim', async () => {
+  it('thoát êm (shutdown): dừng runner, xếp job dở dang lại đầu hàng đợi (không tính lỗi) để lần sau chạy tiếp', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'aps-queue-'));
     cleanup.push(dir);
     const dbPath = join(dir, 'q.sqlite');
@@ -285,8 +285,42 @@ describe('JobQueue', () => {
     await started.promise;
     await first.queue.shutdown();
     expect(aborted).toBe(true);
-    expect(first.store.get(job.id)).toMatchObject({ status: 'rendering', frame: 2, errorCode: null });
+    expect(first.store.get(job.id)).toMatchObject({ status: 'queued', frame: 2, errorCode: null, failures: 0 });
 
+    const second = setup(
+      {
+        async run(_j, ctl) {
+          ctl.enter('rendering');
+          return { outputPath: '/ok' };
+        },
+      },
+      dbPath,
+    );
+    await second.queue.recover();
+    await second.queue.idle();
+    expect(second.queue.get(job.id)).toMatchObject({ status: 'done', failures: 0 });
+    first.db.close();
+    second.db.close();
+  });
+
+  it('crash (kill -9): job đang chạy được reclaim Blender mồ côi, tính 1 lần lỗi và chạy tiếp', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'aps-queue-'));
+    cleanup.push(dir);
+    const dbPath = join(dir, 'q.sqlite');
+    const started = deferred();
+    const first = setup(
+      {
+        async run(_j, ctl) {
+          ctl.enter('rendering');
+          started.resolve();
+          await new Promise(() => {});
+          return { outputPath: '/never' };
+        },
+      },
+      dbPath,
+    );
+    const job = first.queue.enqueue(req());
+    await started.promise;
     const reclaimed: string[] = [];
     const second = setup(
       {
@@ -301,7 +335,7 @@ describe('JobQueue', () => {
     await second.queue.recover();
     await second.queue.idle();
     expect(reclaimed).toEqual([job.id]);
-    expect(second.queue.get(job.id)!.status).toBe('done');
+    expect(second.queue.get(job.id)).toMatchObject({ status: 'done', failures: 1 });
     first.db.close();
     second.db.close();
   });

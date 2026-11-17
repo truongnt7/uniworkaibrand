@@ -1,7 +1,11 @@
 /**
  * CLI kiểm chứng PoC không cần giao diện: dùng đúng orchestrator của app (hàng đợi SQLite, runtime manager, worker).
  *
- *   pnpm poc:render install                      # tải + kiểm sha256 + giải nén + smoke test Blender 4.5 LTS
+ *   pnpm dev:keys                                # (một lần) tạo khóa ký DEV + ký manifest vào .dev-keys/
+ *   pnpm poc:render install                      # tải + kiểm sha256 + giải nén + smoke test Blender 4.5 LTS + ffmpeg LGPL
+ *   pnpm poc:render import <file.apspack>        # nhập gói runtime offline
+ *   pnpm poc:render prompt "Xoay chai chậm, camera tiến gần, cuối video hiện logo" --glb ... --label ... --logo ... --width 1280
+ *                                                # Đạo diễn AI (APS_AI_* nếu có, nếu không thì rule-based offline) -> timeline -> job v2 -> mp4
  *   pnpm poc:render render --glb assets/samples/serum-bottle.glb --label assets/samples/label.png --kind video
  */
 import { copyFileSync, mkdirSync } from 'node:fs';
@@ -22,7 +26,7 @@ const { positionals, values } = parseArgs({
   options: {
     data: { type: 'string', default: join(repoRoot, '.poc-data') },
     blender: { type: 'string' },
-    ffmpeg: { type: 'string', default: process.env.APS_FFMPEG ?? 'ffmpeg' },
+    ffmpeg: { type: 'string' },
     glb: { type: 'string', default: join(repoRoot, 'assets/samples/serum-bottle.glb') },
     label: { type: 'string' },
     logo: { type: 'string' },
@@ -51,9 +55,11 @@ const orch = createOrchestrator(
   {
     dataDir: abs(values.data as string),
     workerScript: join(repoRoot, 'blender-worker', 'worker.py'),
-    manifestPath: join(here, '..', 'resources', 'runtime-manifest.signed.json'),
-    publicKeyPath: join(here, '..', 'resources', 'manifest-public-key.pem'),
-    ffmpegPath: values.ffmpeg as string,
+    manifestPath: process.env.APS_MANIFEST_PATH ?? join(repoRoot, '.dev-keys', 'runtime-manifest.signed.json'),
+    productionKeysDir: join(here, '..', 'resources', 'keys', 'production'),
+    release: false,
+    ffmpegOverride: values.ffmpeg ? abs(values.ffmpeg as string) : (process.env.APS_FFMPEG ?? null),
+    env: { ...process.env, APS_DEV_TRUST_KEY_FILE: process.env.APS_DEV_TRUST_KEY_FILE ?? join(repoRoot, '.dev-keys', 'dev-1.pub.pem') },
     blenderOverride: values.blender ? abs(values.blender) : (process.env.APS_BLENDER_BIN ?? null),
     onLog: (_id, line) => {
       if (process.env.APS_VERBOSE) console.log(`  [blender] ${line}`);
@@ -82,8 +88,52 @@ async function main() {
     console.log('\nRuntime:', st);
     return;
   }
+  if (command === 'import') {
+    const file = positionals[1];
+    if (!file) throw new Error('Dùng: poc-cli import <file.apspack | blender-archive>');
+    console.log('\nRuntime:', await orch.runtime.importFromFile(abs(file)));
+    return;
+  }
   if (command === 'status') {
     console.log(await orch.runtime.status());
+    return;
+  }
+  if (command === 'prompt') {
+    const prompt = positionals.slice(1).join(' ');
+    if (!prompt) throw new Error('Dùng: poc-cli prompt "<mô tả video>" [--glb ... --label ... --logo ...]');
+    const label = values.label
+      ? {
+          label: {
+            imagePath: abs(values.label),
+            mode: values['label-mode'] as 'cylinder' | 'flat',
+            centerDeg: 0,
+            ...(values['label-width'] ? { widthMm: Number(values['label-width']) } : {}),
+            ...(values['label-height'] ? { heightMm: Number(values['label-height']) } : {}),
+            ...(values['label-bottom'] ? { bottomMm: Number(values['label-bottom']) } : {}),
+          },
+        }
+      : {};
+    const res = await orch.handlers['jobs:createFromPrompt']!({
+      prompt,
+      name: 'poc-prompt',
+      product: {
+        glbPath: abs(values.glb as string),
+        ...(values['size-height'] ? { sizeMm: { width: 60, depth: 60, height: Number(values['size-height']) } } : {}),
+        ...label,
+      },
+      ...(values.logo ? { logoPath: abs(values.logo) } : {}),
+      render: {
+        engine: values.engine as 'eevee' | 'cycles',
+        samples: Number(values.samples),
+        device: values.device as 'auto' | 'cpu',
+        shortSide: Math.min(Number(values.width), Number(values.height)),
+        fps: Number(values.fps),
+      },
+    });
+    console.log(`Đạo diễn: ${res.director.source}${res.director.fallbackReason ? ` (dự phòng: ${res.director.fallbackReason})` : ''}`);
+    for (const w of res.director.warnings) console.log(`  cảnh báo: ${w}`);
+    await orch.queue.idle();
+    finish(res.job.id);
     return;
   }
   const num = (s: string | undefined) => (s === undefined ? undefined : Number(s));
@@ -120,7 +170,11 @@ async function main() {
   };
   const job = orch.queue.enqueue(request);
   await orch.queue.idle();
-  const done = orch.queue.get(job.id);
+  finish(job.id);
+}
+
+function finish(jobId: string): void {
+  const done = orch.queue.get(jobId);
   if (!done || done.status !== 'done') {
     console.error('Job không thành công:', done?.status, done?.errorCode, done?.errorMessage);
     process.exitCode = 1;

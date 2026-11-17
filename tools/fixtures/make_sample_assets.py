@@ -149,7 +149,8 @@ def make_logo():
     render_flat(os.path.join(OUT, "logo.png"), 800, 360, 2.2, 1.0)
 
 
-make_bottle()
-make_label()
-make_logo()
-print("OK", os.listdir(OUT))
+if __name__ == "__main__":
+    make_bottle()
+    make_label()
+    make_logo()
+    print("OK", os.listdir(OUT))

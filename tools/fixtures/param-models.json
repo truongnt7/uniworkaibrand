@@ -1,0 +1,10 @@
+[
+  {"name": "serum30", "type": "lathe", "profile": [[0,0],[13,0],[15,3],[15,66],[12,80],[6,86],[6,96]]},
+  {"name": "toner120", "type": "lathe", "profile": [[0,0],[22,0],[24,4],[24,100],[18,125],[8,138],[8,150]]},
+  {"name": "cream50", "type": "lathe", "profile": [[0,0],[30,0],[32,3],[32,52],[0,55]]},
+  {"name": "can330", "type": "lathe", "profile": [[0,0],[31,0],[33,3],[33,116],[29,122]]},
+  {"name": "bottle500", "type": "lathe", "profile": [[0,0],[30,0],[33,5],[33,130],[22,170],[14,195],[14,205]]},
+  {"name": "box_soap", "type": "box", "widthMm": 85, "depthMm": 55, "heightMm": 28},
+  {"name": "box_tea", "type": "box", "widthMm": 70, "depthMm": 45, "heightMm": 110},
+  {"name": "box_cream", "type": "box", "widthMm": 52, "depthMm": 52, "heightMm": 62}
+]

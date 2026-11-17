@@ -38,24 +38,29 @@ function broadcast<C extends EventChannel>(channel: C, payload: EventPayload<C>)
   for (const win of BrowserWindow.getAllWindows()) win.webContents.send(channel, payload);
 }
 
+/** Bố cục tài nguyên: đóng gói -> <resources>/{blender-worker,keys/production,runtime-manifest.signed.json}; dev -> apps/desktop/resources + .dev-keys. */
 function buildConfig(): OrchestratorConfig {
-  const workerScript = app.isPackaged
-    ? join(process.resourcesPath, 'blender-worker', 'worker.py')
-    : join(repoRoot, 'blender-worker', 'worker.py');
-  const publicKey = join(resourceRoot, 'resources', 'manifest-public-key.pem');
+  const release = app.isPackaged;
+  const workerScript = release ? join(process.resourcesPath, 'blender-worker', 'worker.py') : join(repoRoot, 'blender-worker', 'worker.py');
+  const res = release ? process.resourcesPath : join(resourceRoot, 'resources');
+  const devManifest = join(repoRoot, '.dev-keys', 'runtime-manifest.signed.json');
+  const manifestPath = release
+    ? join(res, 'runtime-manifest.signed.json')
+    : (process.env.APS_MANIFEST_PATH ?? (existsSync(devManifest) ? devManifest : join(res, 'runtime-manifest.signed.json')));
   return {
     dataDir: app.getPath('userData'),
     workerScript,
-    manifestPath: join(resourceRoot, 'resources', 'runtime-manifest.signed.json'),
-    publicKeyPath: existsSync(publicKey) ? publicKey : null,
-    ffmpegPath: process.env.APS_FFMPEG ?? 'ffmpeg',
-    blenderOverride: process.env.APS_BLENDER_BIN ?? null,
+    manifestPath,
+    productionKeysDir: join(res, 'keys', 'production'),
+    release,
+    blenderOverride: release ? null : (process.env.APS_BLENDER_BIN ?? null),
+    ffmpegOverride: release ? null : (process.env.APS_FFMPEG ?? null),
   };
 }
 
 async function pickFile(kind: 'glb' | 'image' | 'runtime'): Promise<string | null> {
   // Hook cho e2e tự động (không thể điều khiển hộp thoại hệ điều hành): APS_E2E_FILES='{"glb":"...","image":"..."}'
-  if (process.env.APS_E2E_FILES) {
+  if (process.env.APS_E2E_FILES && (!app.isPackaged || process.env.APS_E2E === '1')) {
     const map = JSON.parse(process.env.APS_E2E_FILES) as Record<string, string>;
     return map[kind] ?? null;
   }
@@ -77,8 +82,11 @@ function registerIpc(): void {
       return list;
     }) as never,
     'jobs:create': forward('jobs:create') as never,
+    'jobs:createFromPrompt': forward('jobs:createFromPrompt') as never,
     'jobs:cancel': forward('jobs:cancel') as never,
     'jobs:retry': forward('jobs:retry') as never,
+    'jobs:pause': forward('jobs:pause') as never,
+    'jobs:resume': forward('jobs:resume') as never,
     'jobs:remove': forward('jobs:remove') as never,
     'runtime:status': forward('runtime:status') as never,
     'runtime:install': forward('runtime:install') as never,

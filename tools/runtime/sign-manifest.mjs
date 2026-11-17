@@ -1,31 +1,17 @@
 #!/usr/bin/env node
-// Ký manifest runtime bằng ed25519.
-//   node tools/runtime/sign-manifest.mjs            -> dùng/ tạo khóa DEV (tools/runtime/dev-signing-key.pem, đã gitignore)
-//   APS_MANIFEST_SIGNING_KEY=<PEM> node ...         -> dùng khóa thật (CI/HSM)
-// Ghi apps/desktop/resources/runtime-manifest.signed.json và manifest-public-key.pem.
-import { createPrivateKey, createPublicKey, generateKeyPairSync, sign } from 'node:crypto';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+// Ký manifest runtime bằng khóa riêng Ed25519 của bạn (offline).
+//   node tools/runtime/sign-manifest.mjs --key /an/toan/prod-2026.key.pem --key-id prod-2026 \
+//        [--manifest tools/runtime/manifest.json] [--out apps/desktop/resources/runtime-manifest.signed.json]
+// Khóa production: key-id không được bắt đầu bằng "dev". Khóa dev chỉ dùng qua `pnpm dev:keys`.
+import { join } from 'node:path';
+import { die, isInsideRepo, parseArgs, repoRoot, signManifestFile } from './lib.mjs';
 
-const here = dirname(fileURLToPath(import.meta.url));
-const outDir = join(here, '..', '..', 'apps', 'desktop', 'resources');
-const manifestText = JSON.stringify(JSON.parse(readFileSync(join(here, 'manifest.json'), 'utf8')));
-
-let privatePem = process.env.APS_MANIFEST_SIGNING_KEY;
-const devKeyPath = join(here, 'dev-signing-key.pem');
-if (!privatePem) {
-  if (!existsSync(devKeyPath)) {
-    const { privateKey } = generateKeyPairSync('ed25519');
-    writeFileSync(devKeyPath, privateKey.export({ type: 'pkcs8', format: 'pem' }), { mode: 0o600 });
-    console.log('Đã tạo khóa ký DEV mới:', devKeyPath, '(KHÔNG dùng cho bản phát hành)');
-  }
-  privatePem = readFileSync(devKeyPath, 'utf8');
-}
-const privateKey = createPrivateKey(privatePem);
-const publicPem = createPublicKey(privateKey).export({ type: 'spki', format: 'pem' });
-const signature = sign(null, Buffer.from(manifestText, 'utf8'), privateKey).toString('base64');
-
-writeFileSync(join(outDir, 'runtime-manifest.signed.json'), JSON.stringify({ manifest: manifestText, signature, keyId: 'dev-1' }, null, 2) + '\n');
-writeFileSync(join(outDir, 'manifest-public-key.pem'), publicPem);
-console.log('Đã ký manifest ->', join(outDir, 'runtime-manifest.signed.json'));
+const args = parseArgs(process.argv.slice(2));
+if (!args.key || args.key === true || !args['key-id'] || args['key-id'] === true) die('thiếu --key <khóa riêng .key.pem> và --key-id <id>');
+const dev = String(args['key-id']).startsWith('dev-');
+if (dev && !args['allow-dev']) die('key-id bắt đầu bằng "dev-" là khóa DEV; dùng `pnpm dev:keys` thay vì ký bản phát hành bằng khóa dev');
+if (!dev && isInsideRepo(args.key)) die('khóa riêng production không được nằm trong repo');
+const manifestPath = args.manifest && args.manifest !== true ? args.manifest : join(repoRoot, 'tools', 'runtime', 'manifest.json');
+const outPath = args.out && args.out !== true ? args.out : join(repoRoot, 'apps', 'desktop', 'resources', 'runtime-manifest.signed.json');
+signManifestFile({ manifestPath, keyPath: args.key, keyId: args['key-id'], outPath });
+console.log(`Đã ký ${manifestPath} bằng khóa ${args['key-id']} -> ${outPath}\nNhớ chép public key tương ứng vào apps/desktop/resources/keys/production/${args['key-id']}.pub.pem`);

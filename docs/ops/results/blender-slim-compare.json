@@ -1,0 +1,55 @@
+{
+ "limitMeanAbsDiff": 0.5,
+ "worstMeanAbsDiff": 0,
+ "pass": true,
+ "rows": [
+  {
+   "engine": "eevee",
+   "angle": 0,
+   "meanAbsDiff": 0,
+   "maxDiff": 0,
+   "psnrDb": "identical",
+   "ssim": 1
+  },
+  {
+   "engine": "eevee",
+   "angle": 120,
+   "meanAbsDiff": 0,
+   "maxDiff": 0,
+   "psnrDb": "identical",
+   "ssim": 1
+  },
+  {
+   "engine": "eevee",
+   "angle": 240,
+   "meanAbsDiff": 0,
+   "maxDiff": 0,
+   "psnrDb": "identical",
+   "ssim": 1
+  },
+  {
+   "engine": "cycles",
+   "angle": 0,
+   "meanAbsDiff": 0,
+   "maxDiff": 0,
+   "psnrDb": "identical",
+   "ssim": 1
+  },
+  {
+   "engine": "cycles",
+   "angle": 120,
+   "meanAbsDiff": 0,
+   "maxDiff": 0,
+   "psnrDb": "identical",
+   "ssim": 1
+  },
+  {
+   "engine": "cycles",
+   "angle": 240,
+   "meanAbsDiff": 0,
+   "maxDiff": 0,
+   "psnrDb": "identical",
+   "ssim": 1
+  }
+ ]
+}

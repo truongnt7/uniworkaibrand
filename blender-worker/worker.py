@@ -17,6 +17,7 @@ if HERE not in sys.path:
 
 import protocol  # noqa: E402
 import job as jobmod  # noqa: E402
+import plan  # noqa: E402
 from protocol import WorkerError  # noqa: E402
 
 
@@ -25,8 +26,17 @@ def _argv_after_dashes():
     return argv[argv.index("--") + 1 :] if "--" in argv else []
 
 
-def _render_frames(bpy, scene, job, handles):
-    from motions import turntable
+def _apply_frame(job, handles, frame):
+    """Đặt toàn bộ trạng thái cảnh cho khung `frame` (1-based) từ job; cùng một đường cho job v1 và v2."""
+    from motions import state as motion_state
+    from scene import overlay_text
+
+    st = plan.state_at(job, frame)
+    motion_state.apply(handles, st)
+    overlay_text.update(handles.get("texts", []), st["t"])
+
+
+def _render_frames(bpy, scene, job, handles, qc=None):
 
     total = job["frames"]["total"]
     os.makedirs(job["paths"]["framesDir"], exist_ok=True)
@@ -35,12 +45,14 @@ def _render_frames(bpy, scene, job, handles):
     for frame in range(1, total + 1):
         final = jobmod.frame_path(job, frame)
         protocol.emit("progress", phase="render", frame=frame - 1, total=total)
+        if qc is not None:
+            _write_qc_grid(bpy, scene, job, handles, qc, frame, final)
         if os.path.isfile(final) and os.path.getsize(final) > 0:
             protocol.emit("frame_done", frame=frame, path=final, ms=0, skipped=True)
             done += 1
             continue
         t0 = time.time()
-        turntable.apply_angle(handles, job["motion"], jobmod.frame_angle(job, frame))
+        _apply_frame(job, handles, frame)
         part = final + ".part"
         scene.render.filepath = part
         try:
@@ -58,6 +70,15 @@ def _render_frames(bpy, scene, job, handles):
         protocol.emit("frame_done", frame=frame, path=final, ms=int((time.time() - t0) * 1000))
     protocol.emit("progress", phase="render", frame=total, total=total)
     return done, int((time.time() - t_all) * 1000)
+
+
+def _write_qc_grid(bpy, scene, job, handles, qc, frame, final):
+    from label_decal import qc_grid
+
+    _apply_frame(job, handles, frame)
+    bpy.context.view_layer.update()
+    grid = qc_grid.compute(scene, scene.camera, qc["obj"], qc["spec"])
+    qc_grid.write(final + ".grid.json", grid)
 
 
 def _smoke(bpy, job):
@@ -84,7 +105,7 @@ def _smoke(bpy, job):
 def _render(bpy, job):
     import gpu_setup
     from label_decal import decal
-    from scene import glb_import, studio
+    from scene import glb_import, overlay_text, studio
 
     t0 = time.time()
     scene = bpy.context.scene
@@ -94,11 +115,17 @@ def _render(bpy, job):
     dims = glb_import.normalize(new_objects, meshes, job["product"].get("sizeMm"))
 
     protocol.emit("progress", phase="scene", frame=0, total=job["frames"]["total"])
-    decal.apply(job, meshes, dims)
+    # Nhãn luôn được dán lại bằng decal từ ảnh gốc (pixel nhãn không do AI sinh); job v2 mang cờ lockLabel để truy vết.
+    spec = decal.apply(job, meshes, dims)
+    protocol.log("job v%d: %d khung%s" % (job["version"], job["frames"]["total"], ", giữ nhãn (decal)" if spec is not None else ""))
     handles = studio.build(scene, job, dims, meshes)
+    handles["texts"] = overlay_text.build(scene, job, handles)
     gpu_setup.configure_render(scene, job["render"])
 
-    frames, _ = _render_frames(bpy, scene, job, handles)
+    qc = None
+    if job.get("qcGrid") and spec is not None:
+        qc = {"spec": spec, "obj": max(meshes, key=lambda o: len(o.data.vertices))}
+    frames, _ = _render_frames(bpy, scene, job, handles, qc)
     protocol.emit("done", frames=frames, ms=int((time.time() - t0) * 1000))
 
 

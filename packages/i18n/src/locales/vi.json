@@ -63,7 +63,11 @@
     "device": "Thiết bị: {{device}}",
     "output": "Kết quả",
     "needRuntime": "Cần cài Blender runtime trước.",
-    "needGlb": "Hãy chọn file .glb."
+    "needGlb": "Hãy chọn file .glb.",
+    "pause": "Tạm dừng",
+    "resume": "Tiếp tục",
+    "attention": "Job lỗi lặp lại nhiều lần nên được tạm gác để không chặn hàng đợi. Hãy kiểm tra lỗi rồi bấm Thử lại.",
+    "failures": "Lỗi liên tiếp: {{count}}"
   },
   "status": {
     "queued": "Đang chờ",
@@ -72,7 +76,9 @@
     "encoding": "Đang ghép video",
     "done": "Hoàn tất",
     "failed": "Lỗi",
-    "canceled": "Đã hủy"
+    "canceled": "Đã hủy",
+    "paused": "Tạm dừng",
+    "needs_attention": "Chờ xử lý"
   },
   "errors": {
     "UNKNOWN": "Đã xảy ra lỗi không xác định.",
@@ -97,6 +103,8 @@
     "GLB_IMPORT_FAILED": "Không nhập được file .glb.",
     "GLB_EMPTY": "File .glb không chứa mesh nào.",
     "LABEL_NOT_FOUND": "Không tìm thấy ảnh nhãn.",
+    "LOGO_NOT_FOUND": "Không tìm thấy ảnh logo.",
+    "INVALID_TIMELINE": "Timeline không hợp lệ, không biên dịch được job render.",
     "RENDER_FAILED": "Render thất bại.",
     "SCRIPT_ERROR": "Script Blender gặp lỗi.",
     "WORKER_EXIT": "Blender kết thúc bất thường.",

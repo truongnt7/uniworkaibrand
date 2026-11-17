@@ -7,9 +7,10 @@ import bpy
 from mathutils import Vector
 
 import job as jobmod
+import plan
 
 PEDESTAL_H = 0.03
-CAMERA_ELEVATION_DEG = 11.0
+CAMERA_ELEVATION_DEG = plan.DEFAULT_ELEVATION_DEG
 FILL_RATIO_V = 0.66
 FILL_RATIO_H = 0.62
 FLOOR_EMISSION = 0.55
@@ -105,6 +106,9 @@ def build(scene, job, dims, meshes):
     pedestal.name = "Pedestal"
     bpy.ops.object.shade_smooth()
     pedestal.data.materials.append(_principled(ped_color, 0.28))
+    if "platform" in job["scene"].get("hide", []):
+        pedestal.hide_render = True
+        pedestal.hide_viewport = True
 
     pivot = _empty("ProductPivot")
     for obj in meshes:
@@ -145,9 +149,15 @@ def build(scene, job, dims, meshes):
     key = _light("Key", "AREA", (-0.9 * dist, -0.8 * dist, prod_h * 1.4 + 0.2), LIGHT_GAIN * 11, (0.6 * dist, 0.6 * dist), target=rig)
     fill = _light("Fill", "AREA", (1.0 * dist, -0.7 * dist, prod_h * 0.6), LIGHT_GAIN * 5, (0.8 * dist, 0.8 * dist), target=rig)
     rim = _light("Rim", "AREA", (0.25 * dist, 1.3 * dist, prod_h * 1.1), LIGHT_GAIN * 40, (1.2 * dist, 0.3 * dist), color=(1.0, 0.96, 0.92), target=rig)
+    # Đèn chính gắn vào một pivot con của rig để track `keyAzimuthDeg` quét đèn quanh sản phẩm.
+    key_pivot = _empty("KeyPivot", rig.location)
+    key_pivot.parent = rig
+    key_pivot.matrix_parent_inverse = rig.matrix_world.inverted()
+    bpy.context.view_layer.update()
+    base_energy = {"key": key.data.energy, "fill": fill.data.energy, "rim": rim.data.energy}
     for light in (key, fill, rim):
-        light.parent = rig
-        light.matrix_parent_inverse = rig.matrix_world.inverted()
+        light.parent = key_pivot if light is key else rig
+        light.matrix_parent_inverse = (key_pivot if light is key else rig).matrix_world.inverted()
         light.data.use_shadow = True
         light.data.use_custom_distance = True
         light.data.cutoff_distance = 60.0
@@ -159,4 +169,16 @@ def build(scene, job, dims, meshes):
     rim.light_linking.receiver_collection = rim_targets
     key.data.shadow_soft_size = 0.08 + 0.12 * (1 - shadow)
 
-    return {"pivot": pivot, "rig": rig, "camera": cam, "distance": dist}
+    return {
+        "pivot": pivot,
+        "rig": rig,
+        "camera": cam,
+        "distance": dist,
+        "key": key,
+        "fill": fill,
+        "rim": rim,
+        "key_pivot": key_pivot,
+        "base_energy": base_energy,
+        "product_height": prod_h,
+        "sensor": (sensor_w, sensor_h, cam_data.lens),
+    }

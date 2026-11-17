@@ -3,7 +3,7 @@ import { dirname } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 
 /**
- * SQLite dùng module có sẵn `node:sqlite` (Node >= 22.13 / Electron 43 = Node 24) để khỏi phải rebuild
+ * SQLite dùng module có sẵn `node:sqlite` (Node >= 22.13; Electron 43 kèm Node 24 — phiên bản được khóa trong package.json `engines` và README) để khỏi phải rebuild
  * native module cho từng hệ điều hành; toàn bộ truy cập đi qua file này nên đổi sang better-sqlite3 là việc nhỏ.
  */
 export type Db = DatabaseSync;
@@ -35,6 +35,42 @@ export const MIGRATIONS: readonly string[] = [
      finished_at INTEGER
    );
    CREATE INDEX idx_jobs_status ON jobs(status, priority, created_at);`,
+  // v2: thêm trạng thái paused/needs_attention (SQLite không sửa được CHECK nên dựng lại bảng), cột failures và recovered.
+  `CREATE TABLE jobs_v2 (
+     id TEXT PRIMARY KEY,
+     name TEXT NOT NULL,
+     target TEXT NOT NULL CHECK (target IN ('local','cloud')),
+     priority TEXT NOT NULL CHECK (priority IN ('preview','final')),
+     status TEXT NOT NULL CHECK (status IN ('queued','preparing','rendering','encoding','done','failed','canceled','paused','needs_attention')),
+     kind TEXT NOT NULL CHECK (kind IN ('image','video')),
+     engine TEXT NOT NULL,
+     request_json TEXT NOT NULL,
+     frame INTEGER NOT NULL DEFAULT 0,
+     total_frames INTEGER NOT NULL DEFAULT 1,
+     progress REAL NOT NULL DEFAULT 0,
+     estimate_s REAL,
+     cost_credits REAL,
+     error_code TEXT,
+     error_message TEXT,
+     device_info TEXT,
+     work_dir TEXT,
+     output_path TEXT,
+     attempts INTEGER NOT NULL DEFAULT 0,
+     created_at INTEGER NOT NULL,
+     updated_at INTEGER NOT NULL,
+     started_at INTEGER,
+     finished_at INTEGER,
+     failures INTEGER NOT NULL DEFAULT 0,
+     recovered INTEGER NOT NULL DEFAULT 0
+   );
+   INSERT INTO jobs_v2 (id, name, target, priority, status, kind, engine, request_json, frame, total_frames, progress, estimate_s,
+       cost_credits, error_code, error_message, device_info, work_dir, output_path, attempts, created_at, updated_at, started_at, finished_at)
+     SELECT id, name, target, priority, status, kind, engine, request_json, frame, total_frames, progress, estimate_s,
+       cost_credits, error_code, error_message, device_info, work_dir, output_path, attempts, created_at, updated_at, started_at, finished_at
+     FROM jobs ORDER BY rowid;
+   DROP TABLE jobs;
+   ALTER TABLE jobs_v2 RENAME TO jobs;
+   CREATE INDEX idx_jobs_status ON jobs(status, recovered, priority, created_at);`,
 ];
 
 export function migrate(db: Db, dbPath: string | null): void {

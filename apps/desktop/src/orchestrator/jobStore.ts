@@ -22,6 +22,8 @@ interface Row {
   work_dir: string | null;
   output_path: string | null;
   attempts: number;
+  failures: number;
+  recovered: number;
   created_at: number;
   updated_at: number;
   started_at: number | null;
@@ -43,6 +45,7 @@ export type JobPatch = Partial<
     | 'workDir'
     | 'outputPath'
     | 'attempts'
+    | 'failures'
     | 'startedAt'
     | 'finishedAt'
   >
@@ -61,6 +64,7 @@ const COLUMN: Record<keyof JobPatch, string> = {
   workDir: 'work_dir',
   outputPath: 'output_path',
   attempts: 'attempts',
+  failures: 'failures',
   startedAt: 'started_at',
   finishedAt: 'finished_at',
 };
@@ -86,6 +90,7 @@ function toRecord(r: Row): JobRecord {
     workDir: r.work_dir,
     outputPath: r.output_path,
     attempts: r.attempts,
+    failures: r.failures,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
     startedAt: r.started_at,
@@ -145,12 +150,20 @@ export class JobStore {
     return rows.map(toRecord);
   }
 
-  /** Job `local` đang chờ, ưu tiên preview trước final, rồi theo thứ tự tạo. Job `cloud` không bao giờ được chọn. */
+  /** Đánh dấu job bị gián đoạn để lần chọn tiếp theo ưu tiên nó trước mọi job queued khác. */
+  setRecovered(id: string, recovered: boolean): void {
+    this.db.prepare('UPDATE jobs SET recovered = ? WHERE id = ?').run(recovered ? 1 : 0, id);
+  }
+
+  /**
+   * Job `local` đang chờ: job vừa bị gián đoạn trước, rồi preview trước final, rồi theo thứ tự tạo (giữ nguyên thứ tự cũ
+   * sau khi khởi động lại). Job `cloud`, `paused`, `needs_attention` không bao giờ được chọn.
+   */
   nextRunnable(): JobRecord | null {
     const row = this.db
       .prepare(
         `SELECT * FROM jobs WHERE status = 'queued' AND target = 'local'
-         ORDER BY CASE priority WHEN 'preview' THEN 0 ELSE 1 END, created_at ASC, rowid ASC LIMIT 1`,
+         ORDER BY recovered DESC, CASE priority WHEN 'preview' THEN 0 ELSE 1 END, created_at ASC, rowid ASC LIMIT 1`,
       )
       .get() as unknown as Row | undefined;
     return row ? toRecord(row) : null;

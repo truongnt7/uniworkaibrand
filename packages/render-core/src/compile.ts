@@ -1,4 +1,4 @@
-import { WorkerJob, totalFramesFor, type RenderRequest } from '@aps/shared';
+import { WorkerJobV1, totalFramesFor, type RenderRequest } from '@aps/shared';
 
 export const FRAME_PATTERN = 'frame_%06d.png';
 
@@ -12,11 +12,11 @@ export interface CompileOptions {
 }
 
 /** Biên dịch yêu cầu của UI (RenderRequest) thành job.json cho blender-worker. */
-export function compileWorkerJob(request: RenderRequest, opts: CompileOptions): WorkerJob {
+export function compileWorkerJob(request: RenderRequest, opts: CompileOptions): WorkerJobV1 {
   const { output, product, scene } = request;
   const total = totalFramesFor(output);
   const isImage = output.kind === 'image';
-  return WorkerJob.parse({
+  return WorkerJobV1.parse({
     version: 1,
     mode: 'render',
     jobId: opts.jobId,
@@ -44,8 +44,8 @@ export function compileWorkerJob(request: RenderRequest, opts: CompileOptions): 
   });
 }
 
-export function compileSmokeJob(jobId: string, framesDir: string): WorkerJob {
-  return WorkerJob.parse({
+export function compileSmokeJob(jobId: string, framesDir: string): WorkerJobV1 {
+  return WorkerJobV1.parse({
     version: 1,
     mode: 'smoke',
     jobId,

@@ -148,7 +148,7 @@ export function JobForm({ runtimeReady }: { runtimeReady: boolean }) {
           <span>{t('job.target')}</span>
           <select value="local" disabled>
             <option value="local">{t('job.targetLocal')}</option>
-            <option value="cloud">{t('job.targetCloud')}</option>
+            <option value="cloud" disabled>{t('job.targetCloud')}</option>
           </select>
         </label>
       </div>

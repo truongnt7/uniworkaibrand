@@ -48,3 +48,19 @@ Thumbs.db
 tools/runtime/*.pem
 # Đầu ra render/PoC cục bộ
 .poc-data/
+
+# Khóa/manifest DEV sinh cục bộ bởi `pnpm dev:keys` (không bao giờ commit)
+.dev-keys/
+# Khóa RIÊNG, ở bất kỳ đâu
+*.key.pem
+*.private.pem
+*.p12
+*.pfx
+# Gói runtime offline và bản đóng gói
+*.apspack
+release-build/
+.package-staging/
+
+# turbo
+.turbo/
+.cache/

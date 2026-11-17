@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Ease, HexColor, TextOverlay } from './overlay.js';
 
 export const JOB_STATUSES = [
   'queued',
@@ -8,11 +9,15 @@ export const JOB_STATUSES = [
   'done',
   'failed',
   'canceled',
+  'paused',
+  'needs_attention',
 ] as const;
 export const JobStatus = z.enum(JOB_STATUSES);
 export type JobStatus = z.infer<typeof JobStatus>;
 
 export const ACTIVE_JOB_STATUSES = ['preparing', 'rendering', 'encoding'] as const satisfies readonly JobStatus[];
+/** Không chạy cho tới khi người dùng can thiệp (tiếp tục / thử lại) nên không chặn hàng đợi. */
+export const HELD_JOB_STATUSES = ['paused', 'needs_attention'] as const satisfies readonly JobStatus[];
 export const TERMINAL_JOB_STATUSES = ['done', 'failed', 'canceled'] as const satisfies readonly JobStatus[];
 
 export const JobTarget = z.enum(['local', 'cloud']);
@@ -54,7 +59,6 @@ export const ProductSpec = z.object({
 });
 export type ProductSpec = z.infer<typeof ProductSpec>;
 
-export const HexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/);
 
 export const SceneSpec = z.object({
   template: z.enum(['studio-soft']).default('studio-soft'),
@@ -78,6 +82,35 @@ export const OutputSpec = z.object({
 });
 export type OutputSpec = z.infer<typeof OutputSpec>;
 
+/**
+ * Timeline của Đạo diễn AI/UI (schema đầy đủ nằm ở @aps/ai, kiểm tra chặt khi biên dịch).
+ * @aps/shared chỉ giữ phần vỏ để lưu cùng job và biên dịch lại y hệt khi thử lại/tiếp tục.
+ */
+export const TimelineEnvelope = z.looseObject({ version: z.literal(1) });
+export type TimelineEnvelope = z.infer<typeof TimelineEnvelope>;
+
+/** Đoạn ánh sáng do UI cung cấp (Đạo diễn AI không sinh track này). Giá trị đạt được ở `t_end` rồi giữ nguyên. */
+export const LightSegment = z.strictObject({
+  t: z.number().min(0).max(60),
+  t_end: z.number().min(0).max(60),
+  key_scale: z.number().min(0).max(4).optional(),
+  fill_scale: z.number().min(0).max(4).optional(),
+  rim_scale: z.number().min(0).max(4).optional(),
+  key_azimuth_deg: z.number().min(-180).max(180).optional(),
+  ease: Ease.default('smooth'),
+});
+export type LightSegment = z.infer<typeof LightSegment>;
+export type LightSegmentInput = z.input<typeof LightSegment>;
+
+/** Track do người dùng thêm trong UI (chữ, ánh sáng), chỉ có tác dụng cùng `timeline`. */
+export const TimelineExtras = z.strictObject({
+  text: z.array(TextOverlay).max(4).optional(),
+  lights: z.array(LightSegment).max(8).optional(),
+  /** Màu thương hiệu cho palette `brand` (#rrggbb). */
+  brandColor: HexColor.optional(),
+});
+export type TimelineExtras = z.infer<typeof TimelineExtras>;
+
 export const RenderRequest = z.object({
   name: z.string().trim().min(1).max(120).default('Render'),
   target: JobTarget.default('local'),
@@ -85,6 +118,9 @@ export const RenderRequest = z.object({
   product: ProductSpec,
   scene: SceneSpec.prefault({}),
   output: OutputSpec,
+  /** Có timeline thì worker chạy job v2 (nhiều track); không có thì job v1 (một chuyển động `output.motion`). */
+  timeline: TimelineEnvelope.optional(),
+  extras: TimelineExtras.optional(),
 });
 export type RenderRequest = z.infer<typeof RenderRequest>;
 export type RenderRequestInput = z.input<typeof RenderRequest>;
@@ -113,6 +149,8 @@ export const JobRecord = z.object({
   workDir: z.string().nullable(),
   outputPath: z.string().nullable(),
   attempts: z.number().int().min(0),
+  /** Số lần lỗi liên tiếp (kể cả bị gián đoạn do crash); chạm ngưỡng thì chuyển `needs_attention`. */
+  failures: z.number().int().min(0).default(0),
   createdAt: z.number(),
   updatedAt: z.number(),
   startedAt: z.number().nullable(),

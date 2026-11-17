@@ -50,5 +50,30 @@
         "binary": "Blender.app/Contents/MacOS/Blender"
       }
     }
+  },
+  "ffmpeg": {
+    "version": "n8.1.3-35-gf1acb0a266",
+    "license": "LGPL-3.0-or-later",
+    "sourceUrl": "https://github.com/BtbN/FFmpeg-Builds/tree/c9fe5114060e507409f7ee07edfd82efaf25d767",
+    "artifacts": {
+      "linux-x64": {
+        "url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-11-16-15-29/ffmpeg-n8.1.3-35-gf1acb0a266-linux64-lgpl-8.1.tar.xz",
+        "mirrors": [],
+        "size": 134750888,
+        "sha256": "4499c131e70aeb31b377d1cd2d5f0f99cd4872bfa6e72478dd30495f52ff8553",
+        "archive": "tar.xz",
+        "extractedSize": 450000000,
+        "binary": "ffmpeg-n8.1.3-35-gf1acb0a266-linux64-lgpl-8.1/bin/ffmpeg"
+      },
+      "win32-x64": {
+        "url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-11-16-15-29/ffmpeg-n8.1.3-35-gf1acb0a266-win64-lgpl-8.1.zip",
+        "mirrors": [],
+        "size": 167577646,
+        "sha256": "8816920f141720edb654232c999fbeb5eab51ee957dd3687c5287bfb6388ddf9",
+        "archive": "zip",
+        "extractedSize": 450000000,
+        "binary": "ffmpeg-n8.1.3-35-gf1acb0a266-win64-lgpl-8.1/bin/ffmpeg.exe"
+      }
+    }
   }
 }
