@@ -82,6 +82,7 @@ function registerIpc(): void {
       return list;
     }) as never,
     'jobs:create': forward('jobs:create') as never,
+    'jobs:createFromPrompt': forward('jobs:createFromPrompt') as never,
     'jobs:cancel': forward('jobs:cancel') as never,
     'jobs:retry': forward('jobs:retry') as never,
     'jobs:pause': forward('jobs:pause') as never,

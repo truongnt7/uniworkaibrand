@@ -35,6 +35,9 @@ importers:
 
   apps/desktop:
     devDependencies:
+      '@aps/ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
       '@aps/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
@@ -133,9 +136,15 @@ importers:
 
   packages/render-core:
     dependencies:
+      '@aps/ai':
+        specifier: workspace:*
+        version: link:../ai
       '@aps/shared':
         specifier: workspace:*
         version: link:../shared
+      zod:
+        specifier: ^4.1.0
+        version: 4.6.7
     devDependencies:
       '@types/node':
         specifier: ^24.9.0

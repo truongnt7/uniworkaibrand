@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite';
 
 // Gói workspace là mã TypeScript nguồn nên phải được bundle vào main/preload/orchestrator.
-const bundled = ['@aps/shared', '@aps/i18n', '@aps/render-core'];
+const bundled = ['@aps/shared', '@aps/i18n', '@aps/render-core', '@aps/ai'];
 
 // `electron-vite build` (mode production) đặt hằng này = false: mã nạp khóa DEV bị loại khỏi bản phát hành.
 const devKeyAllowed = (mode: string) => JSON.stringify(mode !== 'production');

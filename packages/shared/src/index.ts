@@ -1,3 +1,4 @@
+export * from './overlay.js';
 export * from './job.js';
 export * from './worker-protocol.js';
 export * from './runtime.js';

@@ -103,6 +103,8 @@
     "GLB_IMPORT_FAILED": "Could not import the .glb file.",
     "GLB_EMPTY": "The .glb contains no meshes.",
     "LABEL_NOT_FOUND": "Label image not found.",
+    "LOGO_NOT_FOUND": "Logo image not found.",
+    "INVALID_TIMELINE": "Invalid timeline; cannot compile the render job.",
     "RENDER_FAILED": "Render failed.",
     "SCRIPT_ERROR": "The Blender script failed.",
     "WORKER_EXIT": "Blender exited abnormally.",

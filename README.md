@@ -51,6 +51,11 @@ pnpm poc:render render --kind video --motion orbit --engine cycles --samples 24 
   --label-width 94 --label-height 60 --label-bottom 20 --size-height 146 \
   --logo assets/samples/logo.png --out out/turntable.mp4
 
+# 2b) Video từ mô tả tiếng Việt: Đạo diễn AI -> timeline -> job v2 -> Blender -> ffmpeg (offline rule-based nếu không có APS_AI_*)
+pnpm poc:render prompt "Xoay chai chậm, camera tiến gần rồi quay quanh 90 độ, cuối video hiện logo" \
+  --glb assets/samples/serum-bottle.glb --label assets/samples/label.png --logo assets/samples/logo.png \
+  --width 640 --height 360 --fps 15 --samples 16 --out out/ai.mp4
+
 # 3) Chạy app (PoC Console, tiếng Việt / English)
 pnpm dev
 
@@ -94,6 +99,7 @@ Xem bảng chi tiết trong mô tả PR #1. Tóm tắt: đã chạy thật trên
 ## Tài liệu
 
 - Vận hành/số liệu Phase 0: [khóa ký](docs/ops/runtime-signing.md), [gói offline](docs/ops/offline-pack.md), [QC nhãn](docs/ops/label-qc.md), [rút gọn Blender](docs/ops/blender-slimming.md), [benchmark](docs/ops/benchmark.md).
+- [Timeline → render Blender → mp4](docs/timeline-render.md): Đạo diễn AI nối vào worker (job v2), cách chạy, kết quả kiểm chứng, giới hạn.
 - [Kế hoạch triển khai](docs/ke-hoach-ai-blender-electron.md): sản phẩm, kiến trúc, lộ trình, backlog Phase 0.
 - [Bối cảnh và quyết định đã chốt](docs/project-context.md): Blender 4.5 LTS, NestJS + PostgreSQL, thị trường Việt Nam trước, v.v.
 - [Ảnh thiết kế giao diện](docs/design/): Studio video 3D, Studio ảnh sản phẩm, Sản phẩm, Kho mẫu, Thư viện, Kênh & Xuất bản.

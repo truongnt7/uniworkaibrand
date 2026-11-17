@@ -1,6 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { EventChannel, EventPayload, InvokeHandlers, JobRecord } from '@aps/shared';
+import { aspectToSize, createProviderFromEnv, direct, type LlmProvider } from '@aps/ai';
+import { checkTimelineRequest } from '@aps/render-core';
+import { RenderRequest, SCENE_TEMPLATES, type EventChannel, type EventPayload, type InvokeHandlers, type JobRecord } from '@aps/shared';
 import { BlenderRunner } from './blenderRunner.js';
 import { openDb, type Db } from './db.js';
 import { JobStore } from './jobStore.js';
@@ -26,6 +28,8 @@ export interface OrchestratorConfig {
   env?: NodeJS.ProcessEnv;
   runtimeOverrides?: Partial<RuntimeManagerOptions>;
   runner?: JobRunner;
+  /** Chỉ test: thay provider LLM của Đạo diễn AI (mặc định đọc APS_AI_* từ `env`; không có khóa -> rule-based offline). */
+  directorProvider?: () => LlmProvider | null;
   onLog?: (jobId: string, line: string) => void;
 }
 
@@ -86,7 +90,51 @@ export function createOrchestrator(config: OrchestratorConfig, emit: EmitFn): Or
 
   const handlers: InvokeHandlers = {
     'jobs:list': () => queue.list(),
-    'jobs:create': (req) => queue.enqueue(req),
+    'jobs:create': (req) => {
+      if (req.timeline) checkTimelineRequest(req);
+      return queue.enqueue(req);
+    },
+    'jobs:createFromPrompt': async (req) => {
+      const provider = config.directorProvider ? config.directorProvider() : createProviderFromEnv('director', config.env ?? process.env);
+      const directed = await direct(req.prompt, {
+        provider,
+        context: {
+          availableTemplates: req.availableTemplates ?? SCENE_TEMPLATES,
+          hasLogo: Boolean(req.logoPath),
+          ...(req.render?.fps ? { fps: req.render.fps } : {}),
+          ...(req.product.sizeMm ? { productSizeMm: req.product.sizeMm } : {}),
+        },
+      });
+      const { timeline } = directed;
+      const render = req.render ?? {};
+      const request = RenderRequest.parse({
+        name: req.name ?? 'Video AI',
+        product: req.product,
+        output: {
+          kind: 'video',
+          ...aspectToSize(timeline.aspect, render.shortSide ?? 720),
+          fps: timeline.fps,
+          durationS: timeline.duration_s,
+          ...(render.engine ? { engine: render.engine } : {}),
+          ...(render.samples ? { samples: render.samples } : {}),
+          ...(render.device ? { device: render.device } : {}),
+          ...(req.logoPath ? { logoPath: req.logoPath } : {}),
+        },
+        timeline,
+        ...(req.extras ? { extras: req.extras } : {}),
+      });
+      const checked = checkTimelineRequest(request);
+      const job = queue.enqueue(request);
+      return {
+        job,
+        director: {
+          source: directed.source,
+          warnings: [...directed.warnings, ...checked.warnings],
+          fixes: directed.fixes,
+          ...(directed.fallbackReason ? { fallbackReason: directed.fallbackReason } : {}),
+        },
+      };
+    },
     'jobs:cancel': async ({ id }) => ({ ok: await queue.cancel(id) }),
     'jobs:retry': ({ id }) => ({ ok: queue.retry(id) }),
     'jobs:pause': async ({ id }) => ({ ok: await queue.pause(id) }),

@@ -1,0 +1,180 @@
+{
+  "version": 2,
+  "mode": "render",
+  "jobId": "golden",
+  "product": {
+    "glbPath": "/data/p.glb",
+    "label": {
+      "imagePath": "/data/label.png",
+      "mode": "cylinder",
+      "centerDeg": 0
+    },
+    "lockLabel": true
+  },
+  "scene": {
+    "template": "luxury-dark",
+    "backgroundColor": "#241f1a",
+    "shadow": 0.85,
+    "hide": []
+  },
+  "render": {
+    "engine": "eevee",
+    "samples": 4,
+    "width": 256,
+    "height": 144,
+    "device": "auto"
+  },
+  "frames": {
+    "total": 60,
+    "fps": 15
+  },
+  "tracks": {
+    "product": {
+      "rotZDeg": [
+        {
+          "t": 0,
+          "v": 0,
+          "ease": "linear"
+        },
+        {
+          "t": 4,
+          "v": 360,
+          "ease": "linear"
+        }
+      ]
+    },
+    "camera": {
+      "azimuthDeg": [
+        {
+          "t": 0,
+          "v": 0,
+          "ease": "linear"
+        },
+        {
+          "t": 2,
+          "v": 0,
+          "ease": "linear"
+        },
+        {
+          "t": 4,
+          "v": 90,
+          "ease": "linear"
+        }
+      ],
+      "elevationDeg": [
+        {
+          "t": 0,
+          "v": 11,
+          "ease": "smooth"
+        },
+        {
+          "t": 1.999,
+          "v": 11,
+          "ease": "linear"
+        },
+        {
+          "t": 2,
+          "v": 35,
+          "ease": "smooth"
+        },
+        {
+          "t": 4,
+          "v": 35,
+          "ease": "smooth"
+        }
+      ],
+      "distanceScale": [
+        {
+          "t": 0,
+          "v": 1,
+          "ease": "linear"
+        },
+        {
+          "t": 2,
+          "v": 0.8,
+          "ease": "linear"
+        },
+        {
+          "t": 4,
+          "v": 0.8,
+          "ease": "linear"
+        }
+      ]
+    },
+    "light": {
+      "keyScale": [
+        {
+          "t": 0,
+          "v": 0.9,
+          "ease": "linear"
+        }
+      ],
+      "fillScale": [
+        {
+          "t": 0,
+          "v": 0.4,
+          "ease": "linear"
+        }
+      ],
+      "rimScale": [
+        {
+          "t": 0,
+          "v": 1.6,
+          "ease": "linear"
+        },
+        {
+          "t": 1,
+          "v": 1.6,
+          "ease": "linear"
+        },
+        {
+          "t": 2,
+          "v": 2,
+          "ease": "linear"
+        }
+      ],
+      "keyAzimuthDeg": [
+        {
+          "t": 0,
+          "v": -15,
+          "ease": "smooth"
+        },
+        {
+          "t": 4,
+          "v": 15,
+          "ease": "linear"
+        }
+      ]
+    }
+  },
+  "overlays": {
+    "logo": [
+      {
+        "t": 3,
+        "tEnd": 4,
+        "imagePath": "/data/logo.png",
+        "position": "bottom_center",
+        "anim": "fade_in"
+      }
+    ],
+    "text": [
+      {
+        "t": 0.5,
+        "tEnd": 3,
+        "text": "Dịu nhẹ cho làn da",
+        "position": "top_center",
+        "anim": "slide_up",
+        "color": "#ffffff",
+        "sizePct": 6
+      }
+    ]
+  },
+  "paths": {
+    "framesDir": "/tmp/frames",
+    "pattern": "frame_%06d.png"
+  },
+  "limits": {
+    "maxGlbBytes": 209715200,
+    "maxTriangles": 2000000
+  }
+}

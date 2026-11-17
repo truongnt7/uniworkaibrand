@@ -12,6 +12,7 @@
     "test": "vitest run",
     "poc:cli": "tsx scripts/poc-cli.ts",
     "e2e": "node scripts/e2e-electron.mjs",
+    "e2e:timeline": "node scripts/e2e-timeline.mjs",
     "package": "node scripts/package.mjs",
     "package:check": "node scripts/check-release.mjs",
     "verify:ffmpeg": "tsx scripts/verify-ffmpeg-lgpl.ts",
@@ -22,6 +23,7 @@
   },
   "dependencies": {},
   "devDependencies": {
+    "@aps/ai": "workspace:*",
     "@aps/i18n": "workspace:*",
     "@aps/render-core": "workspace:*",
     "@aps/shared": "workspace:*",

@@ -103,6 +103,8 @@
     "GLB_IMPORT_FAILED": "Không nhập được file .glb.",
     "GLB_EMPTY": "File .glb không chứa mesh nào.",
     "LABEL_NOT_FOUND": "Không tìm thấy ảnh nhãn.",
+    "LOGO_NOT_FOUND": "Không tìm thấy ảnh logo.",
+    "INVALID_TIMELINE": "Timeline không hợp lệ, không biên dịch được job render.",
     "RENDER_FAILED": "Render thất bại.",
     "SCRIPT_ERROR": "Script Blender gặp lỗi.",
     "WORKER_EXIT": "Blender kết thúc bất thường.",

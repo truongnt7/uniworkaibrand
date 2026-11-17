@@ -1,12 +1,15 @@
 import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { copyFile, mkdir, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { AppError, type JobRecord, type WorkerEvent } from '@aps/shared';
+import { AppError, type JobRecord, type LogoOverlay, type WorkerEvent, type WorkerJobV1, type WorkerJobV2 } from '@aps/shared';
 import {
   JsonLinesParser,
   blenderArgs,
   buildFfmpegArgs,
+  checkTimelineRequest,
+  compileTimelineJob,
   compileWorkerJob,
+  timelineContextFromRequest,
   parseFfmpegProgress,
 } from '@aps/render-core';
 import { assertLgplFfmpeg } from './ffmpeg.js';
@@ -53,11 +56,23 @@ export class BlenderRunner implements JobRunner {
     for (const [label, p, code] of [
       ['glb', request.product.glbPath, 'GLB_NOT_FOUND'],
       ['label', request.product.label?.imagePath, 'LABEL_NOT_FOUND'],
+      ['logo', request.output.logoPath, 'LOGO_NOT_FOUND'],
     ] as const) {
       if (p && !(await exists(p))) throw new AppError(code, `${label} not found: ${p}`);
     }
 
-    const workerJob = compileWorkerJob(request, { jobId: job.id, framesDir });
+    // Có timeline -> job v2 (biên dịch tất định từ JSON đã validate, không có mã LLM); không có -> job v1 một chuyển động.
+    let logos: readonly LogoOverlay[] | undefined;
+    let workerJob: WorkerJobV1 | WorkerJobV2;
+    if (request.timeline) {
+      checkTimelineRequest(request);
+      const compiled = compileTimelineJob(request.timeline, timelineContextFromRequest(request, { jobId: job.id, framesDir }));
+      for (const w of compiled.warnings) this.opts.onLog?.(job.id, `timeline: ${w}`);
+      workerJob = compiled.job;
+      logos = compiled.job.overlays.logo;
+    } else {
+      workerJob = compileWorkerJob(request, { jobId: job.id, framesDir });
+    }
     const jobJson = join(workDir, 'job.json');
     await writeFile(jobJson, JSON.stringify(workerJob, null, 2));
 
@@ -72,7 +87,7 @@ export class BlenderRunner implements JobRunner {
 
     ctl.enter('encoding');
     const out = join(workDir, 'output.mp4');
-    await this.encode(job, framesDir, out, ctl);
+    await this.encode(job, framesDir, out, ctl, logos);
     return { outputPath: out };
   }
 
@@ -145,7 +160,7 @@ export class BlenderRunner implements JobRunner {
     }
   }
 
-  private async encode(job: JobRecord, framesDir: string, outPath: string, ctl: RunControl): Promise<void> {
+  private async encode(job: JobRecord, framesDir: string, outPath: string, ctl: RunControl, logos?: readonly LogoOverlay[]): Promise<void> {
     const { output } = job.request;
     const part = `${outPath}.part.mp4`;
     await rm(part, { force: true });
@@ -159,7 +174,9 @@ export class BlenderRunner implements JobRunner {
       width: output.width,
       height: output.height,
       durationS: job.totalFrames / output.fps,
-      logoPath: output.logoPath,
+      // Job v2: logo theo timeline (logos); job v1: logo cuối video như PoC.
+      logoPath: logos ? undefined : output.logoPath,
+      logos,
     });
     let buf = '';
     const result = await runProcess(ffmpegPath, args, {

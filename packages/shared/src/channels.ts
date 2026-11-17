@@ -2,6 +2,7 @@
 export const INVOKE_CHANNEL_NAMES = [
   'jobs:list',
   'jobs:create',
+  'jobs:createFromPrompt',
   'jobs:cancel',
   'jobs:retry',
   'jobs:pause',
