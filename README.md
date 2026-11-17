@@ -93,6 +93,7 @@ Xem bảng chi tiết trong mô tả PR #1. Tóm tắt: đã chạy thật trên
 
 ## Tài liệu
 
+- Vận hành/số liệu Phase 0: [khóa ký](docs/ops/runtime-signing.md), [gói offline](docs/ops/offline-pack.md), [QC nhãn](docs/ops/label-qc.md), [rút gọn Blender](docs/ops/blender-slimming.md), [benchmark](docs/ops/benchmark.md).
 - [Kế hoạch triển khai](docs/ke-hoach-ai-blender-electron.md): sản phẩm, kiến trúc, lộ trình, backlog Phase 0.
 - [Bối cảnh và quyết định đã chốt](docs/project-context.md): Blender 4.5 LTS, NestJS + PostgreSQL, thị trường Việt Nam trước, v.v.
 - [Ảnh thiết kế giao diện](docs/design/): Studio video 3D, Studio ảnh sản phẩm, Sản phẩm, Kho mẫu, Thư viện, Kênh & Xuất bản.
