@@ -11,6 +11,9 @@ import {
   EVENT_CHANNEL_NAMES,
   invokeContract,
   eventContract,
+  AppError,
+  decodeIpcError,
+  encodeIpcError,
 } from '../src/index.js';
 
 const baseRequest = {
@@ -168,5 +171,19 @@ describe('danh sách kênh IPC', () => {
   it('khớp hợp đồng zod', () => {
     expect([...INVOKE_CHANNEL_NAMES].sort()).toEqual(Object.keys(invokeContract).sort());
     expect([...EVENT_CHANNEL_NAMES].sort()).toEqual(Object.keys(eventContract).sort());
+  });
+});
+
+describe('mã lỗi qua IPC (main -> renderer)', () => {
+  it('giữ nguyên mã và thông báo kể cả khi Electron thêm tiền tố vào message', () => {
+    const wrapped = `Error invoking remote method 'photo:prepare': Error: ${encodeIpcError('PHOTO_HEIC_FAILED', 'không chuyển được\nảnh')}`;
+    const err = decodeIpcError(wrapped);
+    expect(err).toBeInstanceOf(AppError);
+    expect(err?.code).toBe('PHOTO_HEIC_FAILED');
+    expect(err?.message).toBe('không chuyển được\nảnh');
+  });
+  it('lỗi không có thẻ thì không giả mạo thành AppError', () => {
+    expect(decodeIpcError("Error invoking remote method 'x': Error: boom")).toBeNull();
+    expect(decodeIpcError('APS_ERR|bad code|x')).toBeNull();
   });
 });

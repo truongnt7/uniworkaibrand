@@ -14,6 +14,9 @@
     "e2e": "node scripts/e2e-electron.mjs",
     "e2e:timeline": "node scripts/e2e-timeline.mjs",
     "package": "node scripts/package.mjs",
+    "package:installer": "node scripts/package.mjs --installer",
+    "trial:keys": "node ../../tools/trial/prepare-trial-keys.mjs",
+    "e2e:trial": "node scripts/e2e-trial.mjs",
     "package:check": "node scripts/check-release.mjs",
     "verify:ffmpeg": "tsx scripts/verify-ffmpeg-lgpl.ts",
     "dev:vite": "electron-vite dev",
@@ -23,7 +26,11 @@
     "e2e:ui": "node scripts/e2e-ui.mjs",
     "e2e:create": "node scripts/e2e-create.mjs"
   },
-  "dependencies": {},
+  "dependencies": {
+    "heic-decode": "2.1.0",
+    "jpeg-js": "0.4.4",
+    "libheif-js": "1.23.5"
+  },
   "devDependencies": {
     "@aps/ai": "workspace:*",
     "@aps/i18n": "workspace:*",
@@ -40,6 +47,7 @@
     "electron": "43.8.10",
     "electron-builder": "26.18.0",
     "electron-vite": "^4.0.0",
+    "esbuild": "^0.25.0",
     "i18next": "^25.5.0",
     "jsdom": "^31.0.1",
     "lucide-react": "^1.74.0",

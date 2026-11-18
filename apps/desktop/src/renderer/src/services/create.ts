@@ -3,9 +3,14 @@ import type {
   BusinessProfilePatch,
   CaptionResult,
   CreateFromPromptReq,
+  Draft,
+  DraftSaveReq,
+  DraftSummary,
   DirectorInfo,
   InputIssue,
   JobRecord,
+  RuntimePackageId,
+  RuntimeProgress,
   RuntimeStatus,
   SlideshowCreateReqInput,
   SlideshowValidateRes,
@@ -28,12 +33,20 @@ export interface CreateService {
   /** Đường dẫn của tệp được kéo thả; rỗng nếu không xác định. */
   pathForFile(file: File): string;
   thumbnail(path: string): Promise<ThumbnailResult>;
+  /** Ảnh HEIC/HEIF được chuyển sang JPG ở tiến trình nền khi tải lên; ảnh khác giữ nguyên đường dẫn. */
+  preparePhoto(path: string): Promise<{ path: string; converted: boolean }>;
+  draftsList(): Promise<DraftSummary[]>;
+  draftGet(id: string): Promise<Draft | null>;
+  draftSave(req: DraftSaveReq): Promise<DraftSummary>;
+  draftRemove(id: string): Promise<boolean>;
   validate(req: SlideshowCreateReqInput): Promise<SlideshowValidateRes>;
   create(req: SlideshowCreateReqInput): Promise<{ job: JobRecord; warnings: InputIssue[] }>;
   captions(req: Pick<SlideshowCreateReqInput, 'templateId' | 'input'>): Promise<CaptionResult[]>;
   createFromPrompt(req: Omit<CreateFromPromptReq, 'target'> & { target?: CreateFromPromptReq['target'] }): Promise<{ job: JobRecord; director: DirectorInfo }>;
   runtimeStatus(): Promise<RuntimeStatus>;
-  runtimeInstall(): Promise<RuntimeStatus>;
+  /** Cài đúng gói cần dùng (`ffmpeg` nhẹ cho ảnh sang video, `blender` cho video 3D). */
+  runtimeInstall(packages?: RuntimePackageId[]): Promise<RuntimeStatus>;
+  onRuntimeProgress(listener: (p: RuntimeProgress) => void): () => void;
   jobsList(): Promise<JobRecord[]>;
   onJobChanged(listener: (job: JobRecord) => void): () => void;
   cancel(id: string): Promise<boolean>;
@@ -57,12 +70,18 @@ export class IpcCreateService implements CreateService {
   pick = async (kind: PickKind) => (await invoke('dialog:pickFile', { kind })).path;
   pathForFile = (file: File) => window.aps.pathForFile(file);
   thumbnail = async (path: string) => ({ dataUrl: (await invoke('photo:thumbnail', { path })).dataUrl });
+  preparePhoto = (path: string) => invoke('photo:prepare', { path });
+  draftsList = () => invoke('drafts:list');
+  draftGet = (id: string) => invoke('drafts:get', { id });
+  draftSave = (req: DraftSaveReq) => invoke('drafts:save', req);
+  draftRemove = async (id: string) => (await invoke('drafts:remove', { id })).ok;
   validate = (req: SlideshowCreateReqInput) => invoke('slideshow:validate', req);
   create = (req: SlideshowCreateReqInput) => invoke('slideshow:create', req);
   captions = (req: Pick<SlideshowCreateReqInput, 'templateId' | 'input'>) => invoke('slideshow:caption', req);
   createFromPrompt = (req: Parameters<CreateService['createFromPrompt']>[0]) => invoke('jobs:createFromPrompt', req);
   runtimeStatus = () => invoke('runtime:status');
-  runtimeInstall = () => invoke('runtime:install');
+  runtimeInstall = (packages?: RuntimePackageId[]) => invoke('runtime:install', packages ? { packages } : {});
+  onRuntimeProgress = (listener: (p: RuntimeProgress) => void) => subscribe('runtime:progress', listener);
   jobsList = () => invoke('jobs:list');
   onJobChanged = (listener: (job: JobRecord) => void) => subscribe('jobs:changed', listener);
   cancel = async (id: string) => (await invoke('jobs:cancel', { id })).ok;
@@ -88,12 +107,18 @@ export class UnavailableCreateService implements CreateService {
   pick = async () => unavailable();
   pathForFile = () => '';
   thumbnail = async () => ({ dataUrl: null });
+  preparePhoto = async (path: string) => ({ path, converted: false });
+  draftsList = async () => [];
+  draftGet = async () => null;
+  draftSave = async () => unavailable();
+  draftRemove = async () => false;
   validate = async () => unavailable();
   create = async () => unavailable();
   captions = async () => [];
   createFromPrompt = async () => unavailable();
   runtimeStatus = async () => unavailable();
   runtimeInstall = async () => unavailable();
+  onRuntimeProgress = () => () => undefined;
   jobsList = async () => [];
   onJobChanged = () => () => undefined;
   cancel = async () => false;

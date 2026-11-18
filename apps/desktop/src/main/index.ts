@@ -6,7 +6,9 @@ import { BrowserWindow, app, clipboard, dialog, ipcMain, nativeImage, net, proto
 import {
   AppError,
   INVOKE_CHANNEL_NAMES,
+  IpcValidationError,
   dispatchInvoke,
+  encodeIpcError,
   type EventChannel,
   type EventPayload,
   type InvokeHandlers,
@@ -62,6 +64,7 @@ function buildConfig(): OrchestratorConfig {
     blenderOverride: release ? null : (process.env.APS_BLENDER_BIN ?? null),
     ffmpegOverride: release ? null : (process.env.APS_FFMPEG ?? null),
     fontPath: join(res, 'fonts', VIDEO_FONT),
+    heicWorkerPath: join(__dirname, 'heicWorker.js'),
   };
 }
 
@@ -171,13 +174,24 @@ function registerIpc(): void {
       clipboard.writeText(text);
       return { ok: true };
     },
+    'photo:prepare': forward('photo:prepare') as never,
+    'drafts:list': forward('drafts:list') as never,
+    'drafts:get': forward('drafts:get') as never,
+    'drafts:save': forward('drafts:save') as never,
+    'drafts:remove': forward('drafts:remove') as never,
     'photo:thumbnail': async ({ path, maxSide }) => thumbnail(path, maxSide),
     'app:info': () => ({ version: app.getVersion(), platform: `${process.platform}-${process.arch}`, dataDir: app.getPath('userData') }),
   };
   for (const channel of INVOKE_CHANNEL_NAMES) {
     ipcMain.handle(channel, async (event, payload: unknown) => {
       if (!isTrustedSender(event, rendererPrefixes())) throw new AppError('IPC_FORBIDDEN', 'sender không được tin cậy');
-      return dispatchInvoke(handlers, channel, payload);
+      try {
+        return await dispatchInvoke(handlers, channel, payload);
+      } catch (e) {
+        // Electron chỉ chuyển `message` của lỗi sang renderer: mã lỗi được gói vào message để renderer lấy lại (renderer/src/api.ts).
+        if (e instanceof AppError || e instanceof IpcValidationError) throw new Error(encodeIpcError(e.code, e.message));
+        throw e;
+      }
     });
   }
 }

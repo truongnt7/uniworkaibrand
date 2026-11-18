@@ -1,4 +1,5 @@
-# Đóng gói app (PoC: chỉ target `dir` để kiểm chứng trên Linux; installer ký số/notarize là P0-19 chưa làm).
+# Đóng gói app: `dir` (Linux/Windows/macOS, để kiểm chứng) và NSIS x64 cho bản cài thử Windows (`pnpm package --installer`).
+# Installer CHƯA ký số (Authenticode) và chưa notarize: ký số/notarize là P0-19. Không có khóa/chứng chỉ nào nằm trong cấu hình này.
 # Chạy qua `pnpm package` (scripts/package.mjs) để có kiểm tra trước/sau khi đóng gói.
 appId: vn.aiproductstudio.app
 productName: AI Product Studio
@@ -30,7 +31,28 @@ extraResources:
     to: fonts
   - from: ../../THIRD_PARTY_NOTICES.md
     to: THIRD_PARTY_NOTICES.md
+  # Nguyên văn giấy phép LGPL-3.0 của libheif-js (nghĩa vụ phân phối lại, xem THIRD_PARTY_NOTICES.md).
+  - from: node_modules/libheif-js/LICENSE
+    to: licenses/libheif-js-LICENSE
 linux:
   executableName: ai-product-studio
   target: dir
   category: Graphics
+win:
+  executableName: AI Product Studio
+  target:
+    - target: nsis
+      arch: [x64]
+  artifactName: AI-Product-Studio-Trial-Setup-${version}-x64.${ext}
+  # Bản thử CHƯA ký số: không đặt certificateFile/publisherName; Windows SmartScreen sẽ cảnh báo (docs/trial-guide.md).
+  signAndEditExecutable: false
+nsis:
+  oneClick: true
+  perMachine: false
+  runAfterFinish: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: AI Product Studio
+  # Gỡ app không xóa dữ liệu của khách (bài nháp, video, runtime đã tải).
+  deleteAppDataOnUninstall: false
+  language: "1066"

@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState, type DragEvent } from 'react';
+import { useRef, useState, type DragEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { translateError } from '@aps/i18n';
-import type { JobRecord, RuntimeStatus } from '@aps/shared';
+import type { JobRecord } from '@aps/shared';
 import { CHANNELS, CHANNEL_LABELS, INDUSTRIES, INDUSTRY_LABELS, templatesFor, type Channel, type FieldSpec, type Industry, type PhotoSlot, type Template } from '@aps/templates';
 import { useToast } from '../../app/Toast';
 import { useServices } from '../../services';
@@ -30,7 +30,8 @@ import {
   Copy,
 } from '../../ui/Icon';
 import { Button, PageHeader } from '../../ui/kit';
-import { templateSeconds, useCreateFlow } from './useCreateFlow';
+import { RuntimeBanner, useRuntimeInstall, type RuntimeInstallState } from './RuntimeInstall';
+import { suggestedDraftName, templateSeconds, useCreateFlow } from './useCreateFlow';
 import './create.css';
 
 const INDUSTRY_ICON: Record<Industry, typeof ShoppingBag> = {
@@ -73,29 +74,8 @@ function CreateScreen({ service }: { service: CreateService }) {
   const hasIndustry = form.industry !== null;
   const ready = Boolean(template) && flow.missing.length === 0;
   const issueCount = flow.visibleIssues.length;
-  const [runtime, setRuntime] = useState<RuntimeStatus | null>(null);
-  const [installing, setInstalling] = useState<'idle' | 'busy' | 'failed'>('idle');
-
-  useEffect(() => {
-    let alive = true;
-    void service
-      .runtimeStatus()
-      .then((s) => alive && setRuntime(s))
-      .catch(() => undefined);
-    return () => {
-      alive = false;
-    };
-  }, [service]);
-
-  const installRuntime = async () => {
-    setInstalling('busy');
-    try {
-      setRuntime(await service.runtimeInstall());
-      setInstalling('idle');
-    } catch {
-      setInstalling('failed');
-    }
-  };
+  const rt = useRuntimeInstall(service);
+  const runtime = rt.runtime;
   const needFfmpeg = runtime !== null && !runtime.ffmpegPath;
 
   const onCreate = async () => {
@@ -106,17 +86,11 @@ function CreateScreen({ service }: { service: CreateService }) {
   return (
     <div className="page create-page" data-testid="create-page">
       <PageHeader title={t('ui.create.title')} subtitle={t('ui.create.subtitle')} />
-      {needFfmpeg ? (
-        <div className="cr-banner cr-banner-info" data-testid="runtime-banner">
-          <Download size={20} />
-          <span className="grow">{installing === 'failed' ? t('ui.create.runtime.failed') : t('ui.create.runtime.missing')}</span>
-          <Button variant="dark" disabled={installing === 'busy'} onClick={() => void installRuntime()} data-testid="runtime-install">
-            {installing === 'busy' ? t('ui.create.runtime.installing') : t('ui.create.runtime.install')}
-          </Button>
-        </div>
-      ) : null}
+      {needFfmpeg ? <RuntimeBanner state={rt} pkg="ffmpeg" message={t('ui.create.runtime.missing')} testId="runtime-banner" buttonTestId="runtime-install" /> : null}
       <div className="cr-layout">
         <div className="cr-form">
+          <DraftBar flow={flow} />
+
           <Step n={1} title={t('ui.create.step1')} testId="step-industry">
             <div className="cr-industries" role="radiogroup" aria-label={t('ui.create.step1')}>
               {INDUSTRIES.map((id) => {
@@ -175,7 +149,9 @@ function CreateScreen({ service }: { service: CreateService }) {
                         slot={slot}
                         path={form.photos[slot.id] ?? null}
                         thumb={form.photos[slot.id] ? (flow.thumbs[form.photos[slot.id]!] ?? null) : null}
-                        issue={flow.issueFor(`photo:${slot.id}`)?.message ?? null}
+                        issue={flow.issueFor(`photo:${slot.id}`)?.message ?? (flow.photoErrors[slot.id] ? translateError((k) => t(k), flow.photoErrors[slot.id]) : null)}
+                        converting={flow.converting.has(slot.id)}
+                        converted={flow.converted.has(slot.id)}
                         caption={form.captions[slot.id] ?? ''}
                         onPick={() => void flow.pickPhoto(slot.id)}
                         onDrop={(file) => flow.dropPhoto(slot.id, file)}
@@ -286,7 +262,7 @@ function CreateScreen({ service }: { service: CreateService }) {
             </div>
           </div>
 
-          <Director3D service={service} runtime={runtime} onInstall={() => void installRuntime()} installing={installing === 'busy'} />
+          <Director3D service={service} rt={rt} />
         </div>
 
         <aside className="cr-side" aria-label={t('ui.create.preview.title')}>
@@ -302,6 +278,75 @@ function CreateScreen({ service }: { service: CreateService }) {
 function ErrorMessage({ code }: { code: string }) {
   const text = useErrorText();
   return <>{text(code)}</>;
+}
+
+function DraftBar({ flow }: { flow: Flow }) {
+  const { t, i18n } = useTranslation();
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const others = flow.drafts.filter((d) => d.id !== flow.draftId);
+  const suggested = suggestedDraftName(flow.form);
+  const time = flow.draftSavedAt ? new Intl.DateTimeFormat(i18n.language, { hour: '2-digit', minute: '2-digit' }).format(flow.draftSavedAt) : '';
+  const status =
+    flow.draftStatus === 'saving'
+      ? t('ui.create.draft.saving')
+      : flow.draftStatus === 'saved'
+        ? t('ui.create.draft.saved', { time })
+        : flow.draftStatus === 'error'
+          ? t('ui.create.draft.error')
+          : t('ui.create.draft.idle');
+  return (
+    <section className="cr-drafts" data-testid="draft-bar" aria-label={t('ui.create.draft.title')}>
+      <div className="cr-drafts-row">
+        <label className="cr-field grow">
+          <span className="cr-label">{t('ui.create.draft.name')}</span>
+          <input type="text" value={flow.draftName} maxLength={120} placeholder={suggested || t('ui.create.draft.namePlaceholder')} onChange={(e) => flow.setDraftName(e.target.value)} data-testid="draft-name" />
+        </label>
+        <Button className="btn-sm" onClick={flow.newDraft} data-testid="draft-new">
+          <Plus size={14} aria-hidden /> {t('ui.create.draft.new')}
+        </Button>
+      </div>
+      <p className="cr-hint" role="status" data-testid="draft-status" data-state={flow.draftStatus}>
+        {status}
+      </p>
+      {flow.missingFiles.length > 0 ? (
+        <p className="cr-warn-text" role="alert" data-testid="draft-missing">
+          {t('ui.create.draft.missing', { count: flow.missingFiles.length })}
+        </p>
+      ) : null}
+      {others.length > 0 ? (
+        <details className="cr-draft-list">
+          <summary>{t('ui.create.draft.others', { count: others.length })}</summary>
+          <ul data-testid="draft-list">
+            {others.map((d) => (
+              <li key={d.id} data-testid={`draft-item-${d.id}`}>
+                <button type="button" className="cr-draft-open" onClick={() => void flow.openDraft(d.id)} data-testid={`draft-open-${d.id}`}>
+                  <strong className="ellipsis">{d.name}</strong>
+                  <span className="cr-hint">{t('ui.create.draft.photos', { count: d.photoCount })}</span>
+                </button>
+                {confirmId === d.id ? (
+                  <Button
+                    variant="ghost"
+                    className="btn-sm"
+                    onClick={() => {
+                      setConfirmId(null);
+                      void flow.removeDraft(d.id);
+                    }}
+                    data-testid={`draft-delete-confirm-${d.id}`}
+                  >
+                    {t('ui.create.draft.deleteConfirm')}
+                  </Button>
+                ) : (
+                  <Button variant="ghost" className="btn-sm" onClick={() => setConfirmId(d.id)} data-testid={`draft-delete-${d.id}`} aria-label={`${t('ui.create.draft.delete')}: ${d.name}`}>
+                    <Trash2 size={14} aria-hidden />
+                  </Button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
+    </section>
+  );
 }
 
 function Step({ n, title, testId, children }: { n: number; title: string; testId: string; children: React.ReactNode }) {
@@ -376,7 +421,7 @@ function FieldInput({ spec, value, issue, warning, onChange, onBlur }: { spec: F
   );
 }
 
-function PhotoCard({ slot, path, thumb, issue, caption, onPick, onDrop, onRemove, onCaption }: { slot: PhotoSlot; path: string | null; thumb: string | null; issue: string | null; caption: string; onPick: () => void; onDrop: (f: File) => void; onRemove: () => void; onCaption: (v: string) => void }) {
+function PhotoCard({ slot, path, thumb, issue, converting, converted, caption, onPick, onDrop, onRemove, onCaption }: { slot: PhotoSlot; path: string | null; thumb: string | null; issue: string | null; converting: boolean; converted: boolean; caption: string; onPick: () => void; onDrop: (f: File) => void; onRemove: () => void; onCaption: (v: string) => void }) {
   const { t } = useTranslation();
   const [over, setOver] = useState(false);
   const handleDrop = (e: DragEvent) => {
@@ -406,6 +451,16 @@ function PhotoCard({ slot, path, thumb, issue, caption, onPick, onDrop, onRemove
           </span>
         )}
       </button>
+      {converting ? (
+        <p className="cr-hint cr-converting" role="status" data-testid={`photo-converting-${slot.id}`}>
+          <LoaderCircle size={14} className="cr-spin" aria-hidden /> {t('ui.create.photoConverting')}
+        </p>
+      ) : null}
+      {converted && !converting && !issue ? (
+        <p className="cr-hint" role="status" data-testid={`photo-converted-${slot.id}`}>
+          {t('ui.create.photoConverted')}
+        </p>
+      ) : null}
       {slot.hint && !issue ? <p className="cr-hint">{slot.hint}</p> : null}
       {issue ? (
         <p className="cr-error-text" role="alert" data-testid={`photo-error-${slot.id}`}>
@@ -652,7 +707,7 @@ function QueuePanel({ jobs, service, shownId, onView }: { jobs: JobRecord[]; ser
   );
 }
 
-function Director3D({ service, runtime, onInstall, installing }: { service: CreateService; runtime: RuntimeStatus | null; onInstall: () => void; installing: boolean }) {
+function Director3D({ service, rt }: { service: CreateService; rt: RuntimeInstallState }) {
   const { t } = useTranslation();
   const toast = useToast();
   const [open, setOpen] = useState(false);
@@ -660,7 +715,7 @@ function Director3D({ service, runtime, onInstall, installing }: { service: Crea
   const [glb, setGlb] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const needRuntime = runtime !== null && !runtime.installed;
+  const needRuntime = rt.runtime !== null && !rt.runtime.installed;
 
   const submit = async () => {
     setMsg(null);
@@ -684,14 +739,7 @@ function Director3D({ service, runtime, onInstall, installing }: { service: Crea
         <Cuboid size={16} aria-hidden /> {t('ui.create.d3.title')}
       </summary>
       <p className="cr-hint">{t('ui.create.d3.hint')}</p>
-      {needRuntime ? (
-        <div className="cr-banner cr-banner-info">
-          <span className="grow">{t('ui.create.d3.needRuntime')}</span>
-          <Button variant="dark" className="btn-sm" disabled={installing} onClick={onInstall}>
-            {installing ? t('ui.create.runtime.installing') : t('ui.create.runtime.install')}
-          </Button>
-        </div>
-      ) : null}
+      {needRuntime ? <RuntimeBanner state={rt} pkg="blender" message={t('ui.create.d3.needRuntime')} testId="d3-runtime-banner" buttonTestId="d3-runtime-install" compact /> : null}
       <label className="cr-field">
         <span className="cr-label">{t('ui.create.d3.prompt')}</span>
         <textarea rows={3} value={prompt} placeholder={t('ui.create.d3.placeholder')} onChange={(e) => setPrompt(e.target.value)} data-testid="d3-prompt" />

@@ -73,6 +73,8 @@ describe('check-release --post', () => {
     mkdirSync(join(root, 'fonts'), { recursive: true });
     writeFileSync(join(root, 'fonts', 'BeVietnamPro-Bold.ttf'), 'font');
     writeFileSync(join(root, 'fonts', 'OFL.txt'), 'OFL');
+    mkdirSync(join(root, 'licenses'), { recursive: true });
+    writeFileSync(join(root, 'licenses', 'libheif-js-LICENSE'), 'LGPL');
     for (const [n, c] of Object.entries(extra)) writeFileSync(join(root, n), c);
     return root;
   }
@@ -87,6 +89,14 @@ describe('check-release --post', () => {
     const r = run('--post', root);
     expect(r.status).toBe(1);
     expect(r.stderr).toMatch(/fonts\/OFL.txt/);
+  });
+
+  it('từ chối bản thiếu giấy phép LGPL của libheif-js (chuyển ảnh HEIC)', () => {
+    const root = resources();
+    rmSync(join(root, 'licenses'), { recursive: true });
+    const r = run('--post', root);
+    expect(r.status).toBe(1);
+    expect(r.stderr).toMatch(/libheif-js-LICENSE/);
   });
 
   it('thất bại nếu có khóa riêng, mã nạp khóa dev, hoặc manifest ký bằng khóa dev', () => {

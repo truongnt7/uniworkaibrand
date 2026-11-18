@@ -137,12 +137,17 @@ Job gồm: `output {width, height, fps, maxBytes}`, `fontPath`, `scenes[1..16]` 
 6. **Phông**: Be Vietnam Pro (SIL OFL 1.1) đóng gói trong `apps/desktop/resources/fonts` (Regular/SemiBold cho giao diện qua `@font-face`, Bold cho chữ trong video qua `drawtext`); đã ghi trong `THIRD_PARTY_NOTICES.md`; `check-release --post` yêu cầu có phông và `OFL.txt` trong bản đóng gói; test kiểm bảng cmap có đủ chữ Việt có dấu.
 7. Mã lỗi mới `TEMPLATE_*`, `SLIDESHOW_*`, `LOGO_FORMAT`, `OUTPUT_MISSING`, `FFMPEG_*`, `DISK_FULL` có bản dịch vi/en ở `packages/i18n`.
 
+**Bổ sung ở nhánh `mvp/trial-installer`** (chỉ thêm; không đụng `apps/api`):
+
+8. **Gói runtime tách đôi**: manifest vẫn `schemaVersion: 1`, thêm trường tùy chọn `packages` (được ký cùng manifest): gói `ffmpeg` (nhẹ, đủ cho ảnh sang video) và gói `blender` (chỉ video 3D, **yêu cầu** gói ffmpeg). `runtime:install` nhận `{ packages?: ('ffmpeg'|'blender')[] }` (bỏ trống = cả hai như cũ); tiến độ có `step/steps`. Màn hình Tạo video chỉ xin tải gói ffmpeg ("dưới 200 MB"), banner Blender chỉ hiện ở mục "Video 3D (nâng cao)". Gói `.apspack` mang theo `packages` và chỉ chứa thư mục của các gói đã chọn (gói cũ không có `packages` vẫn nhập được). Manifest cũ không có `packages` vẫn hợp lệ (dùng mặc định).
+9. **Ảnh HEIC/HEIF tự đổi sang JPG** khi chọn ảnh (`photo:prepare`): chạy trong `worker_threads` của tiến trình nền nên giao diện không đứng; áp dụng cả ảnh kéo thả. JPG nằm ở `<dữ liệu app>/uploads/`, ảnh gốc giữ nguyên; ảnh hỏng hoặc quá lớn báo lỗi tiếng Việt ngay tại ô ảnh (`PHOTO_HEIC_FAILED`, `PHOTO_TOO_LARGE`). Quy tắc `photo_heic` trong `@aps/templates` vẫn giữ làm lưới an toàn nếu có đường dẫn HEIC lọt tới bước kiểm tra. Thư viện và giấy phép: `THIRD_PARTY_NOTICES.md`, mục "Chuyển ảnh HEIC/HEIF sang JPG".
+10. **Lưu nháp từng bài**: bảng `drafts` (migration v4, có sao lưu `.bak-v3`), kênh IPC `drafts:list/get/save/remove`. Mỗi bài lưu tên, ngành, mẫu, khung hình, thông tin, chú thích, đường dẫn ảnh/logo/nhạc (không chép ảnh; ảnh HEIC đã là JPG trong `uploads/` nên bền). Tự lưu sau khi dừng gõ 0,8 giây; mở lại app mở đúng bài đang làm dở; có nút "Bài mới", danh sách bài khác, xóa bài (bấm hai lần). Ảnh đã bị xóa khỏi máy được báo "không còn trên máy, hãy chọn lại". Tối đa 100 bài, 64 KB mỗi bài. "Xóa thông tin đã nhớ" chỉ xóa hồ sơ cơ sở và mở bài trắng, **không** xóa các bài nháp đã lưu.
+
 **Kiểm chứng**: `apps/desktop/tests/slideshow-queue.test.ts` (13 test chạy ffmpeg LGPL thật qua hàng đợi SQLite: tạo, mở lại DB, cloud không chạy, thiếu ảnh rồi thử lại, huỷ, thứ tự ưu tiên, caption, hồ sơ, migration v3), `tests/font.test.ts`, `src/renderer/tests/create.test.tsx` (10 test giao diện), và `pnpm --filter @aps/desktop e2e:create` (Electron thật dưới Xvfb, không giả lập dịch vụ nào; chụp 14 ảnh từng bước; kiểm ffprobe bản lưu là `h264 yuv420p 1080×1920`, kiểm clipboard thật, kiểm hồ sơ còn sau khi mở lại app).
 
 **Chưa làm / ý tưởng tiếp:**
 
 - **Cảnh `clip` (v1.1, chỉ nếu Q14 cho thấy cần):** nhận mp4 từ job Blender v2 (xoay sản phẩm 3D) làm một cảnh của slideshow, để hàng online có "ảnh + 3D xoay + thông tin liên hệ" trong cùng một video.
-- Lưu nháp tự động (hiện chỉ nhớ thông tin cơ sở, không nhớ ảnh/giá của từng bài).
 - Cloud thật (mục `target=cloud` mới là chỗ giữ trong hàng đợi).
 
 ---
@@ -335,11 +340,11 @@ CI: job `ffmpeg-license` chạy thêm hai lệnh test trên với binary LGPL gh
 
 ### 6.1 Chưa làm
 
-- Lưu nháp tự động từng bài (mục 2.6); kéo thả ảnh đã cài đặt nhưng chưa có e2e riêng (e2e dùng hộp thoại chọn tệp giả lập qua biến môi trường).
-- **ffmpeg chưa có trong bản cài nhỏ**: hiện ffmpeg LGPL chỉ đi cùng thành phần dựng (Blender + ffmpeg, ~380 MB tải lần đầu). Người chỉ làm ảnh sang video vẫn phải tải gói này; nên tách gói ffmpeg riêng vài chục MB (giao diện đã có banner "Cài ngay" khi thiếu).
+- Kéo thả ảnh đã cài đặt nhưng chưa có e2e riêng (e2e dùng hộp thoại chọn tệp giả lập qua biến môi trường). Bài nháp chưa đồng bộ giữa các máy và chưa có "nhân bản bài".
+- Chuyển HEIC mới kiểm bằng ảnh HEIC tự tạo (pillow-heif) và smoke test; **chưa thử ảnh HEIC thật từ nhiều đời iPhone** (ảnh sâu màu 10-bit, Live Photo, ảnh có lớp độ sâu). Rủi ro bằng sáng chế HEVC: `THIRD_PARTY_NOTICES.md`.
 - Thông báo kiểm tra dữ liệu (SĐT, giá, HEIC...) hiện chỉ có tiếng Việt vì nằm trong `@aps/templates`; bản tiếng Anh của giao diện vẫn hiện câu tiếng Việt cho các lỗi này.
 - Chưa kiểm phông Be Vietnam Pro trên Windows/macOS thật và chưa đo độ tràn chữ với mọi mẫu bằng phông đóng gói (mới đo trên mẫu mặc định).
-- Chuyển HEIC sang JPG (hiện chỉ chặn kèm hướng dẫn); kiểm ảnh quá nhỏ/mờ; xử lý PNG có nền trong suốt (hiện thành nền đen).
+- Kiểm ảnh quá nhỏ/mờ; xử lý PNG có nền trong suốt (hiện thành nền đen).
 - Thư viện nhạc có bản quyền (hiện chỉ nhận tệp người dùng chọn).
 - Thử trên Windows/macOS: mới chạy Linux x64. Chưa có binary LGPL ghim cho macOS (phần ghi trong `THIRD_PARTY_NOTICES.md`); logic escape đường dẫn kiểu Windows (`C:\…`) mới có test đơn vị, chưa chạy trên Windows thật.
 - Máy yếu: chưa đo trên CPU 2 đến 4 lõi thật; số ~4 giây ở trên là VM 4 vCPU.

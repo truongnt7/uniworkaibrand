@@ -1,0 +1,142 @@
+name: trial-installer
+# Bản cài thử Windows x64 (NSIS) gửi khách dùng thử. CHƯA ký số (Authenticode): Windows SmartScreen sẽ cảnh báo,
+# xem docs/ops/windows-trial-installer.md và docs/trial-guide.md. Không có khóa riêng nào nằm trong repo hay installer.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'apps/desktop/**'
+      - 'packages/**'
+      - 'tools/trial/**'
+      - 'tools/runtime/**'
+      - 'THIRD_PARTY_NOTICES.md'
+      - '.github/workflows/trial-installer.yml'
+      - 'pnpm-lock.yaml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trial-installer-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows-trial:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - name: "Bảo đảm có Electron (postinstall)"
+        shell: pwsh
+        run: |
+          $dist = "apps/desktop/node_modules/electron/dist/electron.exe"
+          if (-not (Test-Path $dist)) { node apps/desktop/node_modules/electron/install.js }
+          if (-not (Test-Path $dist)) { throw "Không có electron.exe sau khi cài" }
+
+      - name: "Khóa công khai + manifest đã ký cho bản thử"
+        id: keys
+        shell: pwsh
+        run: |
+          if ($env:TRIAL_SIGNING_KEY) {
+            $keyFile = Join-Path $env:RUNNER_TEMP "trial-signing.key.pem"
+            Set-Content -Path $keyFile -Value $env:TRIAL_SIGNING_KEY -NoNewline
+            $env:APS_TRIAL_SIGNING_KEY_FILE = $keyFile
+          }
+          node tools/trial/prepare-trial-keys.mjs
+          if ($LASTEXITCODE -ne 0) { throw "prepare-trial-keys thất bại" }
+        env:
+          # Tùy chọn: khóa trial CỐ ĐỊNH (Secret của repo). Không có (hoặc PR từ fork) thì dùng khóa trial TẠM, xóa ngay sau khi ký.
+          TRIAL_SIGNING_KEY: ${{ secrets.APS_TRIAL_SIGNING_KEY }}
+
+      - name: "Đóng gói installer NSIS x64 (kiểm tra trước/sau: không khóa riêng, không khóa dev)"
+        run: pnpm --filter @aps/desktop package:installer
+        env:
+          APS_PACKAGE_KEYS_DIR: ${{ steps.keys.outputs.keys_dir }}
+          APS_PACKAGE_MANIFEST: ${{ steps.keys.outputs.manifest }}
+
+      - name: "Ghi thông tin installer"
+        id: installer
+        shell: pwsh
+        run: |
+          $f = Get-ChildItem release-build -Filter *.exe | Select-Object -First 1
+          $hash = (Get-FileHash $f.FullName -Algorithm SHA256).Hash.ToLower()
+          "path=$($f.FullName)" >> $env:GITHUB_OUTPUT
+          "name=$($f.Name)" >> $env:GITHUB_OUTPUT
+          "sha256=$hash" >> $env:GITHUB_OUTPUT
+          "$hash  $($f.Name)" | Set-Content -Path (Join-Path $f.DirectoryName "$($f.Name).sha256") -NoNewline
+          $mb = [math]::Round($f.Length / 1MB, 1)
+          @"
+          ### Bản cài thử Windows x64
+          - Tệp: ``$($f.Name)`` ($mb MB)
+          - SHA-256: ``$hash``
+          - Khóa ký manifest: **${{ steps.keys.outputs.key_mode }}** (``${{ steps.keys.outputs.key_id }}``)
+          - **Chưa ký số (Authenticode)**: Windows SmartScreen sẽ cảnh báo "Windows protected your PC"; khách bấm "More info" rồi "Run anyway" (xem docs/trial-guide.md).
+          "@ >> $env:GITHUB_STEP_SUMMARY
+
+      - name: "Cài thật (silent, per-user) rồi tìm app đã cài"
+        id: install
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath "${{ steps.installer.outputs.path }}" -ArgumentList "/S" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "Installer thoát với mã $($p.ExitCode)" }
+          $exe = $null
+          for ($i = 0; $i -lt 60 -and -not $exe; $i++) {
+            $exe = Get-ChildItem "$env:LOCALAPPDATA\Programs" -Recurse -Depth 3 -Filter "AI Product Studio.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+            if (-not $exe) { Start-Sleep -Seconds 2 }
+          }
+          if (-not $exe) { throw "Không thấy 'AI Product Studio.exe' sau khi cài" }
+          Get-Process -Name "AI Product Studio" -ErrorAction SilentlyContinue | Stop-Process -Force
+          "exe=$($exe.FullName)" >> $env:GITHUB_OUTPUT
+          "dir=$($exe.DirectoryName)" >> $env:GITHUB_OUTPUT
+          Write-Host "Đã cài tại $($exe.DirectoryName)"
+
+      - name: "Kiểm tra bản ĐÃ CÀI (không khóa riêng/khóa dev, có manifest + khóa công khai + phông + notices)"
+        run: node apps/desktop/scripts/check-release.mjs --post "${{ steps.install.outputs.dir }}\resources"
+
+      - name: "Smoke test trên app đã cài (tải ffmpeg thật, tạo ảnh sang video, ffprobe, mở lại còn bài nháp)"
+        run: node apps/desktop/scripts/e2e-trial.mjs "${{ steps.install.outputs.exe }}"
+        env:
+          APS_TRIAL_OUT: ${{ runner.temp }}\trial-smoke
+
+      - name: "Gỡ cài đặt (silent)"
+        if: always() && steps.install.outputs.dir != ''
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $u = Get-ChildItem "${{ steps.install.outputs.dir }}" -Filter "Uninstall*.exe" | Select-Object -First 1
+          if ($u) {
+            Start-Process -FilePath $u.FullName -ArgumentList "/S" -Wait
+            for ($i = 0; $i -lt 30 -and (Test-Path "${{ steps.install.outputs.dir }}\AI Product Studio.exe"); $i++) { Start-Sleep -Seconds 2 }
+            if (Test-Path "${{ steps.install.outputs.dir }}\AI Product Studio.exe") { throw "Gỡ cài đặt chưa xóa app" }
+          }
+
+      - name: "Xóa khóa trial cố định (nếu có)"
+        if: always()
+        shell: pwsh
+        run: Remove-Item (Join-Path $env:RUNNER_TEMP "trial-signing.key.pem") -Force -ErrorAction SilentlyContinue
+
+      - name: "Tải lên installer"
+        uses: actions/upload-artifact@v4
+        with:
+          name: AI-Product-Studio-Trial-Setup-x64
+          path: |
+            release-build/*.exe
+            release-build/*.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: "Tải lên báo cáo smoke test (ảnh chụp, JSON, video đã lưu)"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trial-smoke-report
+          path: |
+            ${{ runner.temp }}\trial-smoke\smoke-report.json
+            ${{ runner.temp }}\trial-smoke\shots\*.png
+            ${{ runner.temp }}\trial-smoke\saved\*.mp4
+          if-no-files-found: warn
+          retention-days: 14

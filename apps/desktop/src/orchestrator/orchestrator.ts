@@ -5,6 +5,8 @@ import { checkTimelineRequest } from '@aps/render-core';
 import { RenderRequest, SCENE_TEMPLATES, type EventChannel, type EventPayload, type InvokeHandlers, type JobRecord } from '@aps/shared';
 import { BlenderRunner } from './blenderRunner.js';
 import { PipelineRunner, SlideshowRunner } from './slideshowRunner.js';
+import { DraftStore } from './drafts.js';
+import { PhotoPreparer, workerConverter } from './photos/prepare.js';
 import { ProfileStore, SettingsStore } from './settings.js';
 import { prepareSlideshow, slideshowCaptions, validateSlideshow } from './slideshowService.js';
 import { openDb, type Db } from './db.js';
@@ -35,6 +37,8 @@ export interface OrchestratorConfig {
   slideshowRunner?: JobRunner;
   /** Phông tiếng Việt (TTF) đi kèm app, dùng cho chữ trên video ảnh sang video. */
   fontPath?: string;
+  /** Tệp worker (bundle) chuyển HEIC sang JPG ở luồng riêng; không đặt (test) thì chuyển ngay trong tiến trình. */
+  heicWorkerPath?: string;
   /** Chỉ test: thay provider LLM của Đạo diễn AI (mặc định đọc APS_AI_* từ `env`; không có khóa -> rule-based offline). */
   directorProvider?: () => LlmProvider | null;
   onLog?: (jobId: string, line: string) => void;
@@ -99,6 +103,8 @@ export function createOrchestrator(config: OrchestratorConfig, emit: EmitFn): Or
   const runner = new PipelineRunner(blenderRunner, slideshowRunner);
   const settings = new SettingsStore(db);
   const profile = new ProfileStore(settings, join(config.dataDir, 'profile'));
+  const drafts = new DraftStore(db);
+  const photos = new PhotoPreparer(join(config.dataDir, 'uploads'), config.heicWorkerPath ? workerConverter(config.heicWorkerPath) : undefined);
 
   const queue = new JobQueue({
     store,
@@ -118,6 +124,11 @@ export function createOrchestrator(config: OrchestratorConfig, emit: EmitFn): Or
       return { job: queue.enqueue(prepared.request, prepared.id), warnings: prepared.warnings };
     },
     'slideshow:caption': (req) => slideshowCaptions(req),
+    'photo:prepare': ({ path }) => photos.prepare(path),
+    'drafts:list': () => drafts.list(),
+    'drafts:get': ({ id }) => drafts.get(id),
+    'drafts:save': (req) => drafts.save(req),
+    'drafts:remove': ({ id }) => ({ ok: drafts.remove(id) }),
     'profile:get': () => profile.get(),
     'profile:set': (patch) => profile.set(patch),
     'jobs:createFromPrompt': async (req) => {
@@ -168,7 +179,7 @@ export function createOrchestrator(config: OrchestratorConfig, emit: EmitFn): Or
     'jobs:resume': ({ id }) => ({ ok: queue.resume(id) }),
     'jobs:remove': async ({ id }) => ({ ok: await queue.remove(id) }),
     'runtime:status': () => runtime.status(),
-    'runtime:install': () => runtime.install(),
+    'runtime:install': (req) => runtime.install(req.packages),
     'runtime:importFile': ({ path }) => runtime.importFromFile(path),
   };
 

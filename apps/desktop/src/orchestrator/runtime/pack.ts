@@ -1,7 +1,7 @@
 import { readFile, stat } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import { z } from 'zod';
-import { AppError, SignedManifest, type RuntimeArtifact, type RuntimeManifest } from '@aps/shared';
+import { AppError, DEFAULT_RUNTIME_PACKAGES, RuntimePackageId, SignedManifest, type RuntimeArtifact, type RuntimeManifest } from '@aps/shared';
 import { sha256File } from './download.js';
 import { extractTar } from './extract.js';
 import { selectArtifact, selectFfmpegArtifact } from './manifest.js';
@@ -14,6 +14,8 @@ export const PackIndex = z.object({
   format: z.literal(1),
   platform: z.string(),
   manifest: SignedManifest,
+  /** Thêm sau: gói chứa trong file này (`ffmpeg` nhẹ, `blender`). Thiếu = gói đầy đủ cả hai (định dạng cũ). */
+  packages: z.array(RuntimePackageId).min(1).max(2).optional(),
 });
 export type PackIndex = z.infer<typeof PackIndex>;
 
@@ -25,7 +27,7 @@ export function artifactFileName(a: RuntimeArtifact): string {
 
 export interface OpenedPack {
   manifest: RuntimeManifest;
-  blender: { artifact: RuntimeArtifact; path: string };
+  blender: { artifact: RuntimeArtifact; path: string } | null;
   ffmpeg: { artifact: RuntimeArtifact; path: string } | null;
 }
 
@@ -57,15 +59,21 @@ export async function openPack(
     throw new AppError('PACK_INVALID', `pack.json không hợp lệ: ${(e as Error).message}`);
   }
   const manifest = await parseManifest(index.manifest);
-  const blenderArt = selectArtifact(manifest, platformKey);
-  const blender = join(workDir, 'blender', artifactFileName(blenderArt));
-  await verifyFile(blender, blenderArt, 'Blender');
-  const ffArt = selectFfmpegArtifact(manifest, platformKey);
+  const wanted = new Set(index.packages ? index.packages.flatMap((id) => (manifest.packages?.[id] ?? DEFAULT_RUNTIME_PACKAGES[id]).components) : ['blender', 'ffmpeg']);
+  let blender: OpenedPack['blender'] = null;
+  if (wanted.has('blender')) {
+    const blenderArt = selectArtifact(manifest, platformKey);
+    const path = join(workDir, 'blender', artifactFileName(blenderArt));
+    await verifyFile(path, blenderArt, 'Blender');
+    blender = { artifact: blenderArt, path };
+  }
+  const ffArt = wanted.has('ffmpeg') ? selectFfmpegArtifact(manifest, platformKey) : null;
   let ffmpeg: OpenedPack['ffmpeg'] = null;
   if (ffArt) {
     const path = join(workDir, 'ffmpeg', artifactFileName(ffArt));
     await verifyFile(path, ffArt, 'FFmpeg');
     ffmpeg = { artifact: ffArt, path };
   }
-  return { manifest, blender: { artifact: blenderArt, path: blender }, ffmpeg };
+  if (!blender && !ffmpeg) throw new AppError('PACK_INVALID', 'gói không chứa thành phần nào');
+  return { manifest, blender, ffmpeg };
 }

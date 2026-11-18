@@ -64,3 +64,4 @@ release-build/
 # turbo
 .turbo/
 .cache/
+.trial-staging/

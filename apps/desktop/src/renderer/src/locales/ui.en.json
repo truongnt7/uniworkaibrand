@@ -481,11 +481,40 @@
         "paused": "Paused",
         "needs_attention": "Needs your attention"
       },
+      "photoConverting": "Converting HEIC photo to JPG…",
+      "photoConverted": "HEIC (iPhone) photo converted to JPG.",
+      "draft": {
+        "title": "Current project",
+        "name": "Project name",
+        "namePlaceholder": "Untitled project",
+        "new": "New project",
+        "idle": "Projects are saved as drafts while you type, so closing the app loses nothing.",
+        "saving": "Saving draft…",
+        "saved": "Draft saved at {{time}}.",
+        "error": "Could not save the draft. Your work is still on screen; do not close the app yet.",
+        "missing": "{{count}} photo(s) or file(s) of this project are no longer on this computer (deleted or moved). Please pick them again.",
+        "others": "Other projects ({{count}})",
+        "photos": "{{count}} photo(s)",
+        "delete": "Delete project",
+        "deleteConfirm": "Press again to delete"
+      },
       "runtime": {
-        "missing": "The video component must be installed once (internet needed).",
+        "missing": "The video component must be installed once (internet needed, under 200 MB). Nothing else is needed to make videos from photos.",
         "install": "Install now",
         "installing": "Installing…",
-        "failed": "Installation failed. Check your connection and press Install now again."
+        "failed": "The video component could not be installed.",
+        "resume": "Resume download",
+        "resumeHint": "Check your connection and press Resume: the part already downloaded is kept.",
+        "name": { "ffmpeg": "video component", "blender": "3D component" },
+        "step": "step {{step}}/{{steps}}",
+        "speed": "· {{speed}}/s",
+        "downloading": "Downloading {{name}} {{step}}: {{received}} / {{total}} ({{pct}}%) {{speed}}",
+        "retrying": "Connection is unstable, retrying (attempt {{attempt}}/{{max}}). The part already downloaded is kept.",
+        "verifying": "Checking the downloaded {{name}}…",
+        "extracting": "Unpacking {{name}}…",
+        "testing": "Test-running {{name}}…",
+        "activating": "Finishing installation…",
+        "done": "Installed."
       },
       "d3": {
         "title": "3D product video (advanced)",
@@ -498,7 +527,7 @@
         "create": "Create 3D video",
         "needModel": "Choose a 3D model file (.glb).",
         "needPrompt": "Describe the video you want.",
-        "needRuntime": "The 3D component (about 380 MB, one time) must be installed first.",
+        "needRuntime": "3D video needs the 3D component (Blender, about 400 MB, downloaded once; plus the video component if missing). Not needed for photo videos.",
         "queued": "The 3D video was added to the queue.",
         "directorNote": "The AI Director ({{source}}) understood your description."
       }

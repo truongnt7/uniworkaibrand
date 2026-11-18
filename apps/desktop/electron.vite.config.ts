@@ -17,6 +17,7 @@ export default defineConfig(({ mode }) => ({
         input: {
           index: resolve(__dirname, 'src/main/index.ts'),
           orchestrator: resolve(__dirname, 'src/orchestrator/entry.ts'),
+          heicWorker: resolve(__dirname, 'src/orchestrator/photos/heicWorker.ts'),
         },
       },
     },

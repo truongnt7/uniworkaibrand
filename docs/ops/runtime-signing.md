@@ -1,6 +1,6 @@
 # Khóa ký manifest runtime (production) và cách phát hành
 
-Manifest runtime (`tools/runtime/manifest.json`) liệt kê Blender 4.5 LTS và FFmpeg LGPL (URL, kích thước, sha256). App chỉ cài runtime khi
+Manifest runtime (`tools/runtime/manifest.json`) liệt kê Blender 4.5 LTS và FFmpeg LGPL (URL, kích thước, sha256), và (mục `packages`, tùy chọn, cũng được ký) cách chia thành gói `ffmpeg` (nhẹ) và `blender` (yêu cầu `ffmpeg`). App chỉ cài runtime khi
 manifest được **ký Ed25519** bằng một khóa mà app tin. Nguyên tắc đã chốt:
 
 | | Khóa DEV | Khóa PRODUCTION |
@@ -11,6 +11,15 @@ manifest được **ký Ed25519** bằng một khóa mà app tin. Nguyên tắc 
 | Bản đóng gói (`app.isPackaged`) | **không bao giờ** tin (mã nạp khóa dev bị bundler loại khỏi build release) | tin duy nhất |
 
 Repo hiện **chưa có khóa production nào**: bản đóng gói sẽ từ chối cài runtime (`MANIFEST_NO_TRUSTED_KEY`) và `pnpm package` dừng ở bước kiểm tra cho tới khi bạn điền khóa.
+
+## Bản thử nghiệm Windows (khóa trial)
+
+Repo **chưa có khóa production**, nhưng bản cài thử cho khách vẫn phải xác minh được manifest (app không bao giờ "mở cửa" khi thiếu khóa). Vì vậy bản thử dùng **khóa trial riêng**:
+
+- `node tools/trial/prepare-trial-keys.mjs` (CI chạy trước khi đóng gói): nếu repo đã có khóa production + manifest production ký đúng thì dùng chúng (`--mode production` ép buộc, thiếu thì lỗi). Nếu chưa, sinh cặp Ed25519 `trial-<ngày>-<6 hex>` ở thư mục tạm **ngoài repo**, ký `tools/runtime/manifest.json`, ghi CHỈ khóa công khai + manifest đã ký ra `apps/desktop/.trial-staging/` (gitignore), rồi **xóa khóa riêng ngay**. Không ai ký thêm được cho installer đã phát hành; muốn đổi URL/sha256 phải ra installer mới.
+- Tùy chọn: Secret `APS_TRIAL_SIGNING_KEY` của repo (khóa riêng trial, **không** phải khóa production) để cùng một `keyId` qua nhiều lần build; CI ghi ra `RUNNER_TEMP`, dùng, rồi xóa. Script từ chối khóa nằm trong repo.
+- Khóa trial vào app như khóa production (thư mục `resources/keys/production/`, keyId không bắt đầu bằng `dev`), nên **cổng kiểm tra giữ nguyên**: `check-release --pre/--post` vẫn chặn khóa riêng, khóa `dev-*`, mã nạp khóa dev. Khác biệt duy nhất so với production: khóa trial tồn tại ngắn và không có người giữ khóa riêng.
+- **Không dùng bản trial để phát hành rộng.** Khi có khóa production: làm các bước dưới đây, điền `prod-*.pub.pem` + `runtime-manifest.signed.json`, và workflow tự chuyển sang chế độ `production` (xem `info.json`/summary của job). App cài bản production sẽ **không** tin manifest/khóa trial cũ.
 
 ## Bước làm của người phát hành (làm một lần, offline)
 
