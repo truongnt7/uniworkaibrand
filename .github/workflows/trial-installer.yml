@@ -30,14 +30,14 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
-      - name: Bảo đảm có Electron (postinstall)
+      - name: "Bảo đảm có Electron (postinstall)"
         shell: pwsh
         run: |
           $dist = "apps/desktop/node_modules/electron/dist/electron.exe"
           if (-not (Test-Path $dist)) { node apps/desktop/node_modules/electron/install.js }
           if (-not (Test-Path $dist)) { throw "Không có electron.exe sau khi cài" }
 
-      - name: Khóa công khai + manifest đã ký cho bản thử
+      - name: "Khóa công khai + manifest đã ký cho bản thử"
         id: keys
         shell: pwsh
         run: |
@@ -52,13 +52,13 @@ jobs:
           # Tùy chọn: khóa trial CỐ ĐỊNH (Secret của repo). Không có (hoặc PR từ fork) thì dùng khóa trial TẠM, xóa ngay sau khi ký.
           TRIAL_SIGNING_KEY: ${{ secrets.APS_TRIAL_SIGNING_KEY }}
 
-      - name: Đóng gói installer NSIS x64 (kiểm tra trước/sau: không khóa riêng, không khóa dev)
+      - name: "Đóng gói installer NSIS x64 (kiểm tra trước/sau: không khóa riêng, không khóa dev)"
         run: pnpm --filter @aps/desktop package:installer
         env:
           APS_PACKAGE_KEYS_DIR: ${{ steps.keys.outputs.keys_dir }}
           APS_PACKAGE_MANIFEST: ${{ steps.keys.outputs.manifest }}
 
-      - name: Ghi thông tin installer
+      - name: "Ghi thông tin installer"
         id: installer
         shell: pwsh
         run: |
@@ -77,7 +77,7 @@ jobs:
           - **Chưa ký số (Authenticode)**: Windows SmartScreen sẽ cảnh báo "Windows protected your PC"; khách bấm "More info" rồi "Run anyway" (xem docs/trial-guide.md).
           "@ >> $env:GITHUB_STEP_SUMMARY
 
-      - name: Cài thật (silent, per-user) rồi tìm app đã cài
+      - name: "Cài thật (silent, per-user) rồi tìm app đã cài"
         id: install
         shell: pwsh
         run: |
@@ -94,15 +94,15 @@ jobs:
           "dir=$($exe.DirectoryName)" >> $env:GITHUB_OUTPUT
           Write-Host "Đã cài tại $($exe.DirectoryName)"
 
-      - name: Kiểm tra bản ĐÃ CÀI (không khóa riêng/khóa dev, có manifest + khóa công khai + phông + notices)
+      - name: "Kiểm tra bản ĐÃ CÀI (không khóa riêng/khóa dev, có manifest + khóa công khai + phông + notices)"
         run: node apps/desktop/scripts/check-release.mjs --post "${{ steps.install.outputs.dir }}\resources"
 
-      - name: Smoke test trên app đã cài (tải ffmpeg thật, tạo ảnh sang video, ffprobe, mở lại còn bài nháp)
+      - name: "Smoke test trên app đã cài (tải ffmpeg thật, tạo ảnh sang video, ffprobe, mở lại còn bài nháp)"
         run: node apps/desktop/scripts/e2e-trial.mjs "${{ steps.install.outputs.exe }}"
         env:
           APS_TRIAL_OUT: ${{ runner.temp }}\trial-smoke
 
-      - name: Gỡ cài đặt (silent)
+      - name: "Gỡ cài đặt (silent)"
         if: always() && steps.install.outputs.dir != ''
         continue-on-error: true
         shell: pwsh
@@ -114,12 +114,12 @@ jobs:
             if (Test-Path "${{ steps.install.outputs.dir }}\AI Product Studio.exe") { throw "Gỡ cài đặt chưa xóa app" }
           }
 
-      - name: Xóa khóa trial cố định (nếu có)
+      - name: "Xóa khóa trial cố định (nếu có)"
         if: always()
         shell: pwsh
         run: Remove-Item (Join-Path $env:RUNNER_TEMP "trial-signing.key.pem") -Force -ErrorAction SilentlyContinue
 
-      - name: Tải lên installer
+      - name: "Tải lên installer"
         uses: actions/upload-artifact@v4
         with:
           name: AI-Product-Studio-Trial-Setup-x64
@@ -129,7 +129,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Tải lên báo cáo smoke test (ảnh chụp, JSON, video đã lưu)
+      - name: "Tải lên báo cáo smoke test (ảnh chụp, JSON, video đã lưu)"
         if: always()
         uses: actions/upload-artifact@v4
         with:
