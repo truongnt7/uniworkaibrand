@@ -1,6 +1,9 @@
 # Gói runtime offline (P0-07): số liệu và cách kiểm
 
-- Tạo gói: `node tools/runtime/pack-runtime.mjs --signed-manifest <manifest đã ký> --platform linux-x64 --out dist/x.apspack` (tar không nén: `pack.json` chứa manifest đã ký + `blender/` + `ffmpeg/`).
+- Tạo gói: `node tools/runtime/pack-runtime.mjs --signed-manifest <manifest đã ký> --platform linux-x64 --out dist/x.apspack` (tar không nén: `pack.json` chứa manifest đã ký + danh sách `packages` + `blender/` + `ffmpeg/`).
+  - **Gói nhẹ cho ảnh sang video**: thêm `--packages ffmpeg` (chỉ thư mục `ffmpeg/`, vài chục đến vài trăm MB tùy nền tảng). `--packages blender` tạo gói chỉ có Blender; gói chỉ có Blender vẫn nhập được nhưng ffmpeg chưa có, app sẽ tiếp tục xin gói ffmpeg (gói `blender` yêu cầu `ffmpeg`). Mặc định cả hai như trước.
+  - Gói cũ (không có `packages` trong `pack.json`) vẫn nhập được và được coi là có đủ hai gói. Nhập gói thiếu thành phần mà manifest bắt buộc vẫn bị từ chối.
+  - Nhập một archive lẻ (ví dụ chỉ `ffmpeg-*.zip`): app tự nhận ra thành phần, kiểm sha256 theo manifest rồi cài đúng gói đó.
 - Nhập: nút "Nhập runtime từ file…" trong app hoặc `pnpm poc:render import <file>`. App kiểm **chữ ký manifest bằng khóa tin cậy của bản build**, rồi kích thước + sha256 từng thành phần, giải nén tạm, smoke test Blender, kiểm LGPL ffmpeg, kích hoạt nguyên tử.
 - Từ chối: gói sai chữ ký/khóa lạ/sai sha256/thiếu thành phần (test: `tests/pack.test.ts`, `tests/trust.test.ts`).
 

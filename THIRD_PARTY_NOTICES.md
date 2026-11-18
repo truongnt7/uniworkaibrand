@@ -46,6 +46,21 @@ Blender 4.5 LTS được **tải về lúc chạy** (hoặc nhập từ gói off
 được phát hành theo GPL-3.0-or-later (xem `blender-worker/LICENSE`) và đi kèm bản phân phối ở dạng mã nguồn. Gói runtime offline có chứa Blender nên phải kèm văn bản GPL và nguồn tương ứng
 (https://download.blender.org/source/ hoặc https://projects.blender.org/blender/blender). Chưa có ý kiến pháp lý bằng văn bản (P0-19).
 
+## Chuyển ảnh HEIC/HEIF sang JPG (libheif-js: LGPL-3.0; heic-decode: ISC; jpeg-js: BSD-3-Clause)
+
+Ảnh iPhone (HEIC/HEIF) được chuyển sang JPG ngay khi khách chọn ảnh, trong một luồng worker của tiến trình nền (không chặn giao diện). Bản JPG nằm trong thư mục dữ liệu của app (`uploads/`); ảnh gốc không bị sửa hay xóa.
+
+| Thư viện | Phiên bản (ghim chính xác) | Giấy phép | Vai trò | Nguồn |
+|---|---|---|---|---|
+| `libheif-js` (libheif + libde265 biên dịch ra WebAssembly bằng Emscripten) | 1.23.5 | **LGPL-3.0** | giải mã HEIC/HEIF (HEVC) | https://github.com/catdad-experiments/libheif-js, mã gốc libheif https://github.com/strukturag/libheif, libde265 https://github.com/strukturag/libde265 |
+| `heic-decode` | 2.1.0 | ISC | giao diện Node gọi libheif-js | https://github.com/catdad-experiments/heic-decode |
+| `jpeg-js` | 0.4.4 | BSD-3-Clause | mã hóa JPG (JS thuần) | https://github.com/eugeneware/jpeg-js |
+
+- **Vì sao chọn bộ này**: chạy được trên Windows/macOS/Linux với Electron mà không cần biên dịch addon native (không `sharp`/`libvips` đi kèm `libheif` có thể kéo theo `x265` GPL, không `ImageMagick`); mọi thứ là JS + WebAssembly nên ổn định theo từng phiên bản Electron. Chỉ **giải mã** (libde265); app không chứa bộ mã hóa HEVC (không x265).
+- **Nghĩa vụ LGPL-3.0 (libheif, libde265)**: (1) giữ nguyên văn giấy phép: `resources/licenses/libheif-js-LICENSE` (trong bản đóng gói) kèm bản trong `app.asar/node_modules/libheif-js/`; (2) thư viện được dùng **nguyên bản, không sửa**, nằm thành mô-đun riêng trong `resources/app.asar/node_modules/libheif-js/` (không bị gộp/biên dịch lại vào mã của app: cấu hình `externalizeDepsPlugin` giữ `dependencies` ngoài bundle) nên người dùng có thể thay bằng phiên bản khác (giải `app.asar`, thay thư mục, đóng lại bằng `asar pack`); (3) mã nguồn tương ứng ở các liên kết trên (đúng phiên bản 1.23.5 của gói npm; tag/commit nằm trong gói npm và repo `catdad-experiments/libheif-js`). Nếu phát hành dưới dạng bản cài hạn chế quyền thay thế (store có DRM, ký chặn sửa), cần xem lại nghĩa vụ "thông tin cài đặt" của LGPL-3.0.
+- **Lưu ý cần luật sư/người phát hành rà soát (chưa được xác nhận)**: HEIC dùng nén **HEVC/H.265**. LGPL chỉ nói về bản quyền mã nguồn; **bằng sáng chế HEVC** (Access Advance, Via LA, ...) là vấn đề riêng, độc lập với giấy phép mã. Trình giải mã libde265 phần mềm không có giấy phép bằng sáng chế đi kèm. Tương tự lưu ý `libopenh264` ở mục FFmpeg. Phương án giảm rủi ro nếu cần: tắt chuyển HEIC và hướng dẫn khách xuất JPG ("Cài đặt máy ảnh > Định dạng > Tương thích nhất").
+- **Không thu thập dữ liệu**: giải mã chạy hoàn toàn trên máy khách; không có kết nối mạng.
+
 ## Electron, Chromium và thư viện JavaScript
 
 Electron (MIT) và Chromium kèm theo giấy phép của chúng (`LICENSE`, `LICENSES.chromium.html` trong thư mục app). Thư viện renderer/bundle (React, i18next, zod, ...) dùng giấy phép MIT/BSD/Apache-2.0;

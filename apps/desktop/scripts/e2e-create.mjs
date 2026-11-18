@@ -251,7 +251,7 @@ await step('hàng đợi: xem, trạng thái, xóa', async () => {
 
 await step('video 3D (nâng cao): mở rộng, chặn khi chưa cài thành phần 3D', async () => {
   await page.click(`${T('d3-section')} summary`);
-  assert(/Cần cài thành phần dựng 3D/.test(await text(T('d3-section'))), 'chưa cài Blender thì phải hướng dẫn cài');
+  assert(/cần thêm thành phần dựng 3D/.test(await text(T('d3-section'))), 'chưa cài Blender thì phải hướng dẫn cài');
   assert(await page.locator(T('d3-create')).isDisabled(), 'không cho tạo video 3D khi chưa cài thành phần 3D');
   await page.fill(T('d3-prompt'), 'Xoay chai chậm, camera tiến gần, cuối video hiện logo.');
   await shot('video-3d-nang-cao');

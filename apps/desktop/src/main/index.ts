@@ -6,7 +6,9 @@ import { BrowserWindow, app, clipboard, dialog, ipcMain, nativeImage, net, proto
 import {
   AppError,
   INVOKE_CHANNEL_NAMES,
+  IpcValidationError,
   dispatchInvoke,
+  encodeIpcError,
   type EventChannel,
   type EventPayload,
   type InvokeHandlers,
@@ -183,7 +185,13 @@ function registerIpc(): void {
   for (const channel of INVOKE_CHANNEL_NAMES) {
     ipcMain.handle(channel, async (event, payload: unknown) => {
       if (!isTrustedSender(event, rendererPrefixes())) throw new AppError('IPC_FORBIDDEN', 'sender không được tin cậy');
-      return dispatchInvoke(handlers, channel, payload);
+      try {
+        return await dispatchInvoke(handlers, channel, payload);
+      } catch (e) {
+        // Electron chỉ chuyển `message` của lỗi sang renderer: mã lỗi được gói vào message để renderer lấy lại (renderer/src/api.ts).
+        if (e instanceof AppError || e instanceof IpcValidationError) throw new Error(encodeIpcError(e.code, e.message));
+        throw e;
+      }
     });
   }
 }

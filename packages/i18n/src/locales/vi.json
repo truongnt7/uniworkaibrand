@@ -91,7 +91,7 @@
     "HTTP_STATUS": "Máy chủ tải trả về lỗi.",
     "CHECKSUM_MISMATCH": "Tệp tải về bị hỏng (sai checksum). Đã xóa và sẽ tải lại.",
     "SIZE_MISMATCH": "Tệp tải về sai kích thước.",
-    "DISK_SPACE": "Không đủ dung lượng đĩa để cài Blender.",
+    "DISK_SPACE": "Không đủ dung lượng đĩa để cài thành phần này. Hãy giải phóng ổ đĩa rồi thử lại.",
     "EXTRACT_FAILED": "Không giải nén được runtime.",
     "SMOKE_TEST_FAILED": "Blender không chạy được trên máy này; bản cũ (nếu có) được giữ nguyên.",
     "MANIFEST_NO_TRUSTED_KEY": "Bản cài này chưa có khóa để kiểm tra thành phần tải về nên không thể cài thêm thành phần. Hãy liên hệ người cung cấp bản dùng thử.",

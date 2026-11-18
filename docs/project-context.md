@@ -18,4 +18,6 @@ Tài liệu chính: [ke-hoach-ai-blender-electron.md](ke-hoach-ai-blender-electr
 
 Mẫu theo ngành và chế độ ảnh sang video: [industry-templates.md](industry-templates.md)
 
+Bản cài thử Windows cho khách dùng thử (installer NSIS chưa ký số, khóa trial, smoke test CI): [ops/windows-trial-installer.md](ops/windows-trial-installer.md); hướng dẫn cho khách: [trial-guide.md](trial-guide.md).
+
 Trạng thái luồng "ảnh sang video" trong app (màn hình Tạo video, hàng đợi, ghi nhớ thông tin, phông, e2e): [industry-templates.md](industry-templates.md) mục 2.6.

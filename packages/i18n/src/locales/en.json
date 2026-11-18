@@ -91,7 +91,7 @@
     "HTTP_STATUS": "The download server returned an error.",
     "CHECKSUM_MISMATCH": "Downloaded file is corrupted (checksum mismatch). It was deleted and will be downloaded again.",
     "SIZE_MISMATCH": "Downloaded file has the wrong size.",
-    "DISK_SPACE": "Not enough disk space to install Blender.",
+    "DISK_SPACE": "Not enough disk space to install this component. Free up some space and try again.",
     "EXTRACT_FAILED": "Could not extract the runtime.",
     "SMOKE_TEST_FAILED": "Blender does not run on this machine; the previous version (if any) was kept.",
     "MANIFEST_NO_TRUSTED_KEY": "This build has no key to verify downloaded components, so none can be installed. Contact whoever gave you the trial build.",
