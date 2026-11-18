@@ -54,7 +54,7 @@ Có test: `apps/desktop/tests/trial-keys.test.ts` (khóa trial vs dev vs product
 
 ## Rủi ro và việc chưa kiểm
 
-- **Lần chạy Windows đầu tiên** của luồng này là CI của nhánh `mvp/trial-installer`; kết quả nằm trong mô tả PR. Trước đó mới kiểm trên Linux (cùng kịch bản smoke trên `linux-unpacked`).
+- **Kết quả CI Windows đầu tiên** (PR #9, `windows-latest`, run 44207477266): đóng gói, cài silent, `check-release --post` trên thư mục đã cài và smoke test đều đạt; installer 115 MB, tải ffmpeg thật mất khoảng 8 giây trên runner, tạo video 1080x1920 H.264 `yuv420p` dài 12 giây, ffprobe bằng `ffprobe.exe` đi kèm gói ffmpeg. Chưa thử trên máy Windows thật có antivirus, màn hình DPI cao hoặc tài khoản không phải quản trị. Thư mục cài là `%LOCALAPPDATA%\Programs\@apsdesktop` (suy ra từ tên gói npm; lối tắt/Start menu vẫn là "AI Product Studio"): nên đặt `nsis.guid`/`productName` hợp lý trước khi phát hành chính thức.
 - NSIS `language: "1066"` (tiếng Việt) và cài one-click chưa được thử với người dùng thật; installer chỉ hiện tiến trình ngắn.
 - Giải nén zip trên Windows dựa vào `System32\tar.exe` (bsdtar); Windows 10 1803 trở lên có sẵn. Máy tắt hoặc xóa tệp này sẽ lỗi `EXTRACT_FAILED`.
 - Tải ffmpeg phụ thuộc URL GitHub BtbN `autobuild-*` (thẻ bị xóa định kỳ, đã ghi ở `THIRD_PARTY_NOTICES.md`). Khuyến nghị chép binary lên máy chủ riêng và thêm vào `mirrors` rồi ký lại manifest trước khi phát rộng.
