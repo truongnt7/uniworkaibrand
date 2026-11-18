@@ -68,6 +68,42 @@ describe('Màn hình Tạo video', () => {
     expect(await screen.findByTestId(`photo-error-${slot.id}`)).toHaveTextContent('HEIC');
   });
 
+  it('ảnh HEIC được chuyển sang JPG khi tải lên: hiện đang chuyển, lưu đường dẫn JPG, báo đã chuyển', async () => {
+    const fake = new FakeCreateService();
+    fake.convertHeic = true;
+    let finish: (() => void) | undefined;
+    const original = fake.preparePhoto;
+    fake.preparePhoto = async (path: string) => {
+      await new Promise<void>((r) => (finish = r));
+      return original(path);
+    };
+    const { user } = renderApp('#/create', { create: fake });
+    await user.click(await screen.findByTestId('industry-ban-hang-online'));
+    const slot = requiredPhotos[0]!;
+    fake.picks.photo = ['/anh/IMG_0001.HEIC'];
+    await user.click(screen.getByTestId(`photo-pick-${slot.id}`));
+    expect(await screen.findByTestId(`photo-converting-${slot.id}`)).toHaveTextContent('Đang chuyển ảnh HEIC sang JPG');
+    act(() => finish?.());
+    expect(await screen.findByTestId(`photo-converted-${slot.id}`)).toHaveTextContent('Đã chuyển ảnh HEIC');
+    expect(screen.queryByTestId(`photo-error-${slot.id}`)).toBeNull();
+    expect(screen.queryByTestId(`photo-converting-${slot.id}`)).toBeNull();
+    await waitFor(() => expect(fake.draftSaves.at(-1)?.form.photos?.[slot.id]).toBe('/du-lieu/uploads/IMG_0001.jpg'));
+  });
+
+  it('ảnh HEIC hỏng: báo lỗi tiếng Việt ở đúng ô ảnh, không gắn ảnh', async () => {
+    const fake = new FakeCreateService();
+    fake.convertHeic = true;
+    fake.prepareError = 'PHOTO_HEIC_FAILED';
+    const { user } = renderApp('#/create', { create: fake });
+    await user.click(await screen.findByTestId('industry-ban-hang-online'));
+    const slot = requiredPhotos[0]!;
+    fake.picks.photo = ['/anh/hong.heic'];
+    await user.click(screen.getByTestId(`photo-pick-${slot.id}`));
+    expect(await screen.findByTestId(`photo-error-${slot.id}`)).toHaveTextContent('Không chuyển được ảnh HEIC');
+    expect(screen.queryByTestId(`photo-thumb-${slot.id}`)).toBeNull();
+    expect(screen.queryByTestId(`photo-file-${slot.id}`)).toBeNull();
+  });
+
   it('tạo video: xếp hàng, chạy, lỗi -> thử lại, hủy -> thử lại, xong -> xem, lưu, mở thư mục', async () => {
     const fake = new FakeCreateService();
     const { user } = renderApp('#/create', { create: fake });
@@ -174,5 +210,122 @@ describe('Màn hình Tạo video', () => {
     renderApp('#/create', { create: fake });
     expect(await screen.findByTestId('runtime-banner')).toHaveTextContent('Cần cài thành phần dựng video');
     expect(getTemplate(template.id)).toBeDefined();
+  });
+
+  it('cài thành phần: chỉ xin gói ffmpeg, hiện tiến độ tiếng Việt (tải, thử lại, giải nén) và báo lỗi có nút Tải tiếp', async () => {
+    const fake = new FakeCreateService();
+    fake.runtime = { installed: false, ffmpegPath: null } as unknown as typeof fake.runtime;
+    let release: (() => void) | undefined;
+    fake.runtimeInstall = async (packages) => {
+      fake.installRequests.push(packages ?? []);
+      await new Promise<void>((r) => (release = r));
+      throw Object.assign(new Error('mất mạng'), { code: 'NETWORK' });
+    };
+    const { user } = renderApp('#/create', { create: fake });
+    await user.click(await screen.findByTestId('runtime-install'));
+    expect(fake.installRequests).toEqual([['ffmpeg']]);
+    const emit = (p: Record<string, unknown>) => act(() => fake.progressListeners.forEach((l) => l({ component: 'ffmpeg', phase: 'downloading', receivedBytes: 0, totalBytes: 0, bytesPerSecond: 0, attempt: 0, maxAttempts: 0, ...p }) as never));
+    emit({ phase: 'downloading', receivedBytes: 50 * 1024 * 1024, totalBytes: 100 * 1024 * 1024, bytesPerSecond: 2 * 1024 * 1024, step: 1, steps: 1 });
+    const progress = await screen.findByTestId('runtime-progress');
+    expect(progress).toHaveTextContent('Đang tải thành phần dựng video');
+    expect(progress).toHaveTextContent('50 MB / 100 MB (50%)');
+    expect(within(progress).getByRole('progressbar')).toHaveAttribute('aria-valuenow', '50');
+    emit({ phase: 'retrying', attempt: 2, maxAttempts: 5 });
+    expect(progress).toHaveTextContent('Mạng chập chờn, đang thử lại (lần 2/5)');
+    emit({ phase: 'extracting' });
+    expect(progress).toHaveTextContent('Đang giải nén thành phần dựng video');
+    act(() => release?.());
+    expect(await screen.findByTestId('runtime-error')).toHaveTextContent('Lỗi mạng khi tải');
+    expect(screen.getByTestId('runtime-install')).toHaveTextContent('Tải tiếp');
+  });
+
+  it('video 3D: banner Blender xin đúng gói blender, không đụng gói ffmpeg khi ffmpeg đã có', async () => {
+    const fake = new FakeCreateService();
+    fake.runtime = { installed: false, ffmpegPath: '/x/ffmpeg' } as unknown as typeof fake.runtime;
+    const { user } = renderApp('#/create', { create: fake });
+    expect(screen.queryByTestId('runtime-banner')).toBeNull();
+    await user.click(await screen.findByText('Video sản phẩm 3D (nâng cao)'));
+    expect(await screen.findByTestId('d3-runtime-banner')).toHaveTextContent('Blender');
+    await user.click(screen.getByTestId('d3-runtime-install'));
+    expect(fake.installRequests).toEqual([['blender']]);
+  });
+
+  it('lưu nháp tự động (tên bài, mẫu, ảnh, thông tin) và mở lại app thì còn nguyên', async () => {
+    const fake = new FakeCreateService();
+    const first = renderApp('#/create', { create: fake });
+    await first.user.click(await screen.findByTestId('industry-ban-hang-online'));
+    await fillValid(fake, first.user);
+    await first.user.type(screen.getByTestId('draft-name'), 'Bài khai trương');
+    await waitFor(() => expect(screen.getByTestId('draft-status')).toHaveAttribute('data-state', 'saved'), { timeout: 3000 });
+    expect(screen.getByTestId('draft-status')).toHaveTextContent('Đã lưu nháp lúc');
+    expect(fake.drafts.size).toBe(1);
+    const saved = [...fake.drafts.values()][0]!;
+    expect(saved.name).toBe('Bài khai trương');
+    expect(saved.form.templateId).toBe(template.id);
+    expect(Object.values(saved.form.photos).sort()).toEqual(requiredPhotos.map((_, i) => `/anh/san-pham-${i}.jpg`).sort());
+    expect(saved.form.values.phone).toBe('0901 234 567');
+    first.unmount();
+
+    const second = renderApp('#/create', { create: fake });
+    await waitFor(() => expect(screen.getByTestId('draft-name')).toHaveValue('Bài khai trương'));
+    await waitFor(() => expect(screen.getByTestId(`template-${template.id}`)).toHaveAttribute('aria-checked', 'true'));
+    expect(screen.getByTestId('field-phone')).toHaveValue('0901 234 567');
+    for (const p of requiredPhotos) expect(screen.getByTestId(`photo-file-${p.id}`)).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByTestId('create-button')).toBeEnabled());
+    expect(fake.drafts.size).toBe(1);
+    second.unmount();
+  });
+
+  it('bài mới giữ thông tin cơ sở nhưng bỏ ảnh; chuyển qua lại giữa các bài; xóa bài cần bấm hai lần', async () => {
+    const fake = new FakeCreateService();
+    const { user } = renderApp('#/create', { create: fake });
+    await user.click(await screen.findByTestId('industry-ban-hang-online'));
+    await fillValid(fake, user);
+    await user.type(screen.getByTestId('draft-name'), 'Bài A');
+    await waitFor(() => expect(fake.drafts.size).toBe(1), { timeout: 3000 });
+    const idA = [...fake.drafts.keys()][0]!;
+
+    await user.click(screen.getByTestId('draft-new'));
+    expect(screen.getByTestId('draft-name')).toHaveValue('');
+    expect(screen.queryByTestId(`photo-file-${requiredPhotos[0]!.id}`)).toBeNull();
+    const phoneField = screen.getByTestId('field-phone') as HTMLInputElement;
+    expect(phoneField.value).toBe('0901 234 567');
+    await user.type(screen.getByTestId('draft-name'), 'Bài B');
+    await waitFor(() => expect(fake.drafts.size).toBe(2), { timeout: 3000 });
+    expect([...fake.drafts.values()].map((d) => d.name).sort()).toEqual(['Bài A', 'Bài B']);
+
+    await user.click(await screen.findByText(/Các bài khác \(1\)/));
+    await user.click(screen.getByTestId(`draft-open-${idA}`));
+    await waitFor(() => expect(screen.getByTestId('draft-name')).toHaveValue('Bài A'));
+    for (const p of requiredPhotos) expect(screen.getByTestId(`photo-file-${p.id}`)).toBeInTheDocument();
+
+    await user.click(await screen.findByText(/Các bài khác \(1\)/));
+    const other = [...fake.drafts.keys()].find((k) => k !== idA)!;
+    await user.click(screen.getByTestId(`draft-delete-${other}`));
+    expect(fake.drafts.has(other)).toBe(true);
+    await user.click(screen.getByTestId(`draft-delete-confirm-${other}`));
+    await waitFor(() => expect(fake.drafts.has(other)).toBe(false));
+  });
+
+  it('mở bài mà ảnh gốc đã bị xóa: báo cần chọn lại', async () => {
+    const fake = new FakeCreateService();
+    const { user, unmount } = renderApp('#/create', { create: fake });
+    await user.click(await screen.findByTestId('industry-ban-hang-online'));
+    await fillValid(fake, user);
+    await waitFor(() => expect(fake.drafts.size).toBe(1), { timeout: 3000 });
+    unmount();
+    fake.missingPaths = ['/anh/san-pham-0.jpg'];
+    renderApp('#/create', { create: fake });
+    expect(await screen.findByTestId('draft-missing')).toHaveTextContent('1 ảnh hoặc tệp');
+  });
+
+  it('chưa nhập gì thì không tạo nháp rỗng', async () => {
+    const fake = new FakeCreateService();
+    const { user } = renderApp('#/create', { create: fake });
+    await screen.findByTestId('draft-bar');
+    await new Promise((r) => setTimeout(r, 1000));
+    expect(fake.drafts.size).toBe(0);
+    await user.click(screen.getByTestId('draft-new'));
+    expect(fake.drafts.size).toBe(0);
   });
 });

@@ -21,6 +21,11 @@ export const INVOKE_CHANNEL_NAMES = [
   'video:reveal',
   'clipboard:writeText',
   'photo:thumbnail',
+  'photo:prepare',
+  'drafts:list',
+  'drafts:get',
+  'drafts:save',
+  'drafts:remove',
   'app:info',
 ] as const;
 export const EVENT_CHANNEL_NAMES = ['jobs:changed', 'runtime:progress'] as const;

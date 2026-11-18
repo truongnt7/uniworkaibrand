@@ -78,6 +78,15 @@ export const MIGRATIONS: readonly string[] = [
      value TEXT NOT NULL,
      updated_at INTEGER NOT NULL
    );`,
+  // v4 (chỉ thêm): bản nháp từng bài trong màn "Tạo video" (tên bài, mẫu, ảnh, thông tin) để đóng app mở lại không mất.
+  `CREATE TABLE drafts (
+     id TEXT PRIMARY KEY,
+     name TEXT NOT NULL,
+     form_json TEXT NOT NULL,
+     created_at INTEGER NOT NULL,
+     updated_at INTEGER NOT NULL
+   );
+   CREATE INDEX idx_drafts_updated ON drafts(updated_at DESC);`,
 ];
 
 export function migrate(db: Db, dbPath: string | null): void {

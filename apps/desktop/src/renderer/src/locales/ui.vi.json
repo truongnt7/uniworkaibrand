@@ -481,11 +481,40 @@
         "paused": "Tạm dừng",
         "needs_attention": "Cần bạn xem lại"
       },
+      "photoConverting": "Đang chuyển ảnh HEIC sang JPG…",
+      "photoConverted": "Đã chuyển ảnh HEIC (iPhone) sang JPG để dùng.",
+      "draft": {
+        "title": "Bài đang làm",
+        "name": "Tên bài",
+        "namePlaceholder": "Bài chưa đặt tên",
+        "new": "Bài mới",
+        "idle": "Bài tự lưu nháp khi bạn nhập, đóng app mở lại vẫn còn.",
+        "saving": "Đang lưu nháp…",
+        "saved": "Đã lưu nháp lúc {{time}}.",
+        "error": "Chưa lưu được nháp. Nội dung vẫn còn trên màn hình, đừng đóng app vội.",
+        "missing": "Có {{count}} ảnh hoặc tệp của bài này không còn trên máy (đã xóa hoặc di chuyển). Hãy chọn lại.",
+        "others": "Các bài khác ({{count}})",
+        "photos": "{{count}} ảnh",
+        "delete": "Xóa bài",
+        "deleteConfirm": "Bấm lại để xóa"
+      },
       "runtime": {
-        "missing": "Cần cài thành phần dựng video một lần (cần có mạng).",
+        "missing": "Cần cài thành phần dựng video một lần (cần có mạng, dưới 200 MB). Không cần cài thêm gì khác để làm video từ ảnh.",
         "install": "Cài ngay",
         "installing": "Đang cài…",
-        "failed": "Chưa cài được. Hãy kiểm tra mạng rồi bấm Cài ngay lại."
+        "failed": "Chưa cài được thành phần dựng video.",
+        "resume": "Tải tiếp",
+        "resumeHint": "Hãy kiểm tra mạng rồi bấm Tải tiếp: phần đã tải được giữ lại, không phải tải lại từ đầu.",
+        "name": { "ffmpeg": "thành phần dựng video", "blender": "thành phần dựng 3D" },
+        "step": "bước {{step}}/{{steps}}",
+        "speed": "· {{speed}}/giây",
+        "downloading": "Đang tải {{name}} {{step}}: {{received}} / {{total}} ({{pct}}%) {{speed}}",
+        "retrying": "Mạng chập chờn, đang thử lại (lần {{attempt}}/{{max}}). Phần đã tải được giữ lại để tải tiếp.",
+        "verifying": "Đang kiểm tra {{name}} vừa tải về…",
+        "extracting": "Đang giải nén {{name}}…",
+        "testing": "Đang chạy thử {{name}}…",
+        "activating": "Đang hoàn tất cài đặt…",
+        "done": "Đã cài xong."
       },
       "d3": {
         "title": "Video sản phẩm 3D (nâng cao)",
@@ -498,7 +527,7 @@
         "create": "Tạo video 3D",
         "needModel": "Hãy chọn tệp mô hình 3D (.glb).",
         "needPrompt": "Hãy mô tả video bạn muốn.",
-        "needRuntime": "Cần cài thành phần dựng 3D (khoảng 380 MB, một lần) trước khi tạo video 3D.",
+        "needRuntime": "Video 3D cần thêm thành phần dựng 3D (Blender, khoảng 400 MB, tải một lần; kèm thành phần dựng video nếu chưa có). Làm video từ ảnh thì không cần.",
         "queued": "Đã xếp video 3D vào hàng đợi.",
         "directorNote": "Đạo diễn AI ({{source}}) đã hiểu mô tả của bạn."
       }

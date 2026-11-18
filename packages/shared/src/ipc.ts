@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import { JobRecord, JobTarget, ProductSpec, RenderDevice, RenderEngine, RenderRequest, SlideshowCreateReq, TimelineExtras } from './job.js';
 import { HexColor } from './overlay.js';
-import { RuntimeProgress, RuntimeStatus } from './runtime.js';
+import { Draft, DraftSaveReq, DraftSummary } from './drafts.js';
+import { RuntimeInstallReq, RuntimeProgress, RuntimeStatus } from './runtime.js';
 
 const Empty = z.object({}).strict();
 const IdPayload = z.object({ id: z.string().min(1) });
@@ -105,7 +106,7 @@ export const invokeContract = {
   'jobs:resume': { req: IdPayload, res: z.object({ ok: z.boolean() }) },
   'jobs:remove': { req: IdPayload, res: z.object({ ok: z.boolean() }) },
   'runtime:status': { req: Empty, res: RuntimeStatus },
-  'runtime:install': { req: Empty, res: RuntimeStatus },
+  'runtime:install': { req: RuntimeInstallReq, res: RuntimeStatus },
   'runtime:importFile': { req: z.object({ path: z.string().min(1) }), res: RuntimeStatus },
   'dialog:pickFile': {
     req: z.object({ kind: z.enum(['glb', 'image', 'runtime', 'photo', 'logo', 'audio']) }),
@@ -124,6 +125,18 @@ export const invokeContract = {
     req: z.object({ path: z.string().min(1).max(1024), maxSide: z.number().int().min(32).max(640).default(240) }),
     res: z.object({ dataUrl: z.string().nullable(), width: z.number().int().nullable(), height: z.number().int().nullable() }),
   },
+  /**
+   * Chuẩn bị ảnh vừa chọn/kéo thả: ảnh HEIC/HEIF (iPhone) được chuyển sang JPG trong tiến trình nền của app (không chặn giao diện)
+   * và trả đường dẫn JPG trong thư mục dữ liệu; ảnh khác trả nguyên đường dẫn.
+   */
+  'photo:prepare': {
+    req: z.object({ path: z.string().min(1).max(1024) }),
+    res: z.object({ path: z.string(), converted: z.boolean() }),
+  },
+  'drafts:list': { req: Empty, res: z.array(DraftSummary) },
+  'drafts:get': { req: IdPayload, res: Draft.nullable() },
+  'drafts:save': { req: DraftSaveReq, res: DraftSummary },
+  'drafts:remove': { req: IdPayload, res: z.object({ ok: z.boolean() }) },
   'app:info': {
     req: Empty,
     res: z.object({ version: z.string(), platform: z.string(), dataDir: z.string() }),

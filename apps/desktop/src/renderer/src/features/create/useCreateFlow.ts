@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { BusinessProfile, CaptionResult, InputIssue, JobRecord, SlideshowCreateReqInput } from '@aps/shared';
+import type { BusinessProfile, CaptionResult, Draft, DraftSummary, InputIssue, JobRecord, SlideshowCreateReqInput } from '@aps/shared';
 import { isSlideshowRequest, slideshowDurationS } from '@aps/shared';
 import { INDUSTRIES, formatPhone, getTemplate, normalizePhone, normalizePrice, templatesFor, type Aspect, type FieldKey, type Industry, type Template } from '@aps/templates';
 import type { CreateService } from '../../services/create';
@@ -47,6 +47,38 @@ export function missingItems(template: Template | null, form: FormState): string
   for (const p of template.photos) if (p.required && !form.photos[p.id]) out.push(p.label);
   return out;
 }
+
+/** Tên bài hiển thị khi người dùng chưa đặt: tên món/sản phẩm, rồi tên cơ sở, rồi tên mẫu. */
+export function suggestedDraftName(form: FormState): string {
+  const template = form.templateId ? getTemplate(form.templateId) : null;
+  return form.values.itemName?.trim() || form.values.businessName?.trim() || template?.name || '';
+}
+
+export function formIsEmpty(f: FormState): boolean {
+  return !f.industry && !f.templateId && Object.values(f.values).every((v) => !v?.trim()) && Object.keys(f.photos).length === 0 && Object.keys(f.captions).length === 0 && !f.logoPath && !f.musicPath;
+}
+
+/** Bản nháp -> trạng thái form; bỏ mọi thứ không còn hợp lệ với mẫu hiện tại (mẫu đã đổi/xoá, chỗ ảnh lạ). */
+export function formFromDraft(d: Draft): FormState {
+  const industry = isIndustry(d.form.industry) ? d.form.industry : null;
+  const template = d.form.templateId ? getTemplate(d.form.templateId) : undefined;
+  const tpl = template && industry && templatesFor(industry).some((t) => t.id === template.id) ? template : (industry ? (templatesFor(industry)[0] ?? null) : null);
+  const slots = new Set((tpl?.photos ?? []).map((p) => p.id));
+  const keep = <T,>(rec: Record<string, T>) => Object.fromEntries(Object.entries(rec).filter(([k]) => slots.has(k)));
+  const aspect = tpl && d.form.aspect && tpl.id === d.form.templateId ? (d.form.aspect as Aspect) : null;
+  return {
+    industry,
+    templateId: tpl?.id ?? null,
+    aspect,
+    values: { ...d.form.values } as FormState['values'],
+    photos: keep(d.form.photos) as Record<string, string>,
+    captions: keep(d.form.captions) as Record<string, string>,
+    logoPath: d.form.logoPath,
+    musicPath: d.form.musicPath,
+  };
+}
+
+export type DraftStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 export function templateSeconds(t: Template): number {
   const scenes = t.scenes.map((s, i) => ({ durationS: s.durationS, transition: i === 0 ? ('none' as const) : (s.transition ?? ('fade' as const)), transitionS: s.transitionS ?? 0.5 }));
@@ -98,6 +130,16 @@ export function useCreateFlow(service: CreateService) {
   const [savingFlag, setSaving] = useState(false);
   const [saved, setSaved] = useState<{ path: string; name: string; jobId: string } | null>(null);
   const [saveError, setSaveError] = useState(false);
+  const [draftId, setDraftId] = useState<string | null>(null);
+  const [draftName, setDraftName] = useState('');
+  const [drafts, setDrafts] = useState<DraftSummary[]>([]);
+  const [draftsLoaded, setDraftsLoaded] = useState(false);
+  const [draftStatus, setDraftStatus] = useState<DraftStatus>('idle');
+  const [draftSavedAt, setDraftSavedAt] = useState<number | null>(null);
+  const [missingFiles, setMissingFiles] = useState<string[]>([]);
+  const [converting, setConverting] = useState<ReadonlySet<string>>(new Set());
+  const [converted, setConverted] = useState<ReadonlySet<string>>(new Set());
+  const [photoErrors, setPhotoErrors] = useState<Record<string, string>>({});
   const jobs = useJobs(service);
   const jobById = useMemo(() => new Map(jobs.map((j) => [j.id, j])), [jobs]);
 
@@ -130,6 +172,163 @@ export function useCreateFlow(service: CreateService) {
       alive = false;
     };
   }, [service]);
+
+  const resetPreview = useCallback(() => {
+    setPreviewJobId(null);
+    setPreviewKey('');
+    setViewJobId(null);
+    setFinalJob(null);
+    setSaving(false);
+    setSaved(null);
+    setSaveError(false);
+    setError(null);
+    setSubmitted(false);
+    setTouched(new Set());
+  }, []);
+
+  const lastDraftKey = useRef<string | null>(null);
+  const idRef = useRef<string | null>(null);
+  const saveChain = useRef<Promise<unknown>>(Promise.resolve());
+  const draftKeyOf = (f: FormState, name: string) => JSON.stringify([f, name]);
+
+  const refreshDrafts = useCallback(async () => {
+    try {
+      setDrafts(await service.draftsList());
+    } catch {
+      /* danh sách nháp chỉ là tiện ích */
+    }
+  }, [service]);
+
+  const applyDraft = useCallback(
+    (d: Draft) => {
+      const next = formFromDraft(d);
+      lastDraftKey.current = draftKeyOf(next, d.name);
+      idRef.current = d.id;
+      setForm(next);
+      setDraftId(d.id);
+      setDraftName(d.name);
+      setMissingFiles(d.missing);
+      setDraftStatus('saved');
+      setDraftSavedAt(d.updatedAt);
+      setConverted(new Set());
+      setPhotoErrors({});
+      resetPreview();
+    },
+    [resetPreview],
+  );
+
+  useEffect(() => {
+    if (!profileLoaded) return;
+    let alive = true;
+    void (async () => {
+      try {
+        const list = await service.draftsList();
+        if (!alive) return;
+        setDrafts(list);
+        const latest = list[0];
+        if (latest) {
+          const d = await service.draftGet(latest.id);
+          if (alive && d) applyDraft(d);
+        }
+      } catch {
+        /* không có nháp hoặc đọc lỗi: bắt đầu bài mới */
+      } finally {
+        if (alive) setDraftsLoaded(true);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileLoaded, service]);
+
+  /** Lưu lần lượt (không chạy chồng) và luôn dùng id mới nhất, nên gõ liên tục không tạo ra nhiều bản nháp trùng. */
+  const saveDraftNow = useCallback(
+    (f: FormState, name: string): Promise<void> => {
+      const run = saveChain.current.then(() => doSaveDraft(f, name));
+      saveChain.current = run.catch(() => undefined);
+      return run;
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [service, refreshDrafts],
+  );
+
+  const doSaveDraft = useCallback(
+    async (f: FormState, name: string): Promise<void> => {
+      const effective = name.trim() || suggestedDraftName(f);
+      const id = idRef.current;
+      setDraftStatus('saving');
+      try {
+        const saved = await service.draftSave({
+          ...(id ? { id } : {}),
+          name: effective,
+          form: { industry: f.industry, templateId: f.templateId, aspect: f.aspect, values: Object.fromEntries(Object.entries(f.values).filter(([, v]) => typeof v === 'string')) as Record<string, string>, photos: f.photos, captions: f.captions, logoPath: f.logoPath, musicPath: f.musicPath },
+        });
+        lastDraftKey.current = draftKeyOf(f, name);
+        idRef.current = saved.id;
+        setDraftId(saved.id);
+        setDraftStatus('saved');
+        setDraftSavedAt(saved.updatedAt);
+        void refreshDrafts();
+      } catch {
+        setDraftStatus('error');
+      }
+    },
+    [refreshDrafts, service],
+  );
+
+  const draftKey = draftKeyOf(form, draftName);
+  useEffect(() => {
+    if (!draftsLoaded) return;
+    if (lastDraftKey.current === null) {
+      lastDraftKey.current = draftKey;
+      return;
+    }
+    if (lastDraftKey.current === draftKey || formIsEmpty(form)) return;
+    const id = setTimeout(() => void saveDraftNow(form, draftName), 800);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftKey, draftsLoaded, saveDraftNow]);
+
+  /** Bắt đầu bài mới: giữ thông tin cơ sở (tên, SĐT, địa chỉ, logo, ngành, mẫu), bỏ ảnh/chữ riêng của bài. */
+  const newDraft = useCallback(() => {
+    const keepKeys = ['businessName', 'phone', 'address'] as const;
+    setForm((f) => {
+      const values: FormState['values'] = {};
+      for (const k of keepKeys) if (f.values[k]) values[k] = f.values[k];
+      const next = { ...EMPTY_FORM, industry: f.industry, templateId: f.templateId, values, logoPath: f.logoPath };
+      lastDraftKey.current = draftKeyOf(next, '');
+      return next;
+    });
+    idRef.current = null;
+    setDraftId(null);
+    setDraftName('');
+    setMissingFiles([]);
+    setDraftStatus('idle');
+    setDraftSavedAt(null);
+    setConverted(new Set());
+    setPhotoErrors({});
+    resetPreview();
+  }, [resetPreview]);
+
+  const openDraft = useCallback(
+    async (id: string) => {
+      if (id === draftId) return;
+      if (!formIsEmpty(form) && lastDraftKey.current !== draftKey) await saveDraftNow(form, draftName);
+      const d = await service.draftGet(id).catch(() => null);
+      if (d) applyDraft(d);
+    },
+    [applyDraft, draftId, draftKey, draftName, form, saveDraftNow, service],
+  );
+
+  const removeDraft = useCallback(
+    async (id: string) => {
+      await service.draftRemove(id).catch(() => undefined);
+      await refreshDrafts();
+      if (id === draftId) newDraft();
+    },
+    [draftId, newDraft, refreshDrafts, service],
+  );
 
   const profileKey = JSON.stringify([form.values.businessName ?? '', form.values.phone ?? '', form.values.address ?? '', form.logoPath, form.industry, form.templateId]);
   const lastSaved = useRef<string | null>(null);
@@ -250,19 +449,48 @@ export function useCreateFlow(service: CreateService) {
       return { ...f, photos };
     });
   }, []);
+  /** Gắn ảnh vào chỗ ảnh: HEIC/HEIF được chuyển sang JPG ở tiến trình nền trước (giao diện không bị đứng). */
+  const attachPhoto = useCallback(
+    async (slot: string, path: string) => {
+      setConverting((s) => new Set(s).add(slot));
+      setPhotoErrors((e) => {
+        const { [slot]: _drop, ...rest } = e;
+        return rest;
+      });
+      setConverted((s) => {
+        const n = new Set(s);
+        n.delete(slot);
+        return n;
+      });
+      try {
+        const prepared = await service.preparePhoto(path);
+        setPhoto(slot, prepared.path);
+        if (prepared.converted) setConverted((s) => new Set(s).add(slot));
+      } catch (e) {
+        setPhotoErrors((errs) => ({ ...errs, [slot]: (e as { code?: string }).code ?? 'UNKNOWN' }));
+      } finally {
+        setConverting((s) => {
+          const n = new Set(s);
+          n.delete(slot);
+          return n;
+        });
+      }
+    },
+    [service, setPhoto],
+  );
   const pickPhoto = useCallback(
     async (slot: string) => {
       const path = await service.pick('photo');
-      if (path) setPhoto(slot, path);
+      if (path) await attachPhoto(slot, path);
     },
-    [service, setPhoto],
+    [attachPhoto, service],
   );
   const dropPhoto = useCallback(
     (slot: string, file: File) => {
       const path = service.pathForFile(file);
-      if (path) setPhoto(slot, path);
+      if (path) void attachPhoto(slot, path);
     },
-    [service, setPhoto],
+    [attachPhoto, service],
   );
   const setCaption = useCallback((slot: string, v: string) => setForm((f) => ({ ...f, captions: { ...f.captions, [slot]: v } })), []);
 
@@ -289,7 +517,13 @@ export function useCreateFlow(service: CreateService) {
   const forgetProfile = useCallback(async () => {
     await service.profileSet({ businessName: null, phone: null, address: null, logoPath: null, industry: null, templateId: null });
     lastSaved.current = null;
+    lastDraftKey.current = draftKeyOf(EMPTY_FORM, '');
     setForm(EMPTY_FORM);
+    idRef.current = null;
+    setDraftId(null);
+    setDraftName('');
+    setDraftStatus('idle');
+    setMissingFiles([]);
     setTouched(new Set());
     setSubmitted(false);
   }, [service]);
@@ -428,6 +662,19 @@ export function useCreateFlow(service: CreateService) {
     pickMusic,
     removeMusic,
     forgetProfile,
+    draftId,
+    draftName,
+    setDraftName,
+    drafts,
+    draftStatus,
+    draftSavedAt,
+    missingFiles,
+    newDraft,
+    openDraft,
+    removeDraft,
+    converting,
+    converted,
+    photoErrors,
     create,
     save,
     view,

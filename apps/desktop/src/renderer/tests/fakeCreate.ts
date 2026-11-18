@@ -1,4 +1,4 @@
-import type { BusinessProfile, BusinessProfilePatch, JobRecord, RuntimeStatus, SlideshowCreateReqInput } from '@aps/shared';
+import type { BusinessProfile, BusinessProfilePatch, Draft, DraftSaveReq, DraftSummary, JobRecord, RuntimePackageId, RuntimeProgress, RuntimeStatus, SlideshowCreateReqInput } from '@aps/shared';
 import { FIELD_KEYS, buildCaptions, getTemplate, validateInput, type FieldValues, type TemplateUserInput } from '@aps/templates';
 import type { CreateService, PickKind } from '../src/services/create';
 
@@ -37,6 +37,40 @@ export class FakeCreateService implements CreateService {
   pick = async (kind: PickKind) => this.picks[kind]?.shift() ?? null;
   pathForFile = (file: File) => `/dropped/${file.name}`;
   thumbnail = async () => ({ dataUrl: null });
+  /** Mô phỏng chuyển HEIC: đường dẫn .heic/.heif -> .jpg trong thư mục dữ liệu; đặt `prepareError` để mô phỏng ảnh hỏng. */
+  prepared: string[] = [];
+  prepareError: string | null = null;
+  preparePhoto = async (path: string) => {
+    this.prepared.push(path);
+    if (/\.(heic|heif)$/i.test(path) && this.convertHeic) {
+      if (this.prepareError) throw Object.assign(new Error('hỏng'), { code: this.prepareError });
+      return { path: `/du-lieu/uploads/${path.split('/').pop()!.replace(/\.(heic|heif)$/i, '')}.jpg`, converted: true };
+    }
+    return { path, converted: false };
+  };
+  convertHeic = false;
+  drafts = new Map<string, Draft>();
+  missingPaths: string[] = [];
+  private draftSeq = 0;
+  draftsList = async (): Promise<DraftSummary[]> =>
+    [...this.drafts.values()].sort((a, b) => b.updatedAt - a.updatedAt).map(({ form: _f, missing: _m, ...summary }) => summary);
+  draftGet = async (id: string) => {
+    const d = this.drafts.get(id);
+    return d ? { ...d, missing: this.missingPaths } : null;
+  };
+  draftSaves: DraftSaveReq[] = [];
+  draftSave = async (req: DraftSaveReq) => {
+    this.draftSaves.push(req);
+    const now = Date.now();
+    const id = req.id ?? `draft-${++this.draftSeq}`;
+    const old = this.drafts.get(id);
+    const form = { industry: null, templateId: null, aspect: null, values: {}, photos: {}, captions: {}, logoPath: null, musicPath: null, ...req.form } as Draft['form'];
+    const draft: Draft = { id, name: req.name.trim() || 'Bài chưa đặt tên', industry: form.industry, templateId: form.templateId, photoCount: Object.keys(form.photos).length, createdAt: old?.createdAt ?? now, updatedAt: now, form, missing: [] };
+    this.drafts.set(id, draft);
+    const { form: _f, missing: _m, ...summary } = draft;
+    return summary;
+  };
+  draftRemove = async (id: string) => this.drafts.delete(id);
   validate = async (req: SlideshowCreateReqInput) => {
     const t = getTemplate(req.templateId)!;
     const r = validateInput(t, userInput(req), { aspect: req.aspect ?? t.defaultAspect });
@@ -69,7 +103,16 @@ export class FakeCreateService implements CreateService {
     throw new Error('không dùng trong test');
   };
   runtimeStatus = async () => this.runtime;
-  runtimeInstall = async () => this.runtime;
+  installRequests: RuntimePackageId[][] = [];
+  progressListeners = new Set<(p: RuntimeProgress) => void>();
+  runtimeInstall = async (packages?: RuntimePackageId[]) => {
+    this.installRequests.push(packages ?? []);
+    return this.runtime;
+  };
+  onRuntimeProgress = (l: (p: RuntimeProgress) => void) => {
+    this.progressListeners.add(l);
+    return () => void this.progressListeners.delete(l);
+  };
   jobsList = async () => [...this.jobs];
   onJobChanged = (l: (j: JobRecord) => void) => {
     this.listeners.add(l);

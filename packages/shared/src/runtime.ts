@@ -29,6 +29,29 @@ export const FfmpegComponent = z.object({
 });
 export type FfmpegComponent = z.infer<typeof FfmpegComponent>;
 
+/** Thành phần tải về (mỗi thành phần là một archive trong manifest). */
+export const RuntimeComponentId = z.enum(['ffmpeg', 'blender']);
+export type RuntimeComponentId = z.infer<typeof RuntimeComponentId>;
+
+/**
+ * Gói runtime là đơn vị app tải theo nhu cầu: `ffmpeg` (nhẹ, đủ cho ảnh sang video) và `blender` (chỉ video 3D).
+ * `requires` là gói phải có trước (video 3D vẫn ghép khung bằng ffmpeg nên gói blender cần gói ffmpeg).
+ */
+export const RuntimePackageId = z.enum(['ffmpeg', 'blender']);
+export type RuntimePackageId = z.infer<typeof RuntimePackageId>;
+
+export const RuntimePackageSpec = z.object({
+  components: z.array(RuntimeComponentId).min(1),
+  requires: z.array(RuntimePackageId).default([]),
+});
+export type RuntimePackageSpec = z.infer<typeof RuntimePackageSpec>;
+
+/** Mặc định khi manifest (ký) cũ không có mục `packages`: cùng ý nghĩa với phân tách ffmpeg/blender hiện có. */
+export const DEFAULT_RUNTIME_PACKAGES: Record<RuntimePackageId, RuntimePackageSpec> = {
+  ffmpeg: { components: ['ffmpeg'], requires: [] },
+  blender: { components: ['blender'], requires: ['ffmpeg'] },
+};
+
 export const RuntimeManifest = z.object({
   schemaVersion: z.literal(1),
   blender: z.object({
@@ -37,6 +60,19 @@ export const RuntimeManifest = z.object({
     artifacts: z.record(z.string(), RuntimeArtifact),
   }),
   ffmpeg: FfmpegComponent.optional(),
+  /** Thêm sau schemaVersion 1 (tùy chọn): gói nào gồm thành phần nào. Nằm trong phần được ký của manifest. */
+  packages: z
+    .object({
+      ffmpeg: RuntimePackageSpec.optional(),
+      blender: RuntimePackageSpec.optional(),
+    })
+    .superRefine((p, ctx) => {
+      if (p.ffmpeg && !p.ffmpeg.components.every((c) => c === 'ffmpeg')) ctx.addIssue({ code: 'custom', message: 'gói ffmpeg chỉ được chứa thành phần ffmpeg' });
+      if (p.ffmpeg && p.ffmpeg.requires.length > 0) ctx.addIssue({ code: 'custom', message: 'gói ffmpeg không được yêu cầu gói khác' });
+      if (p.blender && !p.blender.components.includes('blender')) ctx.addIssue({ code: 'custom', message: 'gói blender phải chứa thành phần blender' });
+      if (p.blender && p.blender.requires.some((r) => r !== 'ffmpeg')) ctx.addIssue({ code: 'custom', message: 'gói blender chỉ được yêu cầu gói ffmpeg' });
+    })
+    .optional(),
 });
 export type RuntimeManifest = z.infer<typeof RuntimeManifest>;
 
@@ -47,6 +83,20 @@ export const SignedManifest = z.object({
   keyId: z.string().optional(),
 });
 export type SignedManifest = z.infer<typeof SignedManifest>;
+
+/** Các thành phần cần có cho một gói (kể cả gói nó yêu cầu), theo thứ tự cài: gói yêu cầu trước. */
+export function runtimePackageComponents(
+  manifest: Pick<RuntimeManifest, 'packages'>,
+  id: RuntimePackageId,
+  seen: RuntimePackageId[] = [],
+): RuntimeComponentId[] {
+  if (seen.includes(id)) return [];
+  const spec = manifest.packages?.[id] ?? DEFAULT_RUNTIME_PACKAGES[id];
+  const out: RuntimeComponentId[] = [];
+  for (const r of spec.requires) for (const c of runtimePackageComponents(manifest, r, [...seen, id])) if (!out.includes(c)) out.push(c);
+  for (const c of spec.components) if (!out.includes(c)) out.push(c);
+  return out;
+}
 
 export const RUNTIME_ERROR_CODES = [
   'MANIFEST_INVALID',
@@ -69,18 +119,38 @@ export const RUNTIME_ERROR_CODES = [
 ] as const;
 export type RuntimeErrorCode = (typeof RUNTIME_ERROR_CODES)[number];
 
+export const RuntimePackageStatus = z.object({
+  installed: z.boolean(),
+  version: z.string().nullable(),
+});
+export type RuntimePackageStatus = z.infer<typeof RuntimePackageStatus>;
+
 export const RuntimeStatus = z.object({
+  /** Blender đã cài (giữ nguyên nghĩa cũ). */
   installed: z.boolean(),
   version: z.string().nullable(),
   binaryPath: z.string().nullable(),
   ffmpegPath: z.string().nullable().default(null),
   platform: z.string(),
   busy: z.boolean(),
+  /** Thêm sau: trạng thái từng gói; `blender` = Blender đã cài, `ffmpeg` = FFmpeg đã cài. */
+  packages: z.object({ ffmpeg: RuntimePackageStatus, blender: RuntimePackageStatus }).optional(),
 });
 export type RuntimeStatus = z.infer<typeof RuntimeStatus>;
 
+export const RuntimeInstallReq = z
+  .object({
+    /** Gói cần cài; bỏ trống = tất cả (cách cũ). App chỉ nên yêu cầu gói đang cần. */
+    packages: z.array(RuntimePackageId).min(1).max(2).optional(),
+  })
+  .strict();
+export type RuntimeInstallReq = z.infer<typeof RuntimeInstallReq>;
+
 export const RuntimeProgress = z.object({
   component: z.enum(['blender', 'ffmpeg']).default('blender'),
+  /** Thêm sau: bước hiện tại / tổng số bước tải (mỗi thành phần cần cài là một bước). */
+  step: z.number().int().min(0).optional(),
+  steps: z.number().int().min(0).optional(),
   phase: z.enum(['downloading', 'verifying', 'extracting', 'smoke-test', 'activating', 'done', 'error', 'retrying']),
   receivedBytes: z.number().min(0).default(0),
   totalBytes: z.number().min(0).default(0),
